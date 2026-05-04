@@ -1,6 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'telaLogin.dart';
 
+// ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicial extends StatelessWidget {
   const TelaInicial({super.key});
 
@@ -9,14 +12,13 @@ class TelaInicial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Verifica se a tela é larga (Web/Tablet) para ajustar o tamanho dos botões
     final isWide = MediaQuery.of(context).size.width > 600;
 
     return Scaffold(
       backgroundColor: _cinzaFundo,
       body: Column(
         children: [
-          // ─── BARRA VERMELHA (Mesmo padrão do Login) ────────────
+          // Barra Vermelha
           Container(
             width: double.infinity,
             color: const Color.fromARGB(255, 255, 126, 112),
@@ -24,14 +26,19 @@ class TelaInicial extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Logo Etec
-                Image.asset('imagens/etec_santo_andre.png', height: 75, errorBuilder: (context, error, stackTrace) => const SizedBox(height: 75, width: 150, child: Placeholder(color: Colors.white))),
-                
-                // Informação do usuário logado (Aparece apenas em telas maiores)
+                Image.asset(
+                  'imagens/etec_santo_andre.png',
+                  height: 75,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox(
+                    height: 75,
+                    width: 150,
+                    child: Placeholder(color: Colors.white),
+                  ),
+                ),
+
                 if (isWide)
                   Row(
                     children: [
-                      const Icon(Icons.person_outline, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(
                         'Olá, Aluno!',
@@ -47,17 +54,54 @@ class TelaInicial extends StatelessWidget {
             ),
           ),
 
-          // ─── CONTEÚDO PRINCIPAL ────────────────────────────────
+          // Conteúdo do Menu
           Expanded(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 800), // Limita a largura na Web
+                  constraints: const BoxConstraints(maxWidth: 800),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _buildLogoHexagono(),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'DOMINÓ DA\nQUÍMICA',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w900,
+                                    color: _vermelho,
+                                    letterSpacing: 1.5,
+                                    height: 1.1,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'FUNÇÕES INORGÂNICAS',
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.grey[500],
+                                    letterSpacing: 2.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
                       Text(
                         'Menu Principal',
                         textAlign: TextAlign.center,
@@ -78,7 +122,6 @@ class TelaInicial extends StatelessWidget {
                       ),
                       const SizedBox(height: 40),
 
-                      // ─── OPÇÕES DO MENU ──────────────────────────
                       Wrap(
                         spacing: 24,
                         runSpacing: 24,
@@ -92,7 +135,6 @@ class TelaInicial extends StatelessWidget {
                             isPrimary: true,
                             onTap: () {
                               debugPrint('Navegar para a tela do jogo');
-                              // Navigator.pushNamed(context, '/jogo');
                             },
                           ),
                           _buildMenuCard(
@@ -120,8 +162,13 @@ class TelaInicial extends StatelessWidget {
                             icon: Icons.logout_rounded,
                             iconColor: Colors.grey[600],
                             onTap: () {
-                              debugPrint('Fazer logout');
-                              // Navigator.pushReplacementNamed(context, '/login');
+                              // Volta para a tela de Login
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginScreen(),
+                                ),
+                              );
                             },
                           ),
                         ],
@@ -137,7 +184,6 @@ class TelaInicial extends StatelessWidget {
     );
   }
 
-  //WIDGET REUTILIZÁVEL PARA OS BOTÕES DO MENU
   Widget _buildMenuCard({
     required BuildContext context,
     required String title,
@@ -156,7 +202,7 @@ class TelaInicial extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         hoverColor: isPrimary ? Colors.red[800] : Colors.grey[100],
         child: Container(
-          width: 300, // Largura fixa para manter o grid alinhado
+          width: 300,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
@@ -170,15 +216,15 @@ class TelaInicial extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isPrimary ? Colors.white.withOpacity(0.2) : _cinzaFundo,
+                  color: isPrimary
+                      ? Colors.white.withOpacity(0.2)
+                      : _cinzaFundo,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
                   size: 32,
-                  color: isPrimary 
-                      ? Colors.white 
-                      : (iconColor ?? _vermelho),
+                  color: isPrimary ? Colors.white : (iconColor ?? _vermelho),
                 ),
               ),
               const SizedBox(width: 16),
@@ -212,4 +258,84 @@ class TelaInicial extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildLogoHexagono() {
+  return SizedBox(
+    width: 90,
+    height: 90,
+    child: CustomPaint(painter: _HexLogoPainter()),
+  );
+}
+
+class _HexLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width / 2;
+
+    final path = Path();
+    for (int i = 0; i < 6; i++) {
+      final angle = (i * 60 - 30) * 3.14159 / 180;
+      final x = cx + r * 0.95 * cos(angle);
+      final y = cy + r * 0.95 * sin(angle);
+      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+    }
+    path.close();
+
+    canvas.drawPath(path, Paint()..color = const Color(0xFFC0392B));
+
+    final innerPath = Path();
+    final ir = r * 0.82;
+    for (int i = 0; i < 6; i++) {
+      final angle = (i * 60 - 30) * 3.14159 / 180;
+      final x = cx + ir * cos(angle);
+      final y = cy + ir * sin(angle);
+      i == 0 ? innerPath.moveTo(x, y) : innerPath.lineTo(x, y);
+    }
+    innerPath.close();
+    canvas.drawPath(innerPath, Paint()..color = const Color(0xFFA93226));
+
+    final iconPaint = Paint()
+      ..color = Colors.white.withOpacity(0.95)
+      ..style = PaintingStyle.fill;
+
+    final flask = Path()
+      ..moveTo(cx - 10, cy - 16)
+      ..lineTo(cx - 10, cy - 4)
+      ..lineTo(cx - 18, cy + 14)
+      ..quadraticBezierTo(cx - 20, cy + 20, cx, cy + 20)
+      ..quadraticBezierTo(cx + 20, cy + 20, cx + 18, cy + 14)
+      ..lineTo(cx + 10, cy - 4)
+      ..lineTo(cx + 10, cy - 16)
+      ..close();
+    canvas.drawPath(flask, iconPaint);
+
+    final liquid = Path()
+      ..moveTo(cx - 14, cy + 10)
+      ..quadraticBezierTo(cx, cy + 8, cx + 14, cy + 10)
+      ..lineTo(cx + 18, cy + 14)
+      ..quadraticBezierTo(cx + 20, cy + 20, cx, cy + 20)
+      ..quadraticBezierTo(cx - 20, cy + 20, cx - 18, cy + 14)
+      ..close();
+    canvas.drawPath(
+      liquid,
+      Paint()..color = const Color(0xFFE74C3C).withOpacity(0.75),
+    );
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx, cy - 18), width: 22, height: 5),
+        const Radius.circular(3),
+      ),
+      Paint()..color = Colors.white,
+    );
+  }
+
+  double cos(double a) => math.cos(a);
+  double sin(double a) => math.sin(a);
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
