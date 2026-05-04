@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// ─── TELA DE LOGIN ────────────────────────────────────────────────────────
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -10,7 +11,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _isAluno = true;
+  final bool _isAluno = true;
   bool _obscureSenha = true;
   final _usuarioCtrl = TextEditingController();
   final _senhaCtrl = TextEditingController();
@@ -27,34 +28,33 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  final isWide = MediaQuery.of(context).size.width > 600;
+  Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width > 600;
 
-  return Scaffold(
-    backgroundColor: Colors.white,
-    body: Column(
-      children: [
-        // ─── BARRA VERMELHA ─────────────────────────────────
-        Container(
-          width: double.infinity,
-          color: const Color.fromARGB(255, 255, 126, 112),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Row(
-            children: [
-              Image.asset('imagens/etec_santo_andre.png', height: 75),
-            ],
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          // ─── BARRA VERMELHA ─────────────────────────────────
+          Container(
+            width: double.infinity,
+            color: const Color.fromARGB(255, 255, 126, 112),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Row(
+              children: [
+                Image.asset('imagens/etec_santo_andre.png', height: 75, errorBuilder: (context, error, stackTrace) => const SizedBox(height: 75, width: 150, child: Placeholder(color: Colors.white))),
+              ],
+            ),
           ),
-        ),
-        // ─── CONTEÚDO ────────────────────────────────────────
-        Expanded(
-          child: isWide ? _buildWideLayout() : _buildNarrowLayout(),
-        ),
-      ],
-    ),
-  );
-}
+          // ─── CONTEÚDO ────────────────────────────────────────
+          Expanded(
+            child: isWide ? _buildWideLayout() : _buildNarrowLayout(),
+          ),
+        ],
+      ),
+    );
+  }
 
-  // Layout lado a lado (tablet/desktop)
   Widget _buildWideLayout() {
     return Row(
       children: [
@@ -64,7 +64,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  // Layout empilhado (celular)
   Widget _buildNarrowLayout() {
     return SingleChildScrollView(
       child: Column(
@@ -76,13 +75,11 @@ Widget build(BuildContext context) {
     );
   }
 
-  // ─── PAINEL ESQUERDO ───────────────────────────────────────────────
   Widget _buildLeftPanel() {
     return Container(
       color: _cinzaFundo,
       child: Stack(
         children: [
-          // Conteúdo central
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -126,7 +123,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  // ─── PAINEL DIREITO ────────────────────────────────────────────────
   Widget _buildRightPanel() {
     return Container(
       color: Colors.white,
@@ -152,7 +148,6 @@ Widget build(BuildContext context) {
           ),
           const SizedBox(height: 24),
 
-          // Campo usuário
           _buildCampo(
             controller: _usuarioCtrl,
             hint: 'Usuário ou e-mail',
@@ -160,7 +155,6 @@ Widget build(BuildContext context) {
           ),
           const SizedBox(height: 12),
 
-          // Campo senha
           _buildCampo(
             controller: _senhaCtrl,
             hint: 'Senha',
@@ -169,7 +163,6 @@ Widget build(BuildContext context) {
           ),
           const SizedBox(height: 50),
 
-          // Botão entrar
           ElevatedButton(
             onPressed: _handleLogin,
             style: ElevatedButton.styleFrom(
@@ -240,25 +233,25 @@ Widget build(BuildContext context) {
   void _handleLogin() {
     final usuario = _usuarioCtrl.text.trim();
     final senha = _senhaCtrl.text;
-    final role = _isAluno ? 'aluno' : 'professor';
 
     if (usuario.isEmpty || senha.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Preencha todos os campos',
-              style: GoogleFonts.nunito()),
+          content: Text('Preencha todos os campos', style: GoogleFonts.nunito()),
           backgroundColor: _vermelhoEscuro,
         ),
       );
       return;
     }
 
-    debugPrint('Login: $usuario | Role: $role');
-    // Navigator.pushReplacementNamed(context, '/home');
+    // Navega para a Tela Inicial após "sucesso" no login
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const TelaInicial()),
+    );
   }
 }
 
-// ─── HEXÁGONO COM FRASCO ──────────────────────────────────────────────
 class _HexLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -277,7 +270,6 @@ class _HexLogoPainter extends CustomPainter {
 
     canvas.drawPath(path, Paint()..color = const Color(0xFFC0392B));
 
-    // sombra interna
     final innerPath = Path();
     final ir = r * 0.82;
     for (int i = 0; i < 6; i++) {
@@ -289,12 +281,10 @@ class _HexLogoPainter extends CustomPainter {
     innerPath.close();
     canvas.drawPath(innerPath, Paint()..color = const Color(0xFFA93226));
 
-    // Frasco (simplificado com ícone embutido)
     final iconPaint = Paint()
       ..color = Colors.white.withOpacity(0.95)
       ..style = PaintingStyle.fill;
 
-    // corpo do frasco
     final flask = Path()
       ..moveTo(cx - 10, cy - 16)
       ..lineTo(cx - 10, cy - 4)
@@ -306,7 +296,6 @@ class _HexLogoPainter extends CustomPainter {
       ..close();
     canvas.drawPath(flask, iconPaint);
 
-    // líquido
     final liquid = Path()
       ..moveTo(cx - 14, cy + 10)
       ..quadraticBezierTo(cx, cy + 8, cx + 14, cy + 10)
@@ -316,7 +305,6 @@ class _HexLogoPainter extends CustomPainter {
       ..close();
     canvas.drawPath(liquid, Paint()..color = const Color(0xFFE74C3C).withOpacity(0.75));
 
-    // boca do frasco
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(center: Offset(cx, cy - 18), width: 22, height: 5),
@@ -331,4 +319,213 @@ class _HexLogoPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
+class TelaInicial extends StatelessWidget {
+  const TelaInicial({super.key});
+
+  static const _vermelho = Color(0xFFC0392B);
+  static const _cinzaFundo = Color(0xFFF0F0F0);
+
+  @override
+  Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width > 600;
+
+    return Scaffold(
+      backgroundColor: _cinzaFundo,
+      body: Column(
+        children: [
+          // Barra Vermelha
+          Container(
+            width: double.infinity,
+            color: const Color.fromARGB(255, 255, 126, 112),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Image.asset('imagens/etec_santo_andre.png', height: 75, errorBuilder: (context, error, stackTrace) => const SizedBox(height: 75, width: 150, child: Placeholder(color: Colors.white))),
+                
+                if (isWide)
+                  Row(
+                    children: [
+                      const Icon(Icons.person_outline, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Olá, Aluno!',
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+
+          // Conteúdo do Menu
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Menu Principal',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Escolha uma das opções abaixo para continuar',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      Wrap(
+                        spacing: 24,
+                        runSpacing: 24,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          _buildMenuCard(
+                            context: context,
+                            title: 'Nova Partida',
+                            subtitle: 'Iniciar jogo de classificação',
+                            icon: Icons.play_arrow_rounded,
+                            isPrimary: true,
+                            onTap: () {
+                              debugPrint('Navegar para a tela do jogo');
+                            },
+                          ),
+                          _buildMenuCard(
+                            context: context,
+                            title: 'Meus Relatórios',
+                            subtitle: 'Veja seu desempenho',
+                            icon: Icons.bar_chart_rounded,
+                            onTap: () {
+                              debugPrint('Navegar para relatórios');
+                            },
+                          ),
+                          _buildMenuCard(
+                            context: context,
+                            title: 'Regras do Jogo',
+                            subtitle: 'Como jogar o dominó',
+                            icon: Icons.menu_book_rounded,
+                            onTap: () {
+                              debugPrint('Navegar para regras');
+                            },
+                          ),
+                          _buildMenuCard(
+                            context: context,
+                            title: 'Sair',
+                            subtitle: 'Desconectar da conta',
+                            icon: Icons.logout_rounded,
+                            iconColor: Colors.grey[600],
+                            onTap: () {
+                              // Volta para a tela de Login
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isPrimary = false,
+    Color? iconColor,
+  }) {
+    return Material(
+      color: isPrimary ? _vermelho : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        hoverColor: isPrimary ? Colors.red[800] : Colors.grey[100],
+        child: Container(
+          width: 300,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isPrimary ? _vermelho : Colors.grey[300]!,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isPrimary ? Colors.white.withOpacity(0.2) : _cinzaFundo,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 32,
+                  color: isPrimary ? Colors.white : (iconColor ?? _vermelho),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.nunito(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isPrimary ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isPrimary ? Colors.white70 : Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
