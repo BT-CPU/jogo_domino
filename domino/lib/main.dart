@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
-import 'telaLogin.dart';
 
-void main() => runApp(const MyApp());
+// IMPORTS DAS SUAS TELAS
+import 'telaLogin.dart';
+import 'telaInicial.dart';
+import 'comoJogar.dart';
+
+void main() {
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -9,10 +15,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Dominó Química',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true),
-      home: const LoginScreen(),
+      title: 'Dominó Química',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+        scaffoldBackgroundColor: Colors.white,
+      ),
+
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginScreen(),
+        '/home': (context) => const TelaInicial(),
+        '/howToPlay': (context) => const HowToPlayScreen(),
+      },
     );
   }
 }

@@ -152,7 +152,7 @@ class TelaInicial extends StatelessWidget {
                             subtitle: 'Como jogar o dominó',
                             icon: Icons.menu_book_rounded,
                             onTap: () {
-                              debugPrint('Navegar para regras');
+                              Navigator.pushNamed(context, '/howToPlay');
                             },
                           ),
                           _buildMenuCard(
