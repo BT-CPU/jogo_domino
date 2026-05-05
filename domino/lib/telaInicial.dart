@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaLogin.dart';
+import 'telaJogo.dart';
 
 // ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicial extends StatelessWidget {
@@ -133,7 +134,13 @@ class TelaInicial extends StatelessWidget {
                             icon: Icons.play_arrow_rounded,
                             isPrimary: true,
                             onTap: () {
-                              Navigator.pushNamed(context, '/difficulty');
+                              // Aqui fazemos a transição para a tela de jogo
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const TelaJogo(),
+                                ),
+                              );
                             },
                           ),
                           _buildMenuCard(

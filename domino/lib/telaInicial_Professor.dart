@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaLogin.dart';
+import 'telaJogo.dart';
 
 // ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicialProfessor extends StatelessWidget {
@@ -55,143 +56,150 @@ class TelaInicialProfessor extends StatelessWidget {
 
           // Conteúdo do Menu
           Expanded(
-            child: Scrollbar(                          // ← Scrollbar fora do Center
+            child: Scrollbar(
+              // ← Scrollbar fora do Center
               thumbVisibility: false,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
-                 child: Center(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              _buildLogoHexagono(),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'DOMINÓ DA\nQUÍMICA',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900,
+                                      color: _vermelho,
+                                      letterSpacing: 1.5,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'FUNÇÕES INORGÂNICAS',
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.grey[500],
+                                      letterSpacing: 2.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        Text(
+                          'Menu Principal',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.nunito(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Escolha uma das opções abaixo para continuar',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.nunito(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+
+                        Wrap(
+                          spacing: 24,
+                          runSpacing: 24,
+                          alignment: WrapAlignment.center,
                           children: [
-                            _buildLogoHexagono(),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'DOMINÓ DA\nQUÍMICA',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    color: _vermelho,
-                                    letterSpacing: 1.5,
-                                    height: 1.1,
+                            _buildMenuCard(
+                              context: context,
+                              title: 'Jogar',
+                              subtitle: 'Testar ou demonstrar o jogo',
+                              icon: Icons.sports_esports_rounded,
+                              isPrimary: true,
+                              onTap: () {
+                                // Aqui fazemos a transição para a tela de jogo
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const TelaJogo(),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'FUNÇÕES INORGÂNICAS',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.grey[500],
-                                    letterSpacing: 2.5,
+                                );
+                              },
+                            ),
+
+                            _buildMenuCard(
+                              context: context,
+                              title: 'Cadastrar Aluno',
+                              subtitle: 'Adicionar novos estudantes',
+                              icon: Icons.person_add_alt_1_rounded,
+                              onTap: () {
+                                debugPrint('Ir para cadastro de aluno');
+                              },
+                            ),
+
+                            _buildMenuCard(
+                              context: context,
+                              title: 'Configurações do Dominó',
+                              subtitle: 'Editar regras e conteúdo',
+                              icon: Icons.settings_rounded,
+                              onTap: () {
+                                debugPrint('Abrir configurações do jogo');
+                              },
+                            ),
+
+                            _buildMenuCard(
+                              context: context,
+                              title: 'Relatórios dos Alunos',
+                              subtitle: 'Acompanhar desempenho',
+                              icon: Icons.analytics_rounded,
+                              onTap: () {
+                                debugPrint('Abrir relatórios');
+                              },
+                            ),
+
+                            _buildMenuCard(
+                              context: context,
+                              title: 'Sair',
+                              subtitle: 'Encerrar sessão',
+                              icon: Icons.logout_rounded,
+                              iconColor: Colors.grey[600],
+                              onTap: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginScreen(),
                                   ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 40),
-                      Text(
-                        'Menu Principal',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Escolha uma das opções abaixo para continuar',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-
-                      Wrap(
-                        spacing: 24,
-                        runSpacing: 24,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          _buildMenuCard(
-                            context: context,
-                            title: 'Jogar',
-                            subtitle: 'Testar ou demonstrar o jogo',
-                            icon: Icons.sports_esports_rounded,
-                            isPrimary: true,
-                            onTap: () {
-                              debugPrint('Professor iniciando jogo');
-                            },
-                          ),
-
-                          _buildMenuCard(
-                            context: context,
-                            title: 'Cadastrar Aluno',
-                            subtitle: 'Adicionar novos estudantes',
-                            icon: Icons.person_add_alt_1_rounded,
-                            onTap: () {
-                              debugPrint('Ir para cadastro de aluno');
-                            },
-                          ),
-
-                          _buildMenuCard(
-                            context: context,
-                            title: 'Configurações do Dominó',
-                            subtitle: 'Editar regras e conteúdo',
-                            icon: Icons.settings_rounded,
-                            onTap: () {
-                              debugPrint('Abrir configurações do jogo');
-                            },
-                          ),
-
-                          _buildMenuCard(
-                            context: context,
-                            title: 'Relatórios dos Alunos',
-                            subtitle: 'Acompanhar desempenho',
-                            icon: Icons.analytics_rounded,
-                            onTap: () {
-                              debugPrint('Abrir relatórios');
-                            },
-                          ),
-
-                          _buildMenuCard(
-                            context: context,
-                            title: 'Sair',
-                            subtitle: 'Encerrar sessão',
-                            icon: Icons.logout_rounded,
-                            iconColor: Colors.grey[600],
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           ),
         ],
       ),
