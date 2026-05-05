@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'telaLogin.dart';
 import 'telaInicial.dart';
 import 'comoJogar.dart';
+import 'telaDificuldade.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const LoginScreen(),
         '/home': (context) => const TelaInicial(),
         '/howToPlay': (context) => const HowToPlayScreen(),
+        '/difficulty': (context) => const TelaDificuldade(),
       },
     );
   }

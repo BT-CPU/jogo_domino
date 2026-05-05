@@ -134,7 +134,7 @@ class TelaInicial extends StatelessWidget {
                             icon: Icons.play_arrow_rounded,
                             isPrimary: true,
                             onTap: () {
-                              debugPrint('Navegar para a tela do jogo');
+                              Navigator.pushNamed(context, '/difficulty');
                             },
                           ),
                           _buildMenuCard(
