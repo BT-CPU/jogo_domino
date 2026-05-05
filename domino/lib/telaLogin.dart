@@ -1,9 +1,28 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaInicial.dart';
 
-// ─── TELA DE LOGIN ────────────────────────────────────────────────────────
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Dominó Química',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: const Color(0xFFC0392B),
+        scaffoldBackgroundColor: Colors.white,
+      ),
+      home: const LoginScreen(),
+    );
+  }
+}
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -12,102 +31,191 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool isStudent = true;
   bool _obscureSenha = true;
-  final _usuarioCtrl = TextEditingController();
-  final _senhaCtrl = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   static const _vermelho = Color(0xFFC0392B);
   static const _vermelhoEscuro = Color(0xFFA93226);
   static const _cinzaFundo = Color(0xFFF0F0F0);
 
   @override
-  void dispose() {
-    _usuarioCtrl.dispose();
-    _senhaCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 600;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // ─── BARRA VERMELHA ─────────────────────────────────
+          // ─── BARRA VERMELHA SUPERIOR ─────────────────────────
           Container(
             width: double.infinity,
-            color: const Color.fromARGB(255, 255, 126, 112),
+            color: const Color(0xFFFF7E70),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Row(
               children: [
                 Image.asset(
                   'imagens/etec_santo_andre.png',
                   height: 75,
-                  errorBuilder: (context, error, stackTrace) => const SizedBox(
+                  errorBuilder: (context, error, stackTrace) => Container(
                     height: 75,
                     width: 150,
-                    child: Placeholder(color: Colors.white),
+                    color: Colors.white.withOpacity(0.3),
+                    child: const Center(
+                      child: Text(
+                        'ETEC',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           // ─── CONTEÚDO ────────────────────────────────────────
-          Expanded(child: isWide ? _buildWideLayout() : _buildNarrowLayout()),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isWideScreen = constraints.maxWidth > 900;
+                final isTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
+                final isMobile = constraints.maxWidth <= 600;
+
+                return Container(
+                  color: _cinzaFundo,
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxWidth: isWideScreen ? 1200 : (isTablet ? 800 : double.infinity),
+                        ),
+                        child: isWideScreen
+                            ? IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(child: _buildLeftPanel(isMobile, isTablet)),
+                                    Expanded(child: _buildRightPanel(isMobile, isTablet)),
+                                  ],
+                                ),
+                              )
+                            : Column(
+                                children: [
+                                  SizedBox(
+                                    height: isMobile ? 280 : 320,
+                                    child: _buildLeftPanel(isMobile, isTablet),
+                                  ),
+                                  _buildRightPanel(isMobile, isTablet),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildWideLayout() {
-    return Row(
-      children: [
-        Expanded(flex: 4, child: _buildLeftPanel()),
-        Expanded(flex: 5, child: _buildRightPanel()),
-      ],
-    );
-  }
+  Widget _buildLeftPanel(bool isMobile, bool isTablet) {
+    final logoSize = isMobile ? 120.0 : (isTablet ? 150.0 : 180.0);
+    final titleFontSize = isMobile ? 28.0 : (isTablet ? 32.0 : 36.0);
+    final subtitleFontSize = isMobile ? 10.0 : (isTablet ? 11.0 : 12.0);
+    final padding = isMobile ? 24.0 : (isTablet ? 32.0 : 40.0);
 
-  Widget _buildNarrowLayout() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          SizedBox(height: 220, child: _buildLeftPanel()),
-          _buildRightPanel(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeftPanel() {
     return Container(
-      color: _cinzaFundo,
+      padding: EdgeInsets.all(padding),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
+      ),
       child: Stack(
         children: [
+          // Moléculas decorativas de fundo (apenas em telas maiores)
+          if (!isMobile) ...[
+            Positioned(
+              top: 20,
+              left: 20,
+              child: _buildMolecule('H₂O', 0.6, isMobile),
+            ),
+            Positioned(
+              top: 60,
+              right: 40,
+              child: _buildMolecule('NaCl', 0.5, isMobile),
+            ),
+            Positioned(
+              bottom: 100,
+              left: 30,
+              child: _buildMolecule('H₂SO₄', 0.7, isMobile),
+            ),
+            Positioned(
+              bottom: 40,
+              right: 60,
+              child: _buildMolecule('Ca(OH)₂', 0.55, isMobile),
+            ),
+          ],
+          // Conteúdo principal
           Center(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildLogoHexagono(),
-                const SizedBox(height: 16),
+                // Logo
+                Container(
+                  width: logoSize,
+                  height: logoSize,
+                  decoration: BoxDecoration(
+                    color: _vermelho,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  padding: EdgeInsets.all(logoSize * 0.12),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: EdgeInsets.all(logoSize * 0.12),
+                    child: Image.asset(
+                      'imagens/logo_quimico.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        decoration: BoxDecoration(
+                          color: _vermelho.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.science,
+                          size: 60,
+                          color: _vermelho,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: isMobile ? 16 : 20),
+                // Título
                 Text(
                   'DOMINÓ DA\nQUÍMICA',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.nunito(
-                    fontSize: 26,
+                    fontSize: titleFontSize,
                     fontWeight: FontWeight.w900,
                     color: _vermelho,
                     letterSpacing: 1.5,
                     height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: isMobile ? 8 : 10),
                 Text(
                   'FUNÇÕES INORGÂNICAS',
                   style: GoogleFonts.nunito(
-                    fontSize: 10,
+                    fontSize: subtitleFontSize,
                     fontWeight: FontWeight.w700,
                     color: Colors.grey[500],
                     letterSpacing: 2.5,
@@ -121,18 +229,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLogoHexagono() {
-    return SizedBox(
-      width: 100,
-      height: 100,
-      child: CustomPaint(painter: _HexLogoPainter()),
-    );
-  }
+  Widget _buildRightPanel(bool isMobile, bool isTablet) {
+    final padding = isMobile ? 24.0 : (isTablet ? 35.0 : 40.0);
+    final titleSize = isMobile ? 28.0 : (isTablet ? 30.0 : 32.0);
+    final subtitleSize = isMobile ? 13.0 : 14.0;
+    final buttonVerticalPadding = isMobile ? 14.0 : 16.0;
+    final inputVerticalPadding = isMobile ? 14.0 : 15.0;
 
-  Widget _buildRightPanel() {
     return Container(
+      padding: EdgeInsets.all(padding),
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -141,40 +247,68 @@ class _LoginScreenState extends State<LoginScreen> {
             'Bem-vindo!',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
-              fontSize: 28,
+              fontSize: titleSize,
               fontWeight: FontWeight.w800,
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: isMobile ? 4 : 6),
           Text(
             'Faça login para continuar',
             textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey[400]),
+            style: GoogleFonts.nunito(
+              fontSize: subtitleSize,
+              color: Colors.grey[400],
+            ),
           ),
-          const SizedBox(height: 24),
-
+          SizedBox(height: isMobile ? 20 : 24),
+          
+          // Toggle Aluno/Professor
+          Row(
+            children: [
+              Expanded(
+                child: _buildToggleButton('Aluno', isStudent, isMobile, () {
+                  setState(() => isStudent = true);
+                }),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildToggleButton('Professor', !isStudent, isMobile, () {
+                  setState(() => isStudent = false);
+                }),
+              ),
+            ],
+          ),
+          SizedBox(height: isMobile ? 16 : 20),
+          
+          // Campo de usuário/email
           _buildCampo(
-            controller: _usuarioCtrl,
+            controller: _emailController,
             hint: 'Usuário ou e-mail',
             icon: Icons.person_outline,
+            isMobile: isMobile,
+            verticalPadding: inputVerticalPadding,
           ),
           const SizedBox(height: 12),
-
+          
+          // Campo de senha
           _buildCampo(
-            controller: _senhaCtrl,
+            controller: _passwordController,
             hint: 'Senha',
             icon: Icons.lock_outline,
             isPassword: true,
+            isMobile: isMobile,
+            verticalPadding: inputVerticalPadding,
           ),
-          const SizedBox(height: 50),
-
+          SizedBox(height: isMobile ? 20 : 28),
+          
+          // Botão Entrar
           ElevatedButton(
             onPressed: _handleLogin,
             style: ElevatedButton.styleFrom(
               backgroundColor: _vermelho,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 15),
+              padding: EdgeInsets.symmetric(vertical: buttonVerticalPadding),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -183,14 +317,36 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               'Entrar',
               style: GoogleFonts.nunito(
-                fontSize: 16,
+                fontSize: isMobile ? 15 : 16,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.5,
               ),
             ),
           ),
-          const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildToggleButton(String text, bool isActive, bool isMobile, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 14),
+        decoration: BoxDecoration(
+          color: isActive ? _vermelho : Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: GoogleFonts.nunito(
+              color: isActive ? Colors.white : Colors.black54,
+              fontSize: isMobile ? 14 : 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -199,15 +355,23 @@ class _LoginScreenState extends State<LoginScreen> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    required bool isMobile,
+    required double verticalPadding,
     bool isPassword = false,
   }) {
     return TextField(
       controller: controller,
       obscureText: isPassword && _obscureSenha,
-      style: GoogleFonts.nunito(fontSize: 14, color: Colors.black87),
+      style: GoogleFonts.nunito(
+        fontSize: isMobile ? 13 : 14,
+        color: Colors.black87,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[350]),
+        hintStyle: GoogleFonts.nunito(
+          fontSize: isMobile ? 13 : 14,
+          color: Colors.grey[350],
+        ),
         prefixIcon: Icon(icon, size: 18, color: Colors.grey[400]),
         suffixIcon: isPassword
             ? IconButton(
@@ -221,9 +385,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () => setState(() => _obscureSenha = !_obscureSenha),
               )
             : null,
-        contentPadding: const EdgeInsets.symmetric(
+        contentPadding: EdgeInsets.symmetric(
           horizontal: 14,
-          vertical: 14,
+          vertical: verticalPadding,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -241,11 +405,40 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin() {
-    final usuario = _usuarioCtrl.text.trim();
-    final senha = _senhaCtrl.text;
+  Widget _buildMolecule(String formula, double opacity, bool isMobile) {
+    return Opacity(
+      opacity: opacity,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 8 : 12,
+          vertical: isMobile ? 4 : 6,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.2),
+          ),
+        ),
+        child: Text(
+          formula,
+          style: GoogleFonts.nunito(
+            fontSize: isMobile ? 14 : 16,
+            color: Colors.black.withOpacity(0.3),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
 
-    if (usuario == 'teste' && senha == 'teste') {
+  void _handleLogin() {
+    final usuario = _emailController.text.trim();
+    final senha = _passwordController.text;
+
+    // Validação: teste/teste apenas para Aluno
+    if (usuario == 'teste' && senha == 'teste' && isStudent) {
+      // Navegação para a tela inicial (apenas aluno)
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const TelaInicial()),
@@ -254,7 +447,9 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Usuário ou senha incorretos',
+            isStudent 
+              ? 'Usuário ou senha incorretos'
+              : 'Acesso de professor não disponível',
             style: GoogleFonts.nunito(),
           ),
           backgroundColor: _vermelhoEscuro,
@@ -262,76 +457,11 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
-}
 
-class _HexLogoPainter extends CustomPainter {
   @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width / 2;
-
-    final path = Path();
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 60 - 30) * 3.14159 / 180;
-      final x = cx + r * 0.95 * cos(angle);
-      final y = cy + r * 0.95 * sin(angle);
-      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-    }
-    path.close();
-
-    canvas.drawPath(path, Paint()..color = const Color(0xFFC0392B));
-
-    final innerPath = Path();
-    final ir = r * 0.82;
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 60 - 30) * 3.14159 / 180;
-      final x = cx + ir * cos(angle);
-      final y = cy + ir * sin(angle);
-      i == 0 ? innerPath.moveTo(x, y) : innerPath.lineTo(x, y);
-    }
-    innerPath.close();
-    canvas.drawPath(innerPath, Paint()..color = const Color(0xFFA93226));
-
-    final iconPaint = Paint()
-      ..color = Colors.white.withOpacity(0.95)
-      ..style = PaintingStyle.fill;
-
-    final flask = Path()
-      ..moveTo(cx - 10, cy - 16)
-      ..lineTo(cx - 10, cy - 4)
-      ..lineTo(cx - 18, cy + 14)
-      ..quadraticBezierTo(cx - 20, cy + 20, cx, cy + 20)
-      ..quadraticBezierTo(cx + 20, cy + 20, cx + 18, cy + 14)
-      ..lineTo(cx + 10, cy - 4)
-      ..lineTo(cx + 10, cy - 16)
-      ..close();
-    canvas.drawPath(flask, iconPaint);
-
-    final liquid = Path()
-      ..moveTo(cx - 14, cy + 10)
-      ..quadraticBezierTo(cx, cy + 8, cx + 14, cy + 10)
-      ..lineTo(cx + 18, cy + 14)
-      ..quadraticBezierTo(cx + 20, cy + 20, cx, cy + 20)
-      ..quadraticBezierTo(cx - 20, cy + 20, cx - 18, cy + 14)
-      ..close();
-    canvas.drawPath(
-      liquid,
-      Paint()..color = const Color(0xFFE74C3C).withOpacity(0.75),
-    );
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx, cy - 18), width: 22, height: 5),
-        const Radius.circular(3),
-      ),
-      Paint()..color = Colors.white,
-    );
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
-
-  double cos(double a) => math.cos(a);
-  double sin(double a) => math.sin(a);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
