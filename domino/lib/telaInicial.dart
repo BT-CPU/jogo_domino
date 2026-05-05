@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaLogin.dart';
@@ -13,6 +12,7 @@ class TelaInicial extends StatelessWidget {
 
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 600;
+    final logoSize = isWide ? 90.0 : 30.0;
 
     return Scaffold(
       backgroundColor: _cinzaFundo,
@@ -70,8 +70,46 @@ class TelaInicial extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            _buildLogoHexagono(),
-                            const SizedBox(width: 10),
+                            Container(
+                              width: logoSize,
+                              height: logoSize,
+                              decoration: BoxDecoration(
+                                color: _vermelho,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.15),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              padding: EdgeInsets.all(logoSize * 0.12),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: EdgeInsets.all(logoSize * 0.12),
+                                child: Image.asset(
+                                  'imagens/logo_quimico.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: _vermelho.withOpacity(0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.science,
+                                          size: logoSize * 0.4,
+                                          color: _vermelho,
+                                        ),
+                                      ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 20),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -264,84 +302,4 @@ class TelaInicial extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget _buildLogoHexagono() {
-  return SizedBox(
-    width: 90,
-    height: 90,
-    child: CustomPaint(painter: _HexLogoPainter()),
-  );
-}
-
-class _HexLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width / 2;
-
-    final path = Path();
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 60 - 30) * 3.14159 / 180;
-      final x = cx + r * 0.95 * cos(angle);
-      final y = cy + r * 0.95 * sin(angle);
-      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-    }
-    path.close();
-
-    canvas.drawPath(path, Paint()..color = const Color(0xFFC0392B));
-
-    final innerPath = Path();
-    final ir = r * 0.82;
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 60 - 30) * 3.14159 / 180;
-      final x = cx + ir * cos(angle);
-      final y = cy + ir * sin(angle);
-      i == 0 ? innerPath.moveTo(x, y) : innerPath.lineTo(x, y);
-    }
-    innerPath.close();
-    canvas.drawPath(innerPath, Paint()..color = const Color(0xFFA93226));
-
-    final iconPaint = Paint()
-      ..color = Colors.white.withOpacity(0.95)
-      ..style = PaintingStyle.fill;
-
-    final flask = Path()
-      ..moveTo(cx - 10, cy - 16)
-      ..lineTo(cx - 10, cy - 4)
-      ..lineTo(cx - 18, cy + 14)
-      ..quadraticBezierTo(cx - 20, cy + 20, cx, cy + 20)
-      ..quadraticBezierTo(cx + 20, cy + 20, cx + 18, cy + 14)
-      ..lineTo(cx + 10, cy - 4)
-      ..lineTo(cx + 10, cy - 16)
-      ..close();
-    canvas.drawPath(flask, iconPaint);
-
-    final liquid = Path()
-      ..moveTo(cx - 14, cy + 10)
-      ..quadraticBezierTo(cx, cy + 8, cx + 14, cy + 10)
-      ..lineTo(cx + 18, cy + 14)
-      ..quadraticBezierTo(cx + 20, cy + 20, cx, cy + 20)
-      ..quadraticBezierTo(cx - 20, cy + 20, cx - 18, cy + 14)
-      ..close();
-    canvas.drawPath(
-      liquid,
-      Paint()..color = const Color(0xFFE74C3C).withOpacity(0.75),
-    );
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx, cy - 18), width: 22, height: 5),
-        const Radius.circular(3),
-      ),
-      Paint()..color = Colors.white,
-    );
-  }
-
-  double cos(double a) => math.cos(a);
-  double sin(double a) => math.sin(a);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
