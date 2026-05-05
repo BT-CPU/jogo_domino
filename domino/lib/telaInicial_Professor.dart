@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'telaLogin.dart';
 
 // ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
-class TelaInicial extends StatelessWidget {
-  const TelaInicial({super.key});
+class TelaInicialProfessor extends StatelessWidget {
+  const TelaInicialProfessor({super.key});
 
   static const _vermelho = Color(0xFFC0392B);
   static const _cinzaFundo = Color(0xFFF0F0F0);
@@ -40,7 +40,7 @@ class TelaInicial extends StatelessWidget {
                     children: [
                       const SizedBox(width: 8),
                       Text(
-                        'Olá, Aluno!',
+                        'Olá, Professor!',
                         style: GoogleFonts.nunito(
                           color: Colors.white,
                           fontSize: 16,
@@ -55,9 +55,11 @@ class TelaInicial extends StatelessWidget {
 
           // Conteúdo do Menu
           Expanded(
-            child: Center(
+            child: Scrollbar(                          // ← Scrollbar fora do Center
+              thumbVisibility: false,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
+                 child: Center(
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: Column(
@@ -128,40 +130,52 @@ class TelaInicial extends StatelessWidget {
                         children: [
                           _buildMenuCard(
                             context: context,
-                            title: 'Nova Partida',
-                            subtitle: 'Iniciar jogo de classificação',
-                            icon: Icons.play_arrow_rounded,
+                            title: 'Jogar',
+                            subtitle: 'Testar ou demonstrar o jogo',
+                            icon: Icons.sports_esports_rounded,
                             isPrimary: true,
                             onTap: () {
-                              debugPrint('Navegar para a tela do jogo');
+                              debugPrint('Professor iniciando jogo');
                             },
                           ),
+
                           _buildMenuCard(
                             context: context,
-                            title: 'Meus Relatórios',
-                            subtitle: 'Veja seu desempenho',
-                            icon: Icons.bar_chart_rounded,
+                            title: 'Cadastrar Aluno',
+                            subtitle: 'Adicionar novos estudantes',
+                            icon: Icons.person_add_alt_1_rounded,
                             onTap: () {
-                              debugPrint('Navegar para relatórios');
+                              debugPrint('Ir para cadastro de aluno');
                             },
                           ),
+
                           _buildMenuCard(
                             context: context,
-                            title: 'Regras do Jogo',
-                            subtitle: 'Como jogar o dominó',
-                            icon: Icons.menu_book_rounded,
+                            title: 'Configurações do Dominó',
+                            subtitle: 'Editar regras e conteúdo',
+                            icon: Icons.settings_rounded,
                             onTap: () {
-                              Navigator.pushNamed(context, '/howToPlay');
+                              debugPrint('Abrir configurações do jogo');
                             },
                           ),
+
+                          _buildMenuCard(
+                            context: context,
+                            title: 'Relatórios dos Alunos',
+                            subtitle: 'Acompanhar desempenho',
+                            icon: Icons.analytics_rounded,
+                            onTap: () {
+                              debugPrint('Abrir relatórios');
+                            },
+                          ),
+
                           _buildMenuCard(
                             context: context,
                             title: 'Sair',
-                            subtitle: 'Desconectar da conta',
+                            subtitle: 'Encerrar sessão',
                             icon: Icons.logout_rounded,
                             iconColor: Colors.grey[600],
                             onTap: () {
-                              // Volta para a tela de Login
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
@@ -177,6 +191,7 @@ class TelaInicial extends StatelessWidget {
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

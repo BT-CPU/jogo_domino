@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaInicial.dart';
+import 'telaInicial_Professor.dart';
 
 void main() {
   runApp(const MyApp());
@@ -436,26 +437,34 @@ class _LoginScreenState extends State<LoginScreen> {
     final usuario = _emailController.text.trim();
     final senha = _passwordController.text;
 
-    // Validação: teste/teste apenas para Aluno
+    // LOGIN ALUNO
     if (usuario == 'teste' && senha == 'teste' && isStudent) {
-      // Navegação para a tela inicial (apenas aluno)
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const TelaInicial()),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isStudent 
-              ? 'Usuário ou senha incorretos'
-              : 'Acesso de professor não disponível',
-            style: GoogleFonts.nunito(),
-          ),
-          backgroundColor: _vermelhoEscuro,
-        ),
-      );
+      return;
     }
+
+    // LOGIN PROFESSOR
+    if (usuario == 'professor' && senha == 'professor' && !isStudent) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const TelaInicialProfessor()),
+      );
+      return;
+    }
+
+    // ERRO
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Usuário ou senha incorretos',
+          style: GoogleFonts.nunito(),
+        ),
+        backgroundColor: _vermelhoEscuro,
+      ),
+    );
   }
 
   @override
