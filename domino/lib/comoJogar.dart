@@ -1,265 +1,306 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HowToPlayScreen extends StatelessWidget {
   const HowToPlayScreen({super.key});
 
+  static const _vermelho = Color(0xFFC0392B);
+  static const _cinzaFundo = Color(0xFFF0F0F0);
+
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width > 600;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text("Como Jogar"),
-        backgroundColor: Colors.red,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // HEADER MODERNO (SUBSTITUTO DO VERMELHO GRANDE)
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+      backgroundColor: _cinzaFundo,
+      body: Column(
+        children: [
+          // ─── BARRA VERMELHA ─────────────────────────────────
+          Container(
+            width: double.infinity,
+            color: const Color.fromARGB(255, 255, 126, 112),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Row(
+              children: [
+                Image.asset(
+                  'imagens/etec_santo_andre.png',
+                  height: 75,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox(
+                    height: 75,
+                    width: 150,
+                    child: Placeholder(color: Colors.white),
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+
+          // ─── SETA NO CANTO SUPERIOR ESQUERDO ────────────────
+          Padding(
+            padding: const EdgeInsets.only(left: 8, top: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 36),
+                onPressed: () => Navigator.pop(context),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.science, color: Colors.red),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Dominó Química",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          // ─── CONTEÚDO ────────────────────────────────────────
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(36, 8, 36, 36),
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 1000),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Título
+                      Text(
+                        'Como Jogar',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Saiba como o Dominó Química funciona.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(
+                          fontSize: 16,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ─── LAYOUT ESQUERDA / DIREITA ───────────
+                      isWide
+                          ? IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(child: _buildEsquerda()),
+                                  const SizedBox(width: 32),
+                                  Expanded(child: _buildDireita()),
+                                ],
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                _buildEsquerda(),
+                                const SizedBox(height: 24),
+                                _buildDireita(),
+                              ],
+                            ),
+
+                      const SizedBox(height: 48),
+
+                      // ─── BOTÃO ENTENDI ───────────────────────
+                      Center(
+                        child: SizedBox(
+                          width: 360,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _vermelho,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'Entendi!',
+                              style: GoogleFonts.nunito(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          "Aprenda jogando de forma simples",
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // EXEMPLO
-                  _sectionTitle("Exemplo de Conexão"),
-                  const SizedBox(height: 12),
-
-                  _card(
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _tile("H₂SO₄", "Ácido"),
-                            const SizedBox(width: 10),
-                            const Icon(Icons.arrow_forward,
-                                color: Colors.red),
-                            const SizedBox(width: 10),
-                            _tile("NaOH", "Base"),
-                          ],
+  // ─── LADO ESQUERDO ────────────────────────────────────────────────
+  Widget _buildEsquerda() {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildPecaDomino('H₂SO₄', 'Ácido'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.arrow_back, color: _vermelho, size: 28),
+                      ...List.generate(
+                        6,
+                        (i) => Container(
+                          width: 8,
+                          height: 3,
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          color: _vermelho,
                         ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Ácidos reagem com bases (neutralização).",
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                      ),
+                      Icon(Icons.arrow_forward, color: _vermelho, size: 28),
+                    ],
                   ),
-
-                  const SizedBox(height: 25),
-
-                  // OBJETIVO
-                  _sectionTitle("Objetivo"),
-                  const SizedBox(height: 10),
-
-                  _card(
-                    child: const Text(
-                      "Conecte todas as peças corretamente formando uma cadeia completa de reações químicas.",
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // REGRAS
-                  _sectionTitle("Regras do Jogo"),
-                  const SizedBox(height: 10),
-
-                  _card(
-                    child: Column(
-                      children: const [
-                        _infoItem(
-                          Icons.extension,
-                          "Cada peça representa uma substância química.",
-                        ),
-                        _infoItem(
-                          Icons.link,
-                          "Conecte apenas peças com relação química válida.",
-                        ),
-                        _infoItem(
-                          Icons.science,
-                          "Exemplo: Ácido + Base → neutralização.",
-                        ),
-                        _infoItem(
-                          Icons.block,
-                          "Combinações incorretas não são permitidas.",
-                        ),
-                        _infoItem(
-                          Icons.flag,
-                          "Complete todas as conexões para vencer.",
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // DICAS
-                  _sectionTitle("Dicas"),
-                  const SizedBox(height: 10),
-
-                  _card(
-                    child: Column(
-                      children: const [
-                        _infoItem(
-                          Icons.lightbulb,
-                          "Observe a função química das substâncias.",
-                        ),
-                        _infoItem(
-                          Icons.psychology,
-                          "Use lógica para prever as reações.",
-                        ),
-                        _infoItem(
-                          Icons.school,
-                          "Quanto mais você joga, mais aprende!",
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-                ],
-              ),
+                ),
+                _buildPecaDomino('NaOH', 'Base'),
+              ],
             ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Conecte peças que tenham\ncorrespondência conceitual.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              fontSize: 20,
+              color: Colors.black54,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPecaDomino(String formula, String funcao) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
+        ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            _buildMetadePeca(formula, bold: true),
+            VerticalDivider(width: 1, color: Colors.grey[300]),
+            _buildMetadePeca(funcao),
           ],
         ),
       ),
     );
   }
 
-  // COMPONENTES
-
-  static Widget _sectionTitle(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
+  Widget _buildMetadePeca(String texto, {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
       child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
+        texto,
+        style: GoogleFonts.nunito(
+          fontSize: 22,
+          fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+          color: Colors.black87,
         ),
       ),
     );
   }
 
-  static Widget _card({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-          ),
-        ],
+  // ─── LADO DIREITO ─────────────────────────────────────────────────
+  Widget _buildDireita() {
+    final itens = [
+      _RegraItem(
+        Icons.grid_view_rounded,
+        'O objetivo é formar uma cadeia com todas as peças.',
       ),
-      child: child,
-    );
-  }
+      _RegraItem(
+        Icons.text_fields_rounded,
+        'Você só pode conectar peças que tenham relação correta.',
+      ),
+      _RegraItem(
+        Icons.lightbulb_outline_rounded,
+        'Use a lógica e o conhecimento sobre funções inorgânicas.',
+      ),
+      _RegraItem(
+        Icons.handshake_outlined,
+        'Complete os níveis e desafie seus conhecimentos!',
+      ),
+    ];
 
-  static Widget _tile(String top, String bottom) {
     return Container(
-      width: 110,
-      height: 70,
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            top,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const Divider(height: 8),
-          Text(bottom),
-        ],
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: itens
+            .map(
+              (item) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(item.icone, size: 36, color: Colors.black54),
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Text(
+                        item.texto,
+                        style: GoogleFonts.nunito(
+                          fontSize: 18,
+                          color: Colors.black87,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
       ),
     );
   }
 }
 
-class _infoItem extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _infoItem(this.icon, this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: Colors.red),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
+class _RegraItem {
+  final IconData icone;
+  final String texto;
+  _RegraItem(this.icone, this.texto);
 }
