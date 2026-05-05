@@ -15,26 +15,6 @@ class HowToPlayScreen extends StatelessWidget {
       backgroundColor: _cinzaFundo,
       body: Column(
         children: [
-          // ─── BARRA VERMELHA ─────────────────────────────────
-          Container(
-            width: double.infinity,
-            color: const Color.fromARGB(255, 255, 126, 112),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Row(
-              children: [
-                Image.asset(
-                  'imagens/etec_santo_andre.png',
-                  height: 75,
-                  errorBuilder: (context, error, stackTrace) => const SizedBox(
-                    height: 75,
-                    width: 150,
-                    child: Placeholder(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           // ─── SETA NO CANTO SUPERIOR ESQUERDO ────────────────
           Padding(
             padding: const EdgeInsets.only(left: 8, top: 4),
@@ -160,7 +140,7 @@ class HowToPlayScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildPecaDomino('H₂SO₄', 'Ácido'),
+                _buildPecaDomino('H₂SO₄', 'Base'),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -179,7 +159,7 @@ class HowToPlayScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                _buildPecaDomino('NaOH', 'Base'),
+                _buildPecaDomino('NaOH', 'Ácido'),
               ],
             ),
           ),
