@@ -1,5 +1,4 @@
-CREATE DATABASE IF NOT EXISTS domino_quimica;
-USE domino_quimica;
+USE defaultdb;
 
 -- Armazena os dados de acesso e controle de perfil (aluno/professor).
 -- O campo 'aceite_lgpd' registra a permissão para armazenamento dos dados.
