@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-// IMPORTS DAS SUAS TELAS
+// Importamos APENAS as telas que sabemos que estão corretas
 import 'telaLogin.dart';
-import 'telaInicial.dart';
-import 'comoJogar.dart';
-import 'telaDificuldade.dart';
+import 'telaInicial.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -19,16 +17,13 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Dominó Química',
       theme: ThemeData(
-        primarySwatch: Colors.red,
+        primaryColor: Colors.red,
         scaffoldBackgroundColor: Colors.white,
       ),
-
+      // Inicia o app na tela de Login
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),
-        '/home': (context) => const TelaInicial(),
-        '/howToPlay': (context) => const HowToPlayScreen(),
-        '/difficulty': (context) => const TelaDificuldade(),
       },
     );
   }

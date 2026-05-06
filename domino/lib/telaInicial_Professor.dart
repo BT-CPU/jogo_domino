@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaLogin.dart';
 import 'telaJogo.dart';
+import 'cadastrarAluno.dart';
 
 // ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicialProfessor extends StatelessWidget {
@@ -195,7 +196,14 @@ class TelaInicialProfessor extends StatelessWidget {
                               subtitle: 'Adicionar novos estudantes',
                               icon: Icons.person_add_alt_1_rounded,
                               onTap: () {
-                                debugPrint('Ir para cadastro de aluno');
+                                // Agora sim, no arquivo certo!
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CadastrarAlunoScreen(),
+                                  ),
+                                );
                               },
                             ),
 

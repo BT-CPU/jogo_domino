@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'telaLogin.dart';
-import 'telaJogo.dart';
-import 'telaDesempenho.dart';
+
+// Importando as suas telas exatamente com os nomes dos seus arquivos
+import 'telaLogin.dart'; 
+import 'cadastrarAluno.dart'; 
 
 // ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicial extends StatelessWidget {
@@ -37,13 +38,12 @@ class TelaInicial extends StatelessWidget {
                     child: Placeholder(color: Colors.white),
                   ),
                 ),
-
                 if (isWide)
                   Row(
                     children: [
                       const SizedBox(width: 8),
                       Text(
-                        'Olá, Aluno!',
+                        'Olá, Professor!',
                         style: GoogleFonts.nunito(
                           color: Colors.white,
                           fontSize: 16,
@@ -162,6 +162,7 @@ class TelaInicial extends StatelessWidget {
                       ),
                       const SizedBox(height: 40),
 
+                      // ─── BOTÕES DO MENU ───
                       Wrap(
                         spacing: 24,
                         runSpacing: 24,
@@ -169,51 +170,50 @@ class TelaInicial extends StatelessWidget {
                         children: [
                           _buildMenuCard(
                             context: context,
-                            title: 'Nova Partida',
-                            subtitle: 'Iniciar jogo de classificação',
-                            icon: Icons.play_arrow_rounded,
+                            title: 'Jogar',
+                            subtitle: 'Testar ou demonstrar o jogo',
+                            icon: Icons.sports_esports_rounded,
                             isPrimary: true,
                             onTap: () {
-                              // Aqui fazemos a transição para a tela de jogo
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Tela do Jogo em construção!')),
+                              );
+                            },
+                          ),
+                          _buildMenuCard(
+                            context: context,
+                            title: 'Cadastrar Aluno',
+                            subtitle: 'Adicionar novos estudantes',
+                            icon: Icons.person_add_alt_1_rounded,
+                            onTap: () {
+                              // Link exato para a tela de Cadastro
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const TelaJogo(),
+                                  builder: (context) => const CadastrarAlunoScreen(),
                                 ),
                               );
                             },
                           ),
                           _buildMenuCard(
                             context: context,
-                            title: 'Meus Relatórios',
-                            subtitle: 'Veja seu desempenho',
+                            title: 'Relatórios',
+                            subtitle: 'Acompanhar desempenho',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const TelaDesempenho(),
-                                ),
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Tela de Relatórios em construção!')),
                               );
-                            },
-                          ),
-                          _buildMenuCard(
-                            context: context,
-                            title: 'Regras do Jogo',
-                            subtitle: 'Como jogar o dominó',
-                            icon: Icons.menu_book_rounded,
-                            onTap: () {
-                              Navigator.pushNamed(context, '/howToPlay');
                             },
                           ),
                           _buildMenuCard(
                             context: context,
                             title: 'Sair',
-                            subtitle: 'Desconectar da conta',
+                            subtitle: 'Encerrar sessão',
                             icon: Icons.logout_rounded,
                             iconColor: Colors.grey[600],
                             onTap: () {
-                              // Volta para a tela de Login
+                              // Link exato para a tela de Login
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
@@ -267,9 +267,7 @@ class TelaInicial extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isPrimary
-                      ? Colors.white.withOpacity(0.2)
-                      : _cinzaFundo,
+                  color: isPrimary ? Colors.white.withOpacity(0.2) : _cinzaFundo,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
