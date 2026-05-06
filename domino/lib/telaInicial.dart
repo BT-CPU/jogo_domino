@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaLogin.dart';
 import 'telaJogo.dart';
+import 'telaDesempenho.dart';
 
 // ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicial extends StatelessWidget {
@@ -187,7 +188,12 @@ class TelaInicial extends StatelessWidget {
                             subtitle: 'Veja seu desempenho',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {
-                              debugPrint('Navegar para relatórios');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const TelaDesempenho(),
+                                ),
+                              );
                             },
                           ),
                           _buildMenuCard(
