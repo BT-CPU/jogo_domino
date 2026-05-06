@@ -200,17 +200,7 @@ class TelaInicialProfessor extends StatelessWidget {
 
                             _buildMenuCard(
                               context: context,
-                              title: 'Configurações do Dominó',
-                              subtitle: 'Editar regras e conteúdo',
-                              icon: Icons.settings_rounded,
-                              onTap: () {
-                                debugPrint('Abrir configurações do jogo');
-                              },
-                            ),
-
-                            _buildMenuCard(
-                              context: context,
-                              title: 'Relatórios dos Alunos',
+                              title: 'Relatórios',
                               subtitle: 'Acompanhar desempenho',
                               icon: Icons.analytics_rounded,
                               onTap: () {
