@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 // Importamos APENAS as telas que sabemos que estão corretas
 import 'telaLogin.dart';
+// ignore: unused_import
 import 'telaInicial.dart'; 
 
 void main() {
