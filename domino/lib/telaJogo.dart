@@ -108,7 +108,7 @@ class _TelaJogoState extends State<TelaJogo> {
         children: [
           // Aba vermelha do Nível
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: _vermelho,
               borderRadius: BorderRadius.only(bottomRight: Radius.circular(16)),
@@ -122,33 +122,45 @@ class _TelaJogoState extends State<TelaJogo> {
                   style: GoogleFonts.nunito(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
-                      fontSize: 18),
+                      fontSize: 16), // Fonte um pouco menor para caber melhor
                 ),
                 Text(
                   'Fórmula ↔ Função',
                   style: GoogleFonts.nunito(
-                      color: Colors.white70, fontSize: 12),
+                      color: Colors.white70, fontSize: 10), // Reduzido levemente
                 ),
               ],
             ),
           ),
-          const Spacer(),
-
-          // Status: Tempo, Pontos, Erros
-          _buildStatusItem(Icons.access_time, 'TEMPO', _tempoFormatado),
-          const SizedBox(width: 32),
-          _buildStatusItem(Icons.emoji_events_outlined, 'PONTOS', '$_pontos', isGold: true),
-          const SizedBox(width: 32),
-          _buildStatusItem(Icons.highlight_off, 'ERROS', '$_erros', isRed: true),
-          const Spacer(),
+          
+          // ─── CORREÇÃO DO OVERFLOW (Expanded + FittedBox) ───
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: FittedBox(
+                fit: BoxFit.scaleDown, // Encolhe os ícones e textos se não couberem na tela
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildStatusItem(Icons.access_time, 'TEMPO', _tempoFormatado),
+                    const SizedBox(width: 24),
+                    _buildStatusItem(Icons.emoji_events_outlined, 'PONTOS', '$_pontos', isGold: true),
+                    const SizedBox(width: 24),
+                    _buildStatusItem(Icons.highlight_off, 'ERROS', '$_erros', isRed: true),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
           // Botão Sair
           Padding(
-            padding: const EdgeInsets.only(right: 24),
+            padding: const EdgeInsets.only(right: 16),
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _vermelho,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -222,8 +234,6 @@ class _TelaJogoState extends State<TelaJogo> {
                     color: _vermelho,
                     width: 2,
                     style: BorderStyle.solid, 
-                    // No Flutter puro, borda tracejada requer package (ex: dotted_border). 
-                    // Usando sólida por enquanto para não quebrar seu projeto.
                   ),
                 ),
                 child: Center(

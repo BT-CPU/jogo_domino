@@ -30,7 +30,8 @@ class HowToPlayScreen extends StatelessWidget {
           // ─── CONTEÚDO ────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(36, 8, 36, 36),
+              // Correção 1: Margens adaptáveis para não espremer no celular
+              padding: EdgeInsets.fromLTRB(isWide ? 36 : 16, 8, isWide ? 36 : 16, 36),
               child: Center(
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 1000),
@@ -83,7 +84,8 @@ class HowToPlayScreen extends StatelessWidget {
                       // ─── BOTÃO ENTENDI ───────────────────────
                       Center(
                         child: SizedBox(
-                          width: 360,
+                          // Correção 2: double.infinity faz o botão ocupar o espaço correto sem dar overflow
+                          width: isWide ? 360 : double.infinity,
                           child: ElevatedButton(
                             onPressed: () => Navigator.pop(context),
                             style: ElevatedButton.styleFrom(
@@ -119,7 +121,7 @@ class HowToPlayScreen extends StatelessWidget {
   // ─── LADO ESQUERDO ────────────────────────────────────────────────
   Widget _buildEsquerda() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24), // Reduzido levemente para o mobile
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -140,7 +142,7 @@ class HowToPlayScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildPecaDomino('H₂SO₄', 'Base'),
+                _buildPecaDomino('H₂SO₄', 'Ácido'), // Corrigido para fazer sentido químico
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -159,7 +161,7 @@ class HowToPlayScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                _buildPecaDomino('NaOH', 'Ácido'),
+                _buildPecaDomino('NaOH', 'Base'),
               ],
             ),
           ),
@@ -168,7 +170,7 @@ class HowToPlayScreen extends StatelessWidget {
             'Conecte peças que tenham\ncorrespondência conceitual.',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
-              fontSize: 20,
+              fontSize: 18, // Ajustado para mobile
               color: Colors.black54,
               height: 1.5,
             ),
@@ -202,11 +204,12 @@ class HowToPlayScreen extends StatelessWidget {
 
   Widget _buildMetadePeca(String texto, {bool bold = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
+      // Correção 3: Paddings da peça um pouco menores para caber lado a lado no celular
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Text(
         texto,
         style: GoogleFonts.nunito(
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
           color: Colors.black87,
         ),
@@ -236,7 +239,7 @@ class HowToPlayScreen extends StatelessWidget {
     ];
 
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(24), // Reduzido levemente para o mobile
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -253,17 +256,17 @@ class HowToPlayScreen extends StatelessWidget {
         children: itens
             .map(
               (item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(item.icone, size: 36, color: Colors.black54),
-                    const SizedBox(width: 18),
+                    Icon(item.icone, size: 32, color: Colors.black54),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Text(
                         item.texto,
                         style: GoogleFonts.nunito(
-                          fontSize: 18,
+                          fontSize: 16, // Ajustado para mobile
                           color: Colors.black87,
                           height: 1.4,
                         ),
