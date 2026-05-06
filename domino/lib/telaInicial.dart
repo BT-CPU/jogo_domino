@@ -11,6 +11,7 @@ class TelaInicial extends StatelessWidget {
   static const _vermelho = Color(0xFFC0392B);
   static const _cinzaFundo = Color(0xFFF0F0F0);
 
+  @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 600;
     final logoSize = isWide ? 90.0 : 30.0;

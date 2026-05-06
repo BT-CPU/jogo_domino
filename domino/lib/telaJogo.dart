@@ -25,18 +25,18 @@ class _TelaJogoState extends State<TelaJogo> {
   // ─── ESTADO DO JOGO ──────────────────────────────────────────────
   int _tempoSegundos = 0; // Começando em 02:35 para bater com o protótipo
   int _pontos = 0;
-  int _erros = 0;
+  final int _erros = 0;
   Timer? _timer;
 
   // Peças já colocadas no tabuleiro
-  List<PecaDominoModel> _tabuleiro = [
+  final List<PecaDominoModel> _tabuleiro = [
     PecaDominoModel('HCl', 'Ácido'),
     PecaDominoModel('NaOH', 'Base'),
     PecaDominoModel('NaCl', 'Sal'),
   ];
 
   // Peças disponíveis para o jogador
-  List<PecaDominoModel> _maoJogador = [
+  final List<PecaDominoModel> _maoJogador = [
     PecaDominoModel('Óxido', 'CO₂'),
     PecaDominoModel('H₂SO₄', 'Ácido'),
     PecaDominoModel('CaO', 'Óxido'),
