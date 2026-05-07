@@ -196,12 +196,10 @@ class TelaInicialProfessor extends StatelessWidget {
                               subtitle: 'Adicionar novos estudantes',
                               icon: Icons.person_add_alt_1_rounded,
                               onTap: () {
-                                // Agora sim, no arquivo certo!
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CadastrarAlunoScreen(),
+                                    builder: (context) => const CadastrarAlunoScreen(),
                                   ),
                                 );
                               },

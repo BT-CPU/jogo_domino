@@ -437,8 +437,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final usuario = _emailController.text.trim();
     final senha = _passwordController.text;
 
-    // LOGIN ALUNO
-    if (usuario == 'teste' && senha == 'teste' && isStudent) {
+
+      if (usuario == 'aluno' && senha == 'aluno' && isStudent) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const TelaInicial()),

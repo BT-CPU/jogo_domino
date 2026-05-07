@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-// Importando as suas telas exatamente com os nomes dos seus arquivos
-import 'telaLogin.dart'; 
-import 'cadastrarAluno.dart'; 
+import 'telaLogin.dart';
+import 'telaJogo.dart';
+import 'telaDesempenho.dart';
+import 'comoJogar.dart';
 
 // ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicial extends StatelessWidget {
@@ -43,7 +43,7 @@ class TelaInicial extends StatelessWidget {
                     children: [
                       const SizedBox(width: 8),
                       Text(
-                        'Olá, Professor!',
+                        'Olá, Aluno!',
                         style: GoogleFonts.nunito(
                           color: Colors.white,
                           fontSize: 16,
@@ -170,39 +170,47 @@ class TelaInicial extends StatelessWidget {
                         children: [
                           _buildMenuCard(
                             context: context,
-                            title: 'Jogar',
-                            subtitle: 'Testar ou demonstrar o jogo',
-                            icon: Icons.sports_esports_rounded,
+                            title: 'Nova Partida',
+                            subtitle: 'Iniciar jogo de classificação',
+                            icon: Icons.play_arrow_rounded,
                             isPrimary: true,
                             onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Tela do Jogo em construção!')),
-                              );
-                            },
-                          ),
-                          _buildMenuCard(
-                            context: context,
-                            title: 'Cadastrar Aluno',
-                            subtitle: 'Adicionar novos estudantes',
-                            icon: Icons.person_add_alt_1_rounded,
-                            onTap: () {
-                              // Link exato para a tela de Cadastro
+                              // Aqui fazemos a transição para a tela de jogo
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CadastrarAlunoScreen(),
+                                  builder: (context) => const TelaJogo(),
                                 ),
                               );
                             },
                           ),
                           _buildMenuCard(
                             context: context,
-                            title: 'Relatórios',
-                            subtitle: 'Acompanhar desempenho',
+                            title: 'Meus Relatórios',
+                            subtitle: 'Veja seu desempenho',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Tela de Relatórios em construção!')),
+                              // Link exato para a tela de Cadastro
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const TelaDesempenho(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildMenuCard(
+                            context: context,
+                            title: 'Regras do Jogo',
+                            subtitle: 'Como jogar o dominó',
+                            icon: Icons.menu_book_rounded,
+                            onTap: () {
+                              // Link exato para a tela de Cadastro
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HowToPlayScreen(),
+                                ),
                               );
                             },
                           ),
