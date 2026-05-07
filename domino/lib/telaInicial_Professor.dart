@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaLogin.dart';
-import 'telaJogo.dart';
 import 'cadastrarAluno.dart';
+import 'telaDificuldade.dart';
 
 // ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicialProfessor extends StatelessWidget {
@@ -184,7 +184,8 @@ class TelaInicialProfessor extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const TelaJogo(),
+                                    builder: (context) =>
+                                        const TelaDificuldade(),
                                   ),
                                 );
                               },
@@ -199,7 +200,8 @@ class TelaInicialProfessor extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const CadastrarAlunoScreen(),
+                                    builder: (context) =>
+                                        const CadastrarAlunoScreen(),
                                   ),
                                 );
                               },

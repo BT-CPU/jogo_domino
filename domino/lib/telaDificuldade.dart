@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'jogo_models.dart';
+import 'telaJogo.dart';
 
 class TelaDificuldade extends StatefulWidget {
   const TelaDificuldade({super.key});
@@ -15,6 +17,13 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
   static const _cinzaFundo = Color(0xFFF0F0F0);
 
   int? _dificuldadeSelecionada;
+
+  DificuldadeJogo? get _dificuldadeAtual {
+    if (_dificuldadeSelecionada == null) {
+      return null;
+    }
+    return DificuldadeJogo.fromId(_dificuldadeSelecionada!);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +177,41 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                           side: const BorderSide(color: _vermelho),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 22,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _dificuldadeAtual == null
+                            ? null
+                            : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TelaJogo(
+                                      dificuldade: _dificuldadeAtual!,
+                                    ),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: Text(
+                          'Iniciar partida',
+                          style: GoogleFonts.nunito(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _vermelho,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.grey[300],
+                          disabledForegroundColor: Colors.grey[600],
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
                             vertical: 14,
                           ),
                           shape: RoundedRectangleBorder(
