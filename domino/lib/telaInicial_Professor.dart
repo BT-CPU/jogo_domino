@@ -1,10 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaLogin.dart';
-import 'telaJogo.dart';
-import 'cadastrarAluno.dart';
+import 'relatoriosProfessor.dart';
 
-// ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
 class TelaInicialProfessor extends StatelessWidget {
   const TelaInicialProfessor({super.key});
 
@@ -14,13 +13,11 @@ class TelaInicialProfessor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 600;
-    final logoSize = isWide ? 90.0 : 30.0;
 
     return Scaffold(
       backgroundColor: _cinzaFundo,
       body: Column(
         children: [
-          // Barra Vermelha
           Container(
             width: double.infinity,
             color: const Color.fromARGB(255, 255, 126, 112),
@@ -37,7 +34,6 @@ class TelaInicialProfessor extends StatelessWidget {
                     child: Placeholder(color: Colors.white),
                   ),
                 ),
-
                 if (isWide)
                   Row(
                     children: [
@@ -55,11 +51,8 @@ class TelaInicialProfessor extends StatelessWidget {
               ],
             ),
           ),
-
-          // Conteúdo do Menu
           Expanded(
             child: Scrollbar(
-              // ← Scrollbar fora do Center
               thumbVisibility: false,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
@@ -75,49 +68,8 @@ class TelaInicialProfessor extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Container(
-                                width: logoSize,
-                                height: logoSize,
-                                decoration: BoxDecoration(
-                                  color: _vermelho,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.15),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                padding: EdgeInsets.all(logoSize * 0.12),
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: EdgeInsets.all(logoSize * 0.12),
-                                  child: Image.asset(
-                                    'imagens/logo_quimico.png',
-                                    fit: BoxFit.contain,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: _vermelho.withOpacity(
-                                                  0.1,
-                                                ),
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: Icon(
-                                                Icons.science,
-                                                size: logoSize * 0.4,
-                                                color: _vermelho,
-                                              ),
-                                            ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
+                              _buildLogoHexagono(),
+                              const SizedBox(width: 10),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
@@ -167,7 +119,6 @@ class TelaInicialProfessor extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 40),
-
                         Wrap(
                           spacing: 24,
                           runSpacing: 24,
@@ -180,41 +131,43 @@ class TelaInicialProfessor extends StatelessWidget {
                               icon: Icons.sports_esports_rounded,
                               isPrimary: true,
                               onTap: () {
-                                // Aqui fazemos a transição para a tela de jogo
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const TelaJogo(),
-                                  ),
-                                );
+                                debugPrint('Professor iniciando jogo');
                               },
                             ),
-
                             _buildMenuCard(
                               context: context,
                               title: 'Cadastrar Aluno',
                               subtitle: 'Adicionar novos estudantes',
                               icon: Icons.person_add_alt_1_rounded,
                               onTap: () {
+                                debugPrint('Ir para cadastro de aluno');
+                              },
+                            ),
+                            _buildMenuCard(
+                              context: context,
+                              title: 'Configurações do Dominó',
+                              subtitle: 'Editar regras e conteúdo',
+                              icon: Icons.settings_rounded,
+                              onTap: () {
+                                debugPrint('Abrir configurações do jogo');
+                              },
+                            ),
+                            _buildMenuCard(
+                              context: context,
+                              title: 'Relatórios dos Alunos',
+                              subtitle: 'Acompanhar desempenho',
+                              icon: Icons.analytics_rounded,
+                              onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const CadastrarAlunoScreen(),
+                                    builder: (_) => const RelatoriosProfessorPage(
+                                      nomeProfessor: 'Professor',
+                                    ),
                                   ),
                                 );
                               },
                             ),
-
-                            _buildMenuCard(
-                              context: context,
-                              title: 'Relatórios',
-                              subtitle: 'Acompanhar desempenho',
-                              icon: Icons.analytics_rounded,
-                              onTap: () {
-                                debugPrint('Abrir relatórios');
-                              },
-                            ),
-
                             _buildMenuCard(
                               context: context,
                               title: 'Sair',
@@ -276,9 +229,7 @@ class TelaInicialProfessor extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isPrimary
-                      ? Colors.white.withOpacity(0.2)
-                      : _cinzaFundo,
+                  color: isPrimary ? Colors.white.withOpacity(0.2) : _cinzaFundo,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -318,4 +269,83 @@ class TelaInicialProfessor extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildLogoHexagono() {
+  return SizedBox(
+    width: 90,
+    height: 90,
+    child: CustomPaint(painter: _HexLogoPainter()),
+  );
+}
+
+class _HexLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width / 2;
+
+    final path = Path();
+    for (int i = 0; i < 6; i++) {
+      final angle = (i * 60 - 30) * 3.14159 / 180;
+      final x = cx + r * 0.95 * cos(angle);
+      final y = cy + r * 0.95 * sin(angle);
+      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+    }
+    path.close();
+    canvas.drawPath(path, Paint()..color = const Color(0xFFC0392B));
+
+    final innerPath = Path();
+    final ir = r * 0.82;
+    for (int i = 0; i < 6; i++) {
+      final angle = (i * 60 - 30) * 3.14159 / 180;
+      final x = cx + ir * cos(angle);
+      final y = cy + ir * sin(angle);
+      i == 0 ? innerPath.moveTo(x, y) : innerPath.lineTo(x, y);
+    }
+    innerPath.close();
+    canvas.drawPath(innerPath, Paint()..color = const Color(0xFFA93226));
+
+    final iconPaint = Paint()
+      ..color = Colors.white.withOpacity(0.95)
+      ..style = PaintingStyle.fill;
+
+    final flask = Path()
+      ..moveTo(cx - 10, cy - 16)
+      ..lineTo(cx - 10, cy - 4)
+      ..lineTo(cx - 18, cy + 14)
+      ..quadraticBezierTo(cx - 20, cy + 20, cx, cy + 20)
+      ..quadraticBezierTo(cx + 20, cy + 20, cx + 18, cy + 14)
+      ..lineTo(cx + 10, cy - 4)
+      ..lineTo(cx + 10, cy - 16)
+      ..close();
+    canvas.drawPath(flask, iconPaint);
+
+    final liquid = Path()
+      ..moveTo(cx - 14, cy + 10)
+      ..quadraticBezierTo(cx, cy + 8, cx + 14, cy + 10)
+      ..lineTo(cx + 18, cy + 14)
+      ..quadraticBezierTo(cx + 20, cy + 20, cx, cy + 20)
+      ..quadraticBezierTo(cx - 20, cy + 20, cx - 18, cy + 14)
+      ..close();
+    canvas.drawPath(
+      liquid,
+      Paint()..color = const Color(0xFFE74C3C).withOpacity(0.75),
+    );
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx, cy - 18), width: 22, height: 5),
+        const Radius.circular(3),
+      ),
+      Paint()..color = Colors.white,
+    );
+  }
+
+  double cos(double a) => math.cos(a);
+  double sin(double a) => math.sin(a);
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
