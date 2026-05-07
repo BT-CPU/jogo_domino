@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'telaLogin.dart';
 import 'relatoriosProfessor.dart';
+import 'cadastrarAluno.dart'; // IMPORTAÇÃO ADICIONADA
 
 class TelaInicialProfessor extends StatelessWidget {
   const TelaInicialProfessor({super.key});
@@ -51,6 +53,7 @@ class TelaInicialProfessor extends StatelessWidget {
               ],
             ),
           ),
+
           Expanded(
             child: Scrollbar(
               thumbVisibility: false,
@@ -99,7 +102,9 @@ class TelaInicialProfessor extends StatelessWidget {
                             ],
                           ),
                         ),
+
                         const SizedBox(height: 40),
+
                         Text(
                           'Menu Principal',
                           textAlign: TextAlign.center,
@@ -109,7 +114,9 @@ class TelaInicialProfessor extends StatelessWidget {
                             color: Colors.black87,
                           ),
                         ),
+
                         const SizedBox(height: 8),
+
                         Text(
                           'Escolha uma das opções abaixo para continuar',
                           textAlign: TextAlign.center,
@@ -118,7 +125,9 @@ class TelaInicialProfessor extends StatelessWidget {
                             color: Colors.grey[600],
                           ),
                         ),
+
                         const SizedBox(height: 40),
+
                         Wrap(
                           spacing: 24,
                           runSpacing: 24,
@@ -134,15 +143,24 @@ class TelaInicialProfessor extends StatelessWidget {
                                 debugPrint('Professor iniciando jogo');
                               },
                             ),
+
+                            // BOTÃO CORRIGIDO
                             _buildMenuCard(
                               context: context,
                               title: 'Cadastrar Aluno',
                               subtitle: 'Adicionar novos estudantes',
                               icon: Icons.person_add_alt_1_rounded,
                               onTap: () {
-                                debugPrint('Ir para cadastro de aluno');
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const CadastrarAlunoScreen(),
+                                  ),
+                                );
                               },
                             ),
+
                             _buildMenuCard(
                               context: context,
                               title: 'Configurações do Dominó',
@@ -152,6 +170,7 @@ class TelaInicialProfessor extends StatelessWidget {
                                 debugPrint('Abrir configurações do jogo');
                               },
                             ),
+
                             _buildMenuCard(
                               context: context,
                               title: 'Relatórios dos Alunos',
@@ -161,13 +180,15 @@ class TelaInicialProfessor extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const RelatoriosProfessorPage(
+                                    builder: (_) =>
+                                        const RelatoriosProfessorPage(
                                       nomeProfessor: 'Professor',
                                     ),
                                   ),
                                 );
                               },
                             ),
+
                             _buildMenuCard(
                               context: context,
                               title: 'Sair',
@@ -178,7 +199,8 @@ class TelaInicialProfessor extends StatelessWidget {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const LoginScreen(),
+                                    builder: (context) =>
+                                        const LoginScreen(),
                                   ),
                                 );
                               },
@@ -229,7 +251,8 @@ class TelaInicialProfessor extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isPrimary ? Colors.white.withOpacity(0.2) : _cinzaFundo,
+                  color:
+                      isPrimary ? Colors.white.withOpacity(0.2) : _cinzaFundo,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -238,7 +261,9 @@ class TelaInicialProfessor extends StatelessWidget {
                   color: isPrimary ? Colors.white : (iconColor ?? _vermelho),
                 ),
               ),
+
               const SizedBox(width: 16),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,16 +273,20 @@ class TelaInicialProfessor extends StatelessWidget {
                       style: GoogleFonts.nunito(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: isPrimary ? Colors.white : Colors.black87,
+                        color:
+                            isPrimary ? Colors.white : Colors.black87,
                       ),
                     ),
+
                     const SizedBox(height: 4),
+
                     Text(
                       subtitle,
                       style: GoogleFonts.nunito(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isPrimary ? Colors.white70 : Colors.grey[500],
+                        color:
+                            isPrimary ? Colors.white70 : Colors.grey[500],
                       ),
                     ),
                   ],
@@ -275,7 +304,9 @@ Widget _buildLogoHexagono() {
   return SizedBox(
     width: 90,
     height: 90,
-    child: CustomPaint(painter: _HexLogoPainter()),
+    child: CustomPaint(
+      painter: _HexLogoPainter(),
+    ),
   );
 }
 
@@ -287,59 +318,20 @@ class _HexLogoPainter extends CustomPainter {
     final r = size.width / 2;
 
     final path = Path();
+
     for (int i = 0; i < 6; i++) {
       final angle = (i * 60 - 30) * 3.14159 / 180;
       final x = cx + r * 0.95 * cos(angle);
       final y = cy + r * 0.95 * sin(angle);
+
       i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
     }
+
     path.close();
-    canvas.drawPath(path, Paint()..color = const Color(0xFFC0392B));
 
-    final innerPath = Path();
-    final ir = r * 0.82;
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 60 - 30) * 3.14159 / 180;
-      final x = cx + ir * cos(angle);
-      final y = cy + ir * sin(angle);
-      i == 0 ? innerPath.moveTo(x, y) : innerPath.lineTo(x, y);
-    }
-    innerPath.close();
-    canvas.drawPath(innerPath, Paint()..color = const Color(0xFFA93226));
-
-    final iconPaint = Paint()
-      ..color = Colors.white.withOpacity(0.95)
-      ..style = PaintingStyle.fill;
-
-    final flask = Path()
-      ..moveTo(cx - 10, cy - 16)
-      ..lineTo(cx - 10, cy - 4)
-      ..lineTo(cx - 18, cy + 14)
-      ..quadraticBezierTo(cx - 20, cy + 20, cx, cy + 20)
-      ..quadraticBezierTo(cx + 20, cy + 20, cx + 18, cy + 14)
-      ..lineTo(cx + 10, cy - 4)
-      ..lineTo(cx + 10, cy - 16)
-      ..close();
-    canvas.drawPath(flask, iconPaint);
-
-    final liquid = Path()
-      ..moveTo(cx - 14, cy + 10)
-      ..quadraticBezierTo(cx, cy + 8, cx + 14, cy + 10)
-      ..lineTo(cx + 18, cy + 14)
-      ..quadraticBezierTo(cx + 20, cy + 20, cx, cy + 20)
-      ..quadraticBezierTo(cx - 20, cy + 20, cx - 18, cy + 14)
-      ..close();
     canvas.drawPath(
-      liquid,
-      Paint()..color = const Color(0xFFE74C3C).withOpacity(0.75),
-    );
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx, cy - 18), width: 22, height: 5),
-        const Radius.circular(3),
-      ),
-      Paint()..color = Colors.white,
+      path,
+      Paint()..color = const Color(0xFFC0392B),
     );
   }
 
