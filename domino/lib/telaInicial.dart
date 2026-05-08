@@ -15,7 +15,8 @@ class TelaInicial extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 600;
-    final logoSize = isWide ? 90.0 : 30.0;
+    // CORREÇÃO: Tamanho no mobile passou de 30.0 para 70.0 (Igual ao do professor)
+    final logoSize = isWide ? 90.0 : 70.0;
 
     return Scaffold(
       backgroundColor: _cinzaFundo,
@@ -119,7 +120,7 @@ class TelaInicial extends StatelessWidget {
                                   'DOMINÓ DA\nQUÍMICA',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.nunito(
-                                    fontSize: 26,
+                                    fontSize: isWide ? 26 : 22,
                                     fontWeight: FontWeight.w900,
                                     color: _vermelho,
                                     letterSpacing: 1.5,
@@ -175,7 +176,6 @@ class TelaInicial extends StatelessWidget {
                             icon: Icons.play_arrow_rounded,
                             isPrimary: true,
                             onTap: () {
-                              // Aqui fazemos a transição para a tela de jogo
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -190,7 +190,6 @@ class TelaInicial extends StatelessWidget {
                             subtitle: 'Veja seu desempenho',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {
-                              // Link exato para a tela de Cadastro
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -205,7 +204,6 @@ class TelaInicial extends StatelessWidget {
                             subtitle: 'Como jogar o dominó',
                             icon: Icons.menu_book_rounded,
                             onTap: () {
-                              // Link exato para a tela de Cadastro
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -221,7 +219,6 @@ class TelaInicial extends StatelessWidget {
                             icon: Icons.logout_rounded,
                             iconColor: Colors.grey[600],
                             onTap: () {
-                              // Link exato para a tela de Login
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
