@@ -97,6 +97,8 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
   String _perfilSelecionado = 'aluno'; // ← novo
 
   List<Usuario> _usuarios = [];
+  final _buscaCtrl = TextEditingController();
+  String _termoBusca = '';
   bool _carregandoUsuarios = true;
   String? _erroUsuarios;
 
@@ -116,6 +118,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     _emailCtrl.dispose();
     _senhaCtrl.dispose();
     _confirmaSenhaCtrl.dispose();
+    _buscaCtrl.dispose();
     super.dispose();
   }
 
@@ -422,6 +425,16 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
 
   // ─── TABELA DE USUÁRIOS ─────────────────────────────────────────────────
   Widget _buildTabela() {
+    // Filtra a lista com base no termo de busca
+    final usuariosFiltrados = _termoBusca.isEmpty
+        ? _usuarios
+        : _usuarios.where((u) {
+            final termo = _termoBusca.toLowerCase();
+            return u.nome.toLowerCase().contains(termo) ||
+                u.email.toLowerCase().contains(termo) ||
+                u.perfil.toLowerCase().contains(termo);
+          }).toList();
+
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
@@ -434,6 +447,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Cabeçalho
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -445,7 +459,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                     style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.black87),
                   ),
                   Text(
-                    '${_usuarios.length} usuário${_usuarios.length != 1 ? 's' : ''} no sistema',
+                    '${usuariosFiltrados.length} de ${_usuarios.length} usuário${_usuarios.length != 1 ? 's' : ''}',
                     style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey[500]),
                   ),
                 ],
@@ -456,6 +470,38 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                 onPressed: _carregandoUsuarios ? null : _carregarUsuarios,
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+
+          // ─── BARRA DE PESQUISA ───────────────────────────────────
+          TextField(
+            controller: _buscaCtrl,
+            onChanged: (val) => setState(() => _termoBusca = val),
+            style: GoogleFonts.nunito(fontSize: 14, color: Colors.black87),
+            decoration: InputDecoration(
+              hintText: 'Pesquisar por nome, e-mail ou perfil...',
+              hintStyle: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[400]),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20, color: _vermelho),
+              suffixIcon: _termoBusca.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.close_rounded, size: 18, color: Colors.grey[400]),
+                      onPressed: () {
+                        _buscaCtrl.clear();
+                        setState(() => _termoBusca = '');
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              filled: true,
+              fillColor: _cinzaFundo,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _vermelho, width: 1.5)),
+            ),
           ),
           const SizedBox(height: 20),
 
@@ -493,6 +539,19 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                 ),
               ),
             )
+          else if (usuariosFiltrados.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  children: [
+                    Icon(Icons.search_off_rounded, size: 48, color: Colors.grey[300]),
+                    const SizedBox(height: 12),
+                    Text('Nenhum resultado para "$_termoBusca".', style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[500])),
+                  ],
+                ),
+              ),
+            )
           else
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -515,7 +574,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                       _headerCell(''),
                     ],
                   ),
-                  ..._usuarios.asMap().entries.map((entry) {
+                  ...usuariosFiltrados.asMap().entries.map((entry) {
                     final i = entry.key;
                     final usuario = entry.value;
                     final isEven = i % 2 == 0;
@@ -524,7 +583,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                       children: [
                         _dataCell(usuario.nome),
                         _dataCell(usuario.email),
-                        // Badge de perfil
                         TableCell(
                           verticalAlignment: TableCellVerticalAlignment.middle,
                           child: Padding(
