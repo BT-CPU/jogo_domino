@@ -3,56 +3,60 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
-// ─── MODELO DE ALUNO ────────────────────────────────────────────────────────
-class Aluno {
+// ─── MODELO DE USUÁRIO ──────────────────────────────────────────────────────
+class Usuario {
   final int id;
   final String nome;
   final String email;
+  final String perfil;
   final String dataCadastro;
 
-  Aluno({
+  Usuario({
     required this.id,
     required this.nome,
     required this.email,
+    required this.perfil,
     required this.dataCadastro,
   });
 
-  factory Aluno.fromJson(Map<String, dynamic> json) => Aluno(
+  factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
         id: json['id_usuario'],
         nome: json['nome'],
         email: json['email'],
+        perfil: json['perfil'] ?? 'aluno',
         dataCadastro: json['data_cadastro'] ?? '',
       );
 }
 
 // ─── SERVIÇO DE API ─────────────────────────────────────────────────────────
-class AlunoService {
-  // Troque pela URL do seu servidor (ex: http://192.168.1.10:8000)
+class UsuarioService {
   static const String _baseUrl = 'https://domino-api-production.up.railway.app';
 
-  static Future<List<Aluno>> listarAlunos() async {
-    final response = await http.get(Uri.parse('$_baseUrl/alunos'));
+  static Future<List<Usuario>> listarUsuarios() async {
+    final response = await http.get(Uri.parse('$_baseUrl/usuarios'));
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      return data.map((e) => Aluno.fromJson(e)).toList();
+      return data.map((e) => Usuario.fromJson(e)).toList();
     }
-    throw Exception('Erro ao carregar alunos: ${response.statusCode}');
+    throw Exception('Erro ao carregar usuários: ${response.statusCode}');
   }
 
-  static Future<String> cadastrarAluno({
+  static Future<String> cadastrarUsuario({
     required String nome,
     required String email,
     required String senha,
     required bool aceiteLgpd,
+    required String perfil,
   }) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/alunos'),
+      Uri.parse('$_baseUrl/usuarios'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'nome': nome,
         'email': email,
         'senha': senha,
         'aceite_lgpd': aceiteLgpd,
+        'perfil': perfil,
       }),
     );
 
@@ -60,19 +64,19 @@ class AlunoService {
     if (response.statusCode == 201) {
       return body['mensagem'];
     }
-    throw Exception(body['detail'] ?? 'Erro ao cadastrar aluno.');
+    throw Exception(body['detail'] ?? 'Erro ao cadastrar.');
   }
 
-  static Future<void> excluirAluno(int id) async {
-    final response = await http.delete(Uri.parse('$_baseUrl/alunos/$id'));
+  static Future<void> excluirUsuario(int id) async {
+    final response = await http.delete(Uri.parse('$_baseUrl/usuarios/$id'));
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body);
-      throw Exception(body['detail'] ?? 'Erro ao excluir aluno.');
+      throw Exception(body['detail'] ?? 'Erro ao excluir.');
     }
   }
 }
 
-// ─── TELA CADASTRAR ALUNO ────────────────────────────────────────────────────
+// ─── TELA CADASTRAR USUÁRIO ──────────────────────────────────────────────────
 class CadastrarAlunoScreen extends StatefulWidget {
   const CadastrarAlunoScreen({super.key});
 
@@ -90,10 +94,11 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
   bool _obscureConfirma = true;
   bool _aceiteLgpd = false;
   bool _carregando = false;
+  String _perfilSelecionado = 'aluno'; // ← novo
 
-  List<Aluno> _alunos = [];
-  bool _carregandoAlunos = true;
-  String? _erroAlunos;
+  List<Usuario> _usuarios = [];
+  bool _carregandoUsuarios = true;
+  String? _erroUsuarios;
 
   static const _vermelho = Color(0xFFC0392B);
   static const _vermelhoEscuro = Color(0xFFA93226);
@@ -102,7 +107,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
   @override
   void initState() {
     super.initState();
-    _carregarAlunos();
+    _carregarUsuarios();
   }
 
   @override
@@ -114,34 +119,30 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     super.dispose();
   }
 
-  // ─── CARREGAR LISTA DE ALUNOS ──────────────────────────────────────────
-  Future<void> _carregarAlunos() async {
+  Future<void> _carregarUsuarios() async {
     setState(() {
-      _carregandoAlunos = true;
-      _erroAlunos = null;
+      _carregandoUsuarios = true;
+      _erroUsuarios = null;
     });
     try {
-      final lista = await AlunoService.listarAlunos();
-      setState(() => _alunos = lista);
+      final lista = await UsuarioService.listarUsuarios();
+      setState(() => _usuarios = lista);
     } catch (e) {
-      setState(() => _erroAlunos = e.toString());
+      setState(() => _erroUsuarios = e.toString());
     } finally {
-      setState(() => _carregandoAlunos = false);
+      setState(() => _carregandoUsuarios = false);
     }
   }
 
-  // ─── EXCLUIR ALUNO COM CONFIRMAÇÃO ────────────────────────────────────
-  Future<void> _confirmarExclusao(Aluno aluno) async {
+  Future<void> _confirmarExclusao(Usuario usuario) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text(
-          'Excluir Aluno',
-          style: GoogleFonts.nunito(fontWeight: FontWeight.w800),
-        ),
+        title: Text('Excluir ${usuario.perfil == 'professor' ? 'Professor' : 'Aluno'}',
+            style: GoogleFonts.nunito(fontWeight: FontWeight.w800)),
         content: Text(
-          'Deseja realmente excluir "${aluno.nome}"?\nEsta ação não pode ser desfeita.',
+          'Deseja realmente excluir "${usuario.nome}"?\nEsta ação não pode ser desfeita.',
           style: GoogleFonts.nunito(fontSize: 14, color: Colors.black87),
         ),
         actions: [
@@ -164,9 +165,9 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
 
     if (confirmar == true) {
       try {
-        await AlunoService.excluirAluno(aluno.id);
-        _mostrarSnack('Aluno "${aluno.nome}" excluído.', isErro: false);
-        _carregarAlunos();
+        await UsuarioService.excluirUsuario(usuario.id);
+        _mostrarSnack('"${usuario.nome}" excluído.', isErro: false);
+        _carregarUsuarios();
       } catch (e) {
         _mostrarSnack(e.toString(), isErro: true);
       }
@@ -238,12 +239,9 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                     constraints: const BoxConstraints(maxWidth: 750),
                     child: Column(
                       children: [
-                        // ── Formulário de Cadastro ──────────────────
                         _buildFormulario(),
                         const SizedBox(height: 40),
-
-                        // ── Tabela de Alunos ────────────────────────
-                        _buildTabelaAlunos(),
+                        _buildTabela(),
                       ],
                     ),
                   ),
@@ -256,7 +254,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     );
   }
 
-  // ─── CARD DO FORMULÁRIO ─────────────────────────────────────────────────
+  // ─── FORMULÁRIO ─────────────────────────────────────────────────────────
   Widget _buildFormulario() {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -264,20 +262,22 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.person_add_alt_1_rounded, size: 48, color: _vermelho),
+          Icon(
+            _perfilSelecionado == 'professor'
+                ? Icons.school_rounded
+                : Icons.person_add_alt_1_rounded,
+            size: 48,
+            color: _vermelho,
+          ),
           const SizedBox(height: 16),
           Text(
-            'Cadastrar Aluno',
+            'Cadastrar Usuário',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.black87),
           ),
@@ -287,11 +287,28 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[500]),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
+
+          // ─── SELETOR DE PERFIL ──────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: _cinzaFundo,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                _buildPerfilOpcao('aluno', 'Aluno', Icons.person_rounded),
+                _buildPerfilOpcao('professor', 'Professor', Icons.school_rounded),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
 
           _buildCampo(controller: _nomeCtrl, hint: 'Nome Completo', icon: Icons.badge_outlined),
           const SizedBox(height: 16),
-          _buildCampo(controller: _emailCtrl, hint: 'E-mail do aluno', icon: Icons.email_outlined),
+          _buildCampo(controller: _emailCtrl, hint: 'E-mail', icon: Icons.email_outlined),
           const SizedBox(height: 16),
           _buildCampo(
             controller: _senhaCtrl,
@@ -335,7 +352,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'O aluno (ou responsável) autoriza a coleta e o armazenamento de dados de desempenho no jogo para fins pedagógicos, conforme a LGPD.',
+                    'O usuário autoriza a coleta e o armazenamento de dados de desempenho no jogo para fins pedagógicos, conforme a LGPD.',
                     style: GoogleFonts.nunito(fontSize: 12, color: Colors.black87, height: 1.4),
                   ),
                 ),
@@ -344,7 +361,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
           ),
           const SizedBox(height: 32),
 
-          // Botão Cadastrar
           ElevatedButton(
             onPressed: _carregando ? null : _handleCadastro,
             style: ElevatedButton.styleFrom(
@@ -371,25 +387,53 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     );
   }
 
-  // ─── TABELA DE ALUNOS ───────────────────────────────────────────────────
-  Widget _buildTabelaAlunos() {
+  // ─── BOTÃO DE SELEÇÃO DE PERFIL ─────────────────────────────────────────
+  Widget _buildPerfilOpcao(String valor, String label, IconData icon) {
+    final selecionado = _perfilSelecionado == valor;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _perfilSelecionado = valor),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selecionado ? _vermelho : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: selecionado ? Colors.white : Colors.grey[500]),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: selecionado ? Colors.white : Colors.grey[500],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── TABELA DE USUÁRIOS ─────────────────────────────────────────────────
+  Widget _buildTabela() {
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Cabeçalho da tabela
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -397,15 +441,11 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Alunos Cadastrados',
-                    style: GoogleFonts.nunito(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
+                    'Usuários Cadastrados',
+                    style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.black87),
                   ),
                   Text(
-                    '${_alunos.length} aluno${_alunos.length != 1 ? 's' : ''} no sistema',
+                    '${_usuarios.length} usuário${_usuarios.length != 1 ? 's' : ''} no sistema',
                     style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey[500]),
                   ),
                 ],
@@ -413,21 +453,15 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
               IconButton(
                 tooltip: 'Atualizar lista',
                 icon: const Icon(Icons.refresh_rounded, color: _vermelho),
-                onPressed: _carregandoAlunos ? null : _carregarAlunos,
+                onPressed: _carregandoUsuarios ? null : _carregarUsuarios,
               ),
             ],
           ),
           const SizedBox(height: 20),
 
-          // Estado de carregamento / erro / vazio
-          if (_carregandoAlunos)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(color: _vermelho),
-              ),
-            )
-          else if (_erroAlunos != null)
+          if (_carregandoUsuarios)
+            const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator(color: _vermelho)))
+          else if (_erroUsuarios != null)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -435,81 +469,101 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                   children: [
                     const Icon(Icons.wifi_off_rounded, size: 40, color: Colors.grey),
                     const SizedBox(height: 8),
-                    Text(
-                      'Não foi possível carregar os alunos.',
-                      style: GoogleFonts.nunito(color: Colors.grey[600]),
-                    ),
+                    Text('Não foi possível carregar os usuários.', style: GoogleFonts.nunito(color: Colors.grey[600])),
                     const SizedBox(height: 12),
                     TextButton.icon(
-                      onPressed: _carregarAlunos,
+                      onPressed: _carregarUsuarios,
                       icon: const Icon(Icons.refresh, color: _vermelho),
-                      label: Text('Tentar novamente',
-                          style: GoogleFonts.nunito(color: _vermelho, fontWeight: FontWeight.w700)),
+                      label: Text('Tentar novamente', style: GoogleFonts.nunito(color: _vermelho, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
               ),
             )
-          else if (_alunos.isEmpty)
+          else if (_usuarios.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Column(
                   children: [
-                    Icon(Icons.school_outlined, size: 48, color: Colors.grey[300]),
+                    Icon(Icons.group_outlined, size: 48, color: Colors.grey[300]),
                     const SizedBox(height: 12),
-                    Text(
-                      'Nenhum aluno cadastrado ainda.',
-                      style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[500]),
-                    ),
+                    Text('Nenhum usuário cadastrado ainda.', style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[500])),
                   ],
                 ),
               ),
             )
           else
-            // Tabela
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Table(
                 columnWidths: const {
                   0: FlexColumnWidth(2.5),
                   1: FlexColumnWidth(3),
-                  2: FlexColumnWidth(2),
-                  3: FixedColumnWidth(56),
+                  2: FlexColumnWidth(1.5),
+                  3: FlexColumnWidth(2),
+                  4: FixedColumnWidth(56),
                 },
                 children: [
-                  // Header row
                   TableRow(
                     decoration: const BoxDecoration(color: _vermelho),
                     children: [
                       _headerCell('Nome'),
                       _headerCell('E-mail'),
+                      _headerCell('Perfil'),
                       _headerCell('Cadastro'),
                       _headerCell(''),
                     ],
                   ),
-                  // Data rows
-                  ..._alunos.asMap().entries.map((entry) {
+                  ..._usuarios.asMap().entries.map((entry) {
                     final i = entry.key;
-                    final aluno = entry.value;
+                    final usuario = entry.value;
                     final isEven = i % 2 == 0;
                     return TableRow(
-                      decoration: BoxDecoration(
-                        color: isEven ? _cinzaFundo : Colors.white,
-                      ),
+                      decoration: BoxDecoration(color: isEven ? _cinzaFundo : Colors.white),
                       children: [
-                        _dataCell(aluno.nome),
-                        _dataCell(aluno.email),
-                        _dataCell(aluno.dataCadastro),
-                        // Botão excluir
+                        _dataCell(usuario.nome),
+                        _dataCell(usuario.email),
+                        // Badge de perfil
+                        TableCell(
+                          verticalAlignment: TableCellVerticalAlignment.middle,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: usuario.perfil == 'professor'
+                                    ? Colors.blue[50]
+                                    : Colors.green[50],
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: usuario.perfil == 'professor'
+                                      ? Colors.blue[200]!
+                                      : Colors.green[200]!,
+                                ),
+                              ),
+                              child: Text(
+                                usuario.perfil == 'professor' ? 'Professor' : 'Aluno',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: usuario.perfil == 'professor'
+                                      ? Colors.blue[700]
+                                      : Colors.green[700],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        _dataCell(usuario.dataCadastro),
                         TableCell(
                           verticalAlignment: TableCellVerticalAlignment.middle,
                           child: Center(
                             child: IconButton(
-                              tooltip: 'Excluir aluno',
+                              tooltip: 'Excluir',
                               icon: const Icon(Icons.delete_outline_rounded, size: 20),
                               color: Colors.red[400],
-                              onPressed: () => _confirmarExclusao(aluno),
+                              onPressed: () => _confirmarExclusao(usuario),
                             ),
                           ),
                         ),
@@ -527,30 +581,19 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
   TableCell _headerCell(String text) => TableCell(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Text(
-            text,
-            style: GoogleFonts.nunito(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
-          ),
+          child: Text(text,
+              style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.5)),
         ),
       );
 
   TableCell _dataCell(String text) => TableCell(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Text(
-            text,
-            style: GoogleFonts.nunito(fontSize: 13, color: Colors.black87),
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: Text(text,
+              style: GoogleFonts.nunito(fontSize: 13, color: Colors.black87), overflow: TextOverflow.ellipsis),
         ),
       );
 
-  // ─── CAMPO DE TEXTO ─────────────────────────────────────────────────────
   Widget _buildCampo({
     required TextEditingController controller,
     required String hint,
@@ -580,18 +623,13 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: _vermelho, width: 1.5)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _vermelho, width: 1.5)),
       ),
     );
   }
 
-  // ─── LÓGICA DE CADASTRO ─────────────────────────────────────────────────
   Future<void> _handleCadastro() async {
     final nome = _nomeCtrl.text.trim();
     final email = _emailCtrl.text.trim();
@@ -613,11 +651,12 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
 
     setState(() => _carregando = true);
     try {
-      final msg = await AlunoService.cadastrarAluno(
+      final msg = await UsuarioService.cadastrarUsuario(
         nome: nome,
         email: email,
         senha: senha,
         aceiteLgpd: _aceiteLgpd,
+        perfil: _perfilSelecionado,
       );
       _mostrarSnack(msg, isErro: false);
       _nomeCtrl.clear();
@@ -625,7 +664,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
       _senhaCtrl.clear();
       _confirmaSenhaCtrl.clear();
       setState(() => _aceiteLgpd = false);
-      _carregarAlunos(); // Atualiza a tabela
+      _carregarUsuarios();
     } catch (e) {
       _mostrarSnack(e.toString().replaceAll('Exception: ', ''), isErro: true);
     } finally {
