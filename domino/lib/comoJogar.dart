@@ -17,11 +17,11 @@ class HowToPlayScreen extends StatelessWidget {
         children: [
           // ─── SETA NO CANTO SUPERIOR ESQUERDO ────────────────
           Padding(
-            padding: const EdgeInsets.only(left: 8, top: 4),
+            padding: const EdgeInsets.only(left: 8, top: 24),
             child: Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 36),
+                icon: const Icon(Icons.arrow_back, color: _vermelho, size: 36), // Seta colorida
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -30,7 +30,6 @@ class HowToPlayScreen extends StatelessWidget {
           // ─── CONTEÚDO ────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              // Correção 1: Margens adaptáveis para não espremer no celular
               padding: EdgeInsets.fromLTRB(isWide ? 36 : 16, 8, isWide ? 36 : 16, 36),
               child: Center(
                 child: Container(
@@ -38,14 +37,14 @@ class HowToPlayScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Título
+                      // Título Colorido
                       Text(
                         'Como Jogar',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.nunito(
                           fontSize: 34,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black87,
+                          fontWeight: FontWeight.w900,
+                          color: _vermelho, 
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -54,10 +53,10 @@ class HowToPlayScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: GoogleFonts.nunito(
                           fontSize: 16,
-                          color: Colors.grey[500],
+                          color: Colors.grey[700],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 32),
 
                       // ─── LAYOUT ESQUERDA / DIREITA ───────────
                       isWide
@@ -84,7 +83,6 @@ class HowToPlayScreen extends StatelessWidget {
                       // ─── BOTÃO ENTENDI ───────────────────────
                       Center(
                         child: SizedBox(
-                          // Correção 2: double.infinity faz o botão ocupar o espaço correto sem dar overflow
                           width: isWide ? 360 : double.infinity,
                           child: ElevatedButton(
                             onPressed: () => Navigator.pop(context),
@@ -95,7 +93,7 @@ class HowToPlayScreen extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              elevation: 0,
+                              elevation: 4, 
                             ),
                             child: Text(
                               'Entendi!',
@@ -118,18 +116,19 @@ class HowToPlayScreen extends StatelessWidget {
     );
   }
 
-  // ─── LADO ESQUERDO ────────────────────────────────────────────────
+  // ─── LADO ESQUERDO (Exemplo do Dominó Colorido) ───────────────────
   Widget _buildEsquerda() {
     return Container(
-      padding: const EdgeInsets.all(24), // Reduzido levemente para o mobile
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _vermelho.withOpacity(0.3), width: 2), // Borda com cor
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: _vermelho.withOpacity(0.1), // Sombra colorida
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -142,12 +141,12 @@ class HowToPlayScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildPecaDomino('H₂SO₄', 'Base'), // Corrigido para fazer sentido químico
+                _buildPecaDomino('H₂SO₄', 'Ácido'),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      Icon(Icons.arrow_back, color: _vermelho, size: 28),
+                      const Icon(Icons.arrow_back, color: _vermelho, size: 28),
                       ...List.generate(
                         6,
                         (i) => Container(
@@ -157,22 +156,29 @@ class HowToPlayScreen extends StatelessWidget {
                           color: _vermelho,
                         ),
                       ),
-                      Icon(Icons.arrow_forward, color: _vermelho, size: 28),
+                      const Icon(Icons.arrow_forward, color: _vermelho, size: 28),
                     ],
                   ),
                 ),
-                _buildPecaDomino('NaOH', 'Ácido'),
+                _buildPecaDomino('NaOH', 'Base'),
               ],
             ),
           ),
           const SizedBox(height: 32),
-          Text(
-            'Conecte peças que tenham\ncorrespondência conceitual.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(
-              fontSize: 18, // Ajustado para mobile
-              color: Colors.black54,
-              height: 1.5,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: _vermelho.withOpacity(0.1), // Fundo suave para o texto
+              borderRadius: BorderRadius.circular(8)
+            ),
+            child: Text(
+              'Conecte peças que tenham\ncorrespondência conceitual.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunito(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: _vermelho,
+              ),
             ),
           ),
         ],
@@ -185,7 +191,7 @@ class HowToPlayScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Colors.grey[400]!, width: 2),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
         ],
@@ -193,90 +199,86 @@ class HowToPlayScreen extends StatelessWidget {
       child: IntrinsicHeight(
         child: Row(
           children: [
-            _buildMetadePeca(formula, bold: true),
-            VerticalDivider(width: 1, color: Colors.grey[300]),
-            _buildMetadePeca(funcao),
+            _buildMetadePeca(formula, bold: true, isFormula: true),
+            VerticalDivider(width: 2, color: Colors.grey[400], thickness: 2),
+            _buildMetadePeca(funcao, isFormula: false),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMetadePeca(String texto, {bool bold = false}) {
+  Widget _buildMetadePeca(String texto, {bool bold = false, required bool isFormula}) {
     return Padding(
-      // Correção 3: Paddings da peça um pouco menores para caber lado a lado no celular
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Text(
         texto,
         style: GoogleFonts.nunito(
           fontSize: 20,
-          fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
-          color: Colors.black87,
+          fontWeight: bold ? FontWeight.w900 : FontWeight.w700,
+          color: isFormula ? _vermelho : Colors.black87, // Fórmulas em vermelho
         ),
       ),
     );
   }
 
-  // ─── LADO DIREITO ─────────────────────────────────────────────────
+  // ─── LADO DIREITO (Regras com Ícones Coloridos) ───────────────────
   Widget _buildDireita() {
     final itens = [
-      _RegraItem(
-        Icons.grid_view_rounded,
-        'O objetivo é formar uma cadeia com todas as peças.',
-      ),
-      _RegraItem(
-        Icons.text_fields_rounded,
-        'Você só pode conectar peças que tenham relação correta.',
-      ),
-      _RegraItem(
-        Icons.lightbulb_outline_rounded,
-        'Use a lógica e o conhecimento sobre funções inorgânicas.',
-      ),
-      _RegraItem(
-        Icons.handshake_outlined,
-        'Complete os níveis e desafie seus conhecimentos!',
-      ),
+      _RegraItem(Icons.grid_view_rounded, 'O objetivo é formar uma cadeia com todas as peças.'),
+      _RegraItem(Icons.text_fields_rounded, 'Você só pode conectar peças que tenham relação correta.'),
+      _RegraItem(Icons.lightbulb_outline_rounded, 'Use a lógica e o conhecimento sobre funções inorgânicas.'),
+      _RegraItem(Icons.handshake_outlined, 'Complete os níveis e desafie seus conhecimentos!'),
     ];
 
     return Container(
-      padding: const EdgeInsets.all(24), // Reduzido levemente para o mobile
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _vermelho.withOpacity(0.3), width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: _vermelho.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: itens
-            .map(
-              (item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(item.icone, size: 32, color: Colors.black54),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        item.texto,
-                        style: GoogleFonts.nunito(
-                          fontSize: 16, // Ajustado para mobile
-                          color: Colors.black87,
-                          height: 1.4,
-                        ),
-                      ),
+        children: itens.map((item) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Círculo colorido atrás do ícone
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _vermelho.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(item.icone, size: 28, color: _vermelho),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    item.texto,
+                    style: GoogleFonts.nunito(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                      height: 1.4,
                     ),
-                  ],
+                  ),
                 ),
               ),
-            )
-            .toList(),
+            ],
+          ),
+        )).toList(),
       ),
     );
   }

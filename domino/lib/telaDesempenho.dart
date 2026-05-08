@@ -30,7 +30,7 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black, size: 32),
+                    icon: const Icon(Icons.arrow_back, color: _vermelho, size: 32), // Ícone Vermelho
                     onPressed: () => Navigator.pop(context),
                     tooltip: 'Voltar para o Menu',
                   ),
@@ -38,51 +38,29 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
                 Text(
                   'Meu Desempenho',
                   style: GoogleFonts.nunito(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    fontSize: 24, 
+                    fontWeight: FontWeight.w900, 
+                    color: _vermelho // Título Vermelho
                   ),
                 ),
               ],
             ),
           ),
-
-          // ─── CONTEÚDO SCROLLÁVEL ──────────────────────────────────────────
+          
+          // ─── CONTEÚDO ORIGINAL ─────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: EdgeInsets.all(isWide ? 32 : 16),
               child: Center(
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 1200),
+                  constraints: const BoxConstraints(maxWidth: 800),
                   child: Column(
                     children: [
-                      // ABAS (Tabs)
-                      const SizedBox(height: 20),
-
-                      // CARDS DE ESTATÍSTICAS
-                      _buildCardsEstatisticas(isWide),
+                      // Quadrados de resumo geral (Bem coloridos)
+                      _buildEstatisticasGerais(isWide),
                       const SizedBox(height: 32),
-
-                      // ÁREA INFERIOR (GRÁFICO E LISTA)
-                      if (isWide)
-                        IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(flex: 2, child: _buildGrafico()),
-                              const SizedBox(width: 32),
-                              Expanded(flex: 1, child: _buildUltimasPartidas()),
-                            ],
-                          ),
-                        )
-                      else
-                        Column(
-                          children: [
-                            _buildGrafico(),
-                            const SizedBox(height: 32),
-                            _buildUltimasPartidas(),
-                          ],
-                        ),
+                      // Sua lista original de Últimas Partidas
+                      _buildUltimasPartidas(),
                     ],
                   ),
                 ),
@@ -94,185 +72,120 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
     );
   }
 
-  Widget _buildCardsEstatisticas(bool isWide) {
-    final cards = [
-      _buildCard('Partidas Jogadas', '12'),
-      _buildCard('Taxa de Acerto', '85%'),
-      _buildCard('Pontuação Média', '210'),
-      _buildCard('Tempo Médio', '04:15'),
-    ];
-
-    if (isWide) {
-      return Row(
-        children: cards.map((c) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: c))).toList(),
-      );
-    } else {
-      return Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        alignment: WrapAlignment.center,
-        children: cards.map((c) => SizedBox(width: 160, child: c)).toList(),
-      );
-    }
+  Widget _buildEstatisticasGerais(bool isWide) {
+    return GridView.count(
+      crossAxisCount: isWide ? 4 : 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: isWide ? 1.5 : 1.2,
+      children: [
+        _buildStatCard(Icons.sports_esports_rounded, 'Partidas', '47', Colors.blue),
+        _buildStatCard(Icons.emoji_events_rounded, 'Pontos', '1.240', Colors.amber[600]!),
+        _buildStatCard(Icons.check_circle_rounded, 'Acertos', '82%', Colors.green),
+        _buildStatCard(Icons.timer_rounded, 'Tempo Médio', '01:45', _vermelho),
+      ],
+    );
   }
 
-  Widget _buildCard(String titulo, String valor) {
+  Widget _buildStatCard(IconData icon, String label, String value, Color cor) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cor.withOpacity(0.3), width: 2), // Borda da cor do card
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: cor.withOpacity(0.1), // Sombra da cor do card
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Icon(icon, size: 36, color: cor),
+          const SizedBox(height: 8),
           Text(
-            titulo,
-            style: GoogleFonts.nunito(fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
+            value,
+            style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.black87),
           ),
-          const SizedBox(height: 12),
           Text(
-            valor,
-            style: GoogleFonts.nunito(fontSize: 36, color: Colors.black87, fontWeight: FontWeight.bold),
+            label,
+            style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.grey[600]),
           ),
         ],
       ),
     );
   }
 
-  // Gráfico construído de forma nativa com Flutter
-  Widget _buildGrafico() {
+  // Mantive a sua estrutura original para essa lista, apenas adicionei destaques!
+  Widget _buildUltimasPartidas() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _vermelho.withOpacity(0.2), width: 1),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
+          BoxShadow(color: _vermelho.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              const Icon(Icons.history_rounded, color: _vermelho, size: 28),
+              const SizedBox(width: 8),
               Text(
-                'Desempenho por Nível',
-                style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-              Row(
-                children: [
-                  Container(width: 12, height: 12, color: _vermelho),
-                  const SizedBox(width: 8),
-                  Text('Taxa de Acerto (%)', style: GoogleFonts.nunito(fontSize: 12, color: Colors.black54)),
-                ],
+                'Últimas Partidas',
+                style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w900, color: _vermelho),
               ),
             ],
           ),
-          const SizedBox(height: 32),
-          SizedBox(
-            height: 200, // Altura fixa para o gráfico
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // Eixo Y
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('100', style: GoogleFonts.nunito(color: Colors.black54, fontSize: 12)),
-                    Text('50', style: GoogleFonts.nunito(color: Colors.black54, fontSize: 12)),
-                    Text('0', style: GoogleFonts.nunito(color: Colors.black54, fontSize: 12)),
-                    const SizedBox(height: 20), // Espaço para alinhar com o eixo X
-                  ],
-                ),
-                const SizedBox(width: 16),
-                Container(width: 1, color: Colors.grey[300]), // Linha do eixo Y
-                const SizedBox(width: 16),
-                
-                // Barras (Eixo X)
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildBarraGrafico('Nível 1', 85),
-                      _buildBarraGrafico('Nível 2', 65),
-                      _buildBarraGrafico('Nível 3', 75),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBarraGrafico(String label, double porcentagem) {
-    // Calcula a altura da barra baseado no tamanho máximo de 160 pixels (para caber nos 200 do container)
-    final alturaBarra = 160 * (porcentagem / 100);
-    
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          width: 48,
-          height: alturaBarra,
-          color: _vermelho,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          label,
-          style: GoogleFonts.nunito(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w600),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUltimasPartidas() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Últimas Partidas',
-            style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-          ),
           const SizedBox(height: 24),
-          _buildLinhaPartida('Nível 1', '26/05/2026', '260 pts'),
-          const Divider(height: 24),
-          _buildLinhaPartida('Nível 1', '24/05/2026', '180 pts'),
-          const Divider(height: 24),
-          _buildLinhaPartida('Nível 2', '23/05/2026', '210 pts'),
-          const Spacer(),
+          _buildLinhaPartida('Nível 1', '26/05/2026', '260 pts', Colors.green),
+          const Divider(height: 24, thickness: 1),
+          _buildLinhaPartida('Nível 1', '24/05/2026', '180 pts', Colors.amber[600]!),
+          const Divider(height: 24, thickness: 1),
+          _buildLinhaPartida('Nível 2', '23/05/2026', '210 pts', _vermelho),
         ],
       ),
     );
   }
 
-  Widget _buildLinhaPartida(String nivel, String data, String pontos) {
+  Widget _buildLinhaPartida(String nivel, String data, String pontos, Color corNivel) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(nivel, style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.black87)),
-        Text(data, style: GoogleFonts.nunito(color: Colors.black54)),
-        Text(pontos, style: GoogleFonts.nunito(color: Colors.black54)),
+        Row(
+          children: [
+            // Caixinha colorida de destaque para o Nível
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: corNivel.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                nivel,
+                style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w900, color: corNivel),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              data,
+              style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+        Text(
+          pontos,
+          style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87),
+        ),
       ],
     );
   }
