@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'telaLogin.dart';
+import 'cadastrarAluno.dart';
+import 'telaDificuldade.dart';
 import 'relatoriosProfessor.dart';
 import 'cadastrarAluno.dart'; // IMPORTAÇÃO ADICIONADA
 
@@ -140,6 +142,14 @@ class TelaInicialProfessor extends StatelessWidget {
                               icon: Icons.sports_esports_rounded,
                               isPrimary: true,
                               onTap: () {
+                                // Aqui fazemos a transição para a tela de jogo
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const TelaDificuldade(),
+                                  ),
+                                );
                                 debugPrint('Professor iniciando jogo');
                               },
                             ),
@@ -154,6 +164,7 @@ class TelaInicialProfessor extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
+                                    builder: (context) =>
                                     builder: (_) =>
                                         const CadastrarAlunoScreen(),
                                   ),

@@ -1,31 +1,24 @@
 import 'package:flutter/material.dart';
 
-// Importamos APENAS as telas que sabemos que estão corretas
 import 'telaLogin.dart';
-// ignore: unused_import
-import 'telaInicial.dart'; 
 
 void main() {
-  runApp(const MyApp());
+  runApp(const DominoQuimicaApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class DominoQuimicaApp extends StatelessWidget {
+  const DominoQuimicaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Dominó Química',
+      title: 'Domino Quimica',
       theme: ThemeData(
         primaryColor: Colors.red,
         scaffoldBackgroundColor: Colors.white,
       ),
-      // Inicia o app na tela de Login
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const LoginScreen(),
-      },
+      home: const LoginScreen(),
     );
   }
 }
