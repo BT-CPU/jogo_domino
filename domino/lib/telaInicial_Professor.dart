@@ -1,12 +1,12 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'telaLogin.dart';
 import 'cadastrarAluno.dart';
-import 'telaDificuldade.dart';
 import 'relatoriosProfessor.dart';
-import 'cadastrarAluno.dart'; // IMPORTAÇÃO ADICIONADA
+import 'telaDificuldade.dart';
+import 'telaLogin.dart';
 
 class TelaInicialProfessor extends StatelessWidget {
   const TelaInicialProfessor({super.key});
@@ -55,12 +55,11 @@ class TelaInicialProfessor extends StatelessWidget {
               ],
             ),
           ),
-
           Expanded(
             child: Scrollbar(
               thumbVisibility: false,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(24),
                 child: Center(
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 800),
@@ -104,9 +103,7 @@ class TelaInicialProfessor extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 40),
-
                         Text(
                           'Menu Principal',
                           textAlign: TextAlign.center,
@@ -116,9 +113,7 @@ class TelaInicialProfessor extends StatelessWidget {
                             color: Colors.black87,
                           ),
                         ),
-
                         const SizedBox(height: 8),
-
                         Text(
                           'Escolha uma das opções abaixo para continuar',
                           textAlign: TextAlign.center,
@@ -127,9 +122,7 @@ class TelaInicialProfessor extends StatelessWidget {
                             color: Colors.grey[600],
                           ),
                         ),
-
                         const SizedBox(height: 40),
-
                         Wrap(
                           spacing: 24,
                           runSpacing: 24,
@@ -142,7 +135,6 @@ class TelaInicialProfessor extends StatelessWidget {
                               icon: Icons.sports_esports_rounded,
                               isPrimary: true,
                               onTap: () {
-                                // Aqui fazemos a transição para a tela de jogo
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -150,11 +142,8 @@ class TelaInicialProfessor extends StatelessWidget {
                                         const TelaDificuldade(),
                                   ),
                                 );
-                                debugPrint('Professor iniciando jogo');
                               },
                             ),
-
-                            // BOTÃO CORRIGIDO
                             _buildMenuCard(
                               context: context,
                               title: 'Cadastrar Aluno',
@@ -164,14 +153,12 @@ class TelaInicialProfessor extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
                                     builder: (_) =>
                                         const CadastrarAlunoScreen(),
                                   ),
                                 );
                               },
                             ),
-
                             _buildMenuCard(
                               context: context,
                               title: 'Configurações do Dominó',
@@ -181,7 +168,6 @@ class TelaInicialProfessor extends StatelessWidget {
                                 debugPrint('Abrir configurações do jogo');
                               },
                             ),
-
                             _buildMenuCard(
                               context: context,
                               title: 'Relatórios dos Alunos',
@@ -193,13 +179,12 @@ class TelaInicialProfessor extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder: (_) =>
                                         const RelatoriosProfessorPage(
-                                      nomeProfessor: 'Professor',
-                                    ),
+                                          nomeProfessor: 'Professor',
+                                        ),
                                   ),
                                 );
                               },
                             ),
-
                             _buildMenuCard(
                               context: context,
                               title: 'Sair',
@@ -210,8 +195,7 @@ class TelaInicialProfessor extends StatelessWidget {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        const LoginScreen(),
+                                    builder: (context) => const LoginScreen(),
                                   ),
                                 );
                               },
@@ -262,8 +246,9 @@ class TelaInicialProfessor extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      isPrimary ? Colors.white.withOpacity(0.2) : _cinzaFundo,
+                  color: isPrimary
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : _cinzaFundo,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -272,9 +257,7 @@ class TelaInicialProfessor extends StatelessWidget {
                   color: isPrimary ? Colors.white : (iconColor ?? _vermelho),
                 ),
               ),
-
               const SizedBox(width: 16),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,20 +267,16 @@ class TelaInicialProfessor extends StatelessWidget {
                       style: GoogleFonts.nunito(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color:
-                            isPrimary ? Colors.white : Colors.black87,
+                        color: isPrimary ? Colors.white : Colors.black87,
                       ),
                     ),
-
                     const SizedBox(height: 4),
-
                     Text(
                       subtitle,
                       style: GoogleFonts.nunito(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color:
-                            isPrimary ? Colors.white70 : Colors.grey[500],
+                        color: isPrimary ? Colors.white70 : Colors.grey[500],
                       ),
                     ),
                   ],
@@ -312,42 +291,37 @@ class TelaInicialProfessor extends StatelessWidget {
 }
 
 Widget _buildLogoHexagono() {
-  return SizedBox(
+  return const SizedBox(
     width: 90,
     height: 90,
-    child: CustomPaint(
-      painter: _HexLogoPainter(),
-    ),
+    child: CustomPaint(painter: _HexLogoPainter()),
   );
 }
 
 class _HexLogoPainter extends CustomPainter {
+  const _HexLogoPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
     final r = size.width / 2;
-
     final path = Path();
 
     for (int i = 0; i < 6; i++) {
       final angle = (i * 60 - 30) * 3.14159 / 180;
-      final x = cx + r * 0.95 * cos(angle);
-      final y = cy + r * 0.95 * sin(angle);
-
-      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+      final x = cx + r * 0.95 * math.cos(angle);
+      final y = cy + r * 0.95 * math.sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
 
     path.close();
-
-    canvas.drawPath(
-      path,
-      Paint()..color = const Color(0xFFC0392B),
-    );
+    canvas.drawPath(path, Paint()..color = const Color(0xFFC0392B));
   }
-
-  double cos(double a) => math.cos(a);
-  double sin(double a) => math.sin(a);
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
