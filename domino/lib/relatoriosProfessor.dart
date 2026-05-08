@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'relatoriosAluno.dart';
+import 'package:google_fonts/google_fonts.dart';
+// Importando o arquivo do aluno exatamente com o nome que está na sua pasta
+import 'relatoriosAluno.dart'; 
 
 class AlunoResumo {
   final int idUsuario;
@@ -50,22 +52,20 @@ List<AlunoResumo> _mockAlunos() {
   ];
 }
 
-class RelatoriosProfessorPage extends StatefulWidget {
+class RelatoriosProfessorScreen extends StatefulWidget {
   final String nomeProfessor;
-  const RelatoriosProfessorPage({super.key, this.nomeProfessor = 'Professor'});
+  const RelatoriosProfessorScreen({super.key, this.nomeProfessor = 'Professor'});
 
   @override
-  State<RelatoriosProfessorPage> createState() => _RelatoriosProfessorPageState();
+  State<RelatoriosProfessorScreen> createState() => _RelatoriosProfessorScreenState();
 }
 
-class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
-  static const Color _azulPrincipal = Color(0xFF003F8A);
-  static const Color _azulClaro     = Color(0xFF1565C0);
-  static const Color _laranja       = Color(0xFFFF6B00);
-  static const Color _cinzaFundo    = Color(0xFFF4F6FA);
+class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
+  static const Color _vermelho      = Color(0xFFC0392B);
+  static const Color _cinzaFundo    = Color(0xFFF0F0F0);
   static const Color _branco        = Colors.white;
-  static const Color _verde         = Color(0xFF2E7D32);
-  static const Color _vermelho      = Color(0xFFC62828);
+  static const Color _verde         = Color(0xFF27AE60);
+  static const Color _laranja       = Color(0xFFF39C12);
 
   List<AlunoResumo> _todos     = [];
   List<AlunoResumo> _filtrados = [];
@@ -90,7 +90,7 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
   }
 
   Future<void> _carregarDados() async {
-    await Future.delayed(const Duration(milliseconds: 700));
+    await Future.delayed(const Duration(milliseconds: 500));
     final lista = _mockAlunos();
     final turmas = ['Todas', ...{...lista.map((a) => a.turma)}];
     setState(() {
@@ -115,7 +115,6 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
         default:         return a.nome.compareTo(b.nome);
       }
     });
-
     _filtrados = lista;
   }
 
@@ -124,13 +123,10 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
     return Scaffold(
       backgroundColor: _cinzaFundo,
       appBar: AppBar(
-        backgroundColor: _azulPrincipal,
+        backgroundColor: _vermelho,
         foregroundColor: _branco,
         elevation: 0,
-        title: const Text(
-          'Relatórios dos Alunos',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, letterSpacing: 0.5),
-        ),
+        title: Text('Visão da Turma', style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 20)),
         actions: [
           IconButton(
             tooltip: 'Atualizar',
@@ -151,9 +147,9 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: _azulPrincipal),
+          CircularProgressIndicator(color: _vermelho),
           SizedBox(height: 16),
-          Text('Carregando dados dos alunos...', style: TextStyle(color: _azulPrincipal)),
+          Text('Carregando dados dos alunos...', style: TextStyle(color: _vermelho)),
         ],
       ),
     );
@@ -161,21 +157,19 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
 
   Widget _buildConteudo() {
     return RefreshIndicator(
-      color: _azulPrincipal,
+      color: _vermelho,
       onRefresh: _carregarDados,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         children: [
           _buildCabecalhoProfessor(),
-          const SizedBox(height: 20),
-          _buildTituloSecao('Resumo Geral'),
-          const SizedBox(height: 12),
-          _buildCardsResumo(),
           const SizedBox(height: 24),
-          _buildTituloSecao('Lista de Alunos'),
+          _buildCardsResumo(),
+          const SizedBox(height: 32),
+          Text('Lista de Alunos', style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black87)),
           const SizedBox(height: 12),
           _buildBarraFiltros(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _buildTabelaAlunos(),
           const SizedBox(height: 16),
         ],
@@ -185,49 +179,29 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
 
   Widget _buildCabecalhoProfessor() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_azulPrincipal, _azulClaro],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: _azulPrincipal.withOpacity(0.35), blurRadius: 12, offset: const Offset(0, 4)),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3))],
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: _laranja,
-            child: Text(
-              widget.nomeProfessor.isNotEmpty ? widget.nomeProfessor[0].toUpperCase() : 'P',
-              style: const TextStyle(color: _branco, fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(color: Color(0x15C0392B), shape: BoxShape.circle),
+            child: const Icon(Icons.school_rounded, size: 40, color: _vermelho),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Prof. ${widget.nomeProfessor}',
-                  style: const TextStyle(color: _branco, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                Text('Prof. ${widget.nomeProfessor}', style: GoogleFonts.nunito(color: Colors.black87, fontSize: 22, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
-                Text(
-                  '${_todos.length} aluno${_todos.length != 1 ? 's' : ''} cadastrado${_todos.length != 1 ? 's' : ''}',
-                  style: TextStyle(color: _branco.withOpacity(0.85), fontSize: 13),
-                ),
+                Text('${_todos.length} aluno${_todos.length != 1 ? 's' : ''} cadastrado${_todos.length != 1 ? 's' : ''}', style: GoogleFonts.nunito(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w600)),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(color: _laranja, borderRadius: BorderRadius.circular(20)),
-            child: const Icon(Icons.school_rounded, color: _branco, size: 20),
           ),
         ],
       ),
@@ -236,61 +210,38 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
 
   Widget _buildCardsResumo() {
     final comPartidas = _todos.where((a) => a.totalPartidas > 0).toList();
-    final mediaGeral = comPartidas.isEmpty
-        ? 0.0
-        : comPartidas.map((a) => a.taxaAcertoMedia).reduce((x, y) => x + y) / comPartidas.length;
-    final semJogar = _todos.where((a) => a.totalPartidas == 0).length;
+    final mediaGeral = comPartidas.isEmpty ? 0.0 : comPartidas.map((a) => a.taxaAcertoMedia).reduce((x, y) => x + y) / comPartidas.length;
     final totalPartidas = _todos.fold(0, (sum, a) => sum + a.totalPartidas);
 
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.45,
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
       children: [
-        _buildCardResumo(icone: Icons.people_rounded,          valor: '${_todos.length}',                  label: 'Total de Alunos',  cor: _azulPrincipal),
-        _buildCardResumo(icone: Icons.trending_up_rounded,     valor: '${mediaGeral.toStringAsFixed(0)}%', label: 'Média de Acerto',  cor: _verde),
-        _buildCardResumo(icone: Icons.sports_esports_rounded,  valor: '$totalPartidas',                    label: 'Total Partidas',   cor: _laranja),
-        _buildCardResumo(icone: Icons.hourglass_empty_rounded, valor: '$semJogar',                         label: 'Sem Partidas',     cor: _vermelho),
+        _buildCardResumo(Icons.trending_up_rounded, '${mediaGeral.toStringAsFixed(0)}%', 'Média da Turma', _verde),
+        _buildCardResumo(Icons.sports_esports_rounded, '$totalPartidas', 'Partidas Jogadas', _laranja),
       ],
     );
   }
 
-  Widget _buildCardResumo({
-    required IconData icone,
-    required String valor,
-    required String label,
-    required Color cor,
-  }) {
+  Widget _buildCardResumo(IconData icone, String valor, String label, Color cor) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      width: 180,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _branco,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icone, color: cor, size: 26),
-          const SizedBox(height: 8),
-          Text(valor, style: TextStyle(color: cor, fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: Colors.black54, fontSize: 11.5)),
+          Icon(icone, color: cor, size: 28),
+          const SizedBox(height: 12),
+          Text(valor, style: GoogleFonts.nunito(color: Colors.black87, fontSize: 24, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 4),
+          Text(label, style: GoogleFonts.nunito(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
-    );
-  }
-
-  Widget _buildTituloSecao(String titulo) {
-    return Text(
-      titulo,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _azulPrincipal, letterSpacing: 0.3),
     );
   }
 
@@ -299,27 +250,19 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
       children: [
         TextField(
           controller: _buscaCtrl,
+          style: GoogleFonts.nunito(fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Buscar aluno pelo nome...',
-            hintStyle: const TextStyle(fontSize: 14),
+            hintStyle: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[500]),
             prefixIcon: const Icon(Icons.search_rounded, color: Colors.black45),
-            suffixIcon: _busca.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear_rounded, size: 18),
-                    onPressed: () {
-                      _buscaCtrl.clear();
-                      setState(() { _busca = ''; _aplicarFiltros(); });
-                    },
-                  )
-                : null,
             filled: true,
             fillColor: _branco,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           ),
           onChanged: (v) => setState(() { _busca = v; _aplicarFiltros(); }),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(child: _buildDropdown(
@@ -327,7 +270,7 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
               items: _turmas.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
               onChanged: (v) => setState(() { _turmaSel = v!; _aplicarFiltros(); }),
             )),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(child: _buildDropdown(
               value: _ordenarPor,
               items: const [
@@ -343,20 +286,16 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
     );
   }
 
-  Widget _buildDropdown({
-    required String value,
-    required List<DropdownMenuItem<String>> items,
-    required void Function(String?) onChanged,
-  }) {
+  Widget _buildDropdown({required String value, required List<DropdownMenuItem<String>> items, required void Function(String?) onChanged}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(color: _branco, borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
           icon: const Icon(Icons.expand_more_rounded, size: 20),
-          style: const TextStyle(fontSize: 13, color: Colors.black87),
+          style: GoogleFonts.nunito(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w600),
           items: items,
           onChanged: onChanged,
         ),
@@ -365,20 +304,6 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
   }
 
   Widget _buildTabelaAlunos() {
-    if (_filtrados.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(color: _branco, borderRadius: BorderRadius.circular(14)),
-        child: const Column(
-          children: [
-            Icon(Icons.search_off_rounded, size: 48, color: Colors.black26),
-            SizedBox(height: 12),
-            Text('Nenhum aluno encontrado.', style: TextStyle(color: Colors.black45, fontSize: 14)),
-          ],
-        ),
-      );
-    }
-
     return Container(
       decoration: BoxDecoration(
         color: _branco,
@@ -405,98 +330,63 @@ class _RelatoriosProfessorPageState extends State<RelatoriosProfessorPage> {
 
   Widget _buildHeaderTabela() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: _azulPrincipal.withOpacity(0.06),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: const BoxDecoration(color: Color(0xFFFAFAFA), borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
       child: Row(
         children: [
-          const Expanded(flex: 3, child: Text('Aluno / Turma', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54))),
-          _buildHeaderCol('Acerto'),
-          _buildHeaderCol('Partidas'),
-          _buildHeaderCol('Melhor\nTempo'),
-          _buildHeaderCol('Última\nJogada'),
-          const SizedBox(width: 32),
+          Expanded(flex: 3, child: Text('ALUNO / TURMA', style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[600]))),
+          _buildHeaderCol('ACERTO'),
+          _buildHeaderCol('PARTIDAS'),
+          _buildHeaderCol('MELHOR TEMPO'),
+          _buildHeaderCol('ÚLTIMA JOGADA'),
+          const SizedBox(width: 24),
         ],
       ),
     );
   }
 
   Widget _buildHeaderCol(String label) {
-    return Expanded(
-      flex: 2,
-      child: Text(label, textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54)),
-    );
+    return Expanded(flex: 2, child: Text(label, textAlign: TextAlign.center, style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[600])));
   }
 
   Widget _buildLinhaAluno(AlunoResumo aluno) {
-    final cor = aluno.taxaAcertoMedia >= 70
-        ? _verde
-        : aluno.taxaAcertoMedia >= 50
-            ? _laranja
-            : aluno.totalPartidas == 0
-                ? Colors.black38
-                : _vermelho;
+    final cor = aluno.taxaAcertoMedia >= 70 ? _verde : aluno.taxaAcertoMedia >= 50 ? _laranja : aluno.totalPartidas == 0 ? Colors.grey[400]! : _vermelho;
 
     return InkWell(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => RelatoriosAlunoPage(nomeAluno: aluno.nome)),
+        // Conexão exata com a classe que criamos no arquivo relatoriosAluno.dart
+        MaterialPageRoute(builder: (_) => RelatoriosAlunoScreen(nomeAluno: aluno.nome, turmaAluno: aluno.turma)),
       ),
       borderRadius: BorderRadius.circular(14),
-      hoverColor: _azulPrincipal.withOpacity(0.04),
+      hoverColor: _vermelho.withOpacity(0.04),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
             Expanded(
               flex: 3,
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: cor.withOpacity(0.12),
-                    child: Text(aluno.nome[0].toUpperCase(),
-                        style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 14)),
-                  ),
-                  const SizedBox(width: 10),
+                  CircleAvatar(radius: 18, backgroundColor: cor.withOpacity(0.12), child: Text(aluno.nome[0].toUpperCase(), style: GoogleFonts.nunito(color: cor, fontWeight: FontWeight.bold, fontSize: 16))),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(aluno.nome, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5), overflow: TextOverflow.ellipsis),
-                        Text(aluno.turma, style: const TextStyle(fontSize: 11, color: Colors.black45)),
+                        Text(aluno.nome, style: GoogleFonts.nunito(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.black87), overflow: TextOverflow.ellipsis),
+                        Text(aluno.turma, style: GoogleFonts.nunito(fontSize: 12, color: Colors.grey[500])),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: cor.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                  child: Text(
-                    aluno.totalPartidas == 0 ? '--' : '${aluno.taxaAcertoMedia.toStringAsFixed(0)}%',
-                    style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(flex: 2, child: Center(child: Text('${aluno.totalPartidas}', style: const TextStyle(fontSize: 13)))),
-            Expanded(flex: 2, child: Center(child: Text(aluno.melhorTempoFormatado, style: const TextStyle(fontSize: 13)))),
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Text(aluno.ultimaPartidaStr, textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: aluno.ultimaPartida == null ? Colors.black38 : Colors.black54)),
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.black26, size: 20),
+            Expanded(flex: 2, child: Center(child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: cor.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Text(aluno.totalPartidas == 0 ? '--' : '${aluno.taxaAcertoMedia.toStringAsFixed(0)}%', style: GoogleFonts.nunito(color: cor, fontWeight: FontWeight.w800, fontSize: 13))))),
+            Expanded(flex: 2, child: Center(child: Text('${aluno.totalPartidas}', style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)))),
+            Expanded(flex: 2, child: Center(child: Text(aluno.melhorTempoFormatado, style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[600])))),
+            Expanded(flex: 2, child: Center(child: Text(aluno.ultimaPartidaStr, textAlign: TextAlign.center, style: GoogleFonts.nunito(fontSize: 12, color: aluno.ultimaPartida == null ? Colors.grey[400] : Colors.grey[600])))),
+            const Icon(Icons.chevron_right_rounded, color: Colors.black26, size: 24),
           ],
         ),
       ),

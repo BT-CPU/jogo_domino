@@ -1,659 +1,157 @@
-// relatoriosAluno.dart
-// Tela de relatórios de desempenho do aluno no Dominó Químico.
-// Usa dados mockados — substitua as chamadas em _carregarDados() pela sua API futura.
-
 import 'package:flutter/material.dart';
-class Partida {
-  final int nivelDificuldade;
-  final int tempoSegundos;
-  final int qtdAcertos;
-  final int qtdErros;
-  final DateTime dataPartida;
+import 'package:google_fonts/google_fonts.dart';
 
-  const Partida({
-    required this.nivelDificuldade,
-    required this.tempoSegundos,
-    required this.qtdAcertos,
-    required this.qtdErros,
-    required this.dataPartida,
+class PartidaReporte {
+  final int nivel;
+  final String data;
+  final int acertos;
+  final int erros;
+  final String tempo;
+
+  PartidaReporte({
+    required this.nivel,
+    required this.data,
+    required this.acertos,
+    required this.erros,
+    required this.tempo,
+  });
+}
+
+class RelatoriosAlunoScreen extends StatelessWidget {
+  final String nomeAluno;
+  final String turmaAluno;
+
+  const RelatoriosAlunoScreen({
+    super.key, 
+    this.nomeAluno = 'Aluno', 
+    this.turmaAluno = 'Turma não informada'
   });
 
-  int get totalPecas => qtdAcertos + qtdErros;
+  static const _vermelho = Color(0xFFC0392B);
+  static const _cinzaFundo = Color(0xFFF0F0F0);
+  static const _preto87 = Colors.black87;
+  static const _cinzaTexto = Color(0xFF757575);
 
-  double get taxaAcerto =>
-      totalPecas == 0 ? 0 : (qtdAcertos / totalPecas) * 100;
-
-  String get nivelLabel {
-    switch (nivelDificuldade) {
-      case 1:
-        return 'Fácil';
-      case 2:
-        return 'Médio';
-      case 3:
-        return 'Difícil';
-      default:
-        return 'Nível $nivelDificuldade';
-    }
-  }
-
-  String get tempoFormatado {
-    final m = tempoSegundos ~/ 60;
-    final s = tempoSegundos % 60;
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-  }
-}
-
-// ─────────────────────────────────────────────
-// DADOS MOCKADOS
-// Substitua este bloco por chamadas HTTP quando o backend estiver pronto.
-// Exemplo futuro:
-//   final response = await http.get(Uri.parse('$baseUrl/partidas?id_usuario=$idUsuario'));
-//   final lista = (jsonDecode(response.body) as List).map((e) => Partida.fromJson(e)).toList();
-// ─────────────────────────────────────────────
-List<Partida> _mockPartidas() {
-  final now = DateTime.now();
-  return [
-    Partida(
-      nivelDificuldade: 1,
-      tempoSegundos: 92,
-      qtdAcertos: 8,
-      qtdErros: 2,
-      dataPartida: now.subtract(const Duration(days: 0, hours: 2)),
-    ),
-    Partida(
-      nivelDificuldade: 2,
-      tempoSegundos: 145,
-      qtdAcertos: 6,
-      qtdErros: 4,
-      dataPartida: now.subtract(const Duration(days: 1)),
-    ),
-    Partida(
-      nivelDificuldade: 1,
-      tempoSegundos: 78,
-      qtdAcertos: 10,
-      qtdErros: 0,
-      dataPartida: now.subtract(const Duration(days: 2)),
-    ),
-    Partida(
-      nivelDificuldade: 3,
-      tempoSegundos: 210,
-      qtdAcertos: 5,
-      qtdErros: 5,
-      dataPartida: now.subtract(const Duration(days: 3)),
-    ),
-    Partida(
-      nivelDificuldade: 2,
-      tempoSegundos: 130,
-      qtdAcertos: 7,
-      qtdErros: 3,
-      dataPartida: now.subtract(const Duration(days: 5)),
-    ),
-  ];
-}
-
-// ─────────────────────────────────────────────
-// TELA PRINCIPAL
-// ─────────────────────────────────────────────
-class RelatoriosAlunoPage extends StatefulWidget {
-  /// Recebe o nome do aluno logado para exibição.
-  /// Substitua por um objeto de usuário completo quando integrar autenticação.
-  final String nomeAluno;
-
-  const RelatoriosAlunoPage({super.key, this.nomeAluno = 'Aluno'});
-
-  @override
-  State<RelatoriosAlunoPage> createState() => _RelatoriosAlunoPageState();
-}
-
-class _RelatoriosAlunoPageState extends State<RelatoriosAlunoPage> {
-  // ── Paleta de cores (baseada na identidade Centro Paula Souza) ──
-  static const Color _azulPrincipal = Color(0xFF003F8A);
-  static const Color _azulClaro = Color(0xFF1565C0);
-  static const Color _laranja = Color(0xFFFF6B00);
-  static const Color _cinzaFundo = Color(0xFFF4F6FA);
-  static const Color _branco = Colors.white;
-  static const Color _verde = Color(0xFF2E7D32);
-  static const Color _vermelho = Color(0xFFC62828);
-
-  List<Partida> _partidas = [];
-  bool _carregando = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _carregarDados();
-  }
-
-  /// Simula delay de rede. Substitua pelo fetch real da API.
-  Future<void> _carregarDados() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    setState(() {
-      _partidas = _mockPartidas();
-      _carregando = false;
-    });
-  }
-
-  // ── Estatísticas calculadas ──
-  int get _totalPartidas => _partidas.length;
-
-  double get _taxaMediaAcerto {
-    if (_partidas.isEmpty) return 0;
-    return _partidas.map((p) => p.taxaAcerto).reduce((a, b) => a + b) /
-        _partidas.length;
-  }
-
-  int get _melhorTempo {
-    if (_partidas.isEmpty) return 0;
-    return _partidas.map((p) => p.tempoSegundos).reduce((a, b) => a < b ? a : b);
-  }
-
-  int get _totalAcertos =>
-      _partidas.fold(0, (sum, p) => sum + p.qtdAcertos);
-
-  int get _totalErros =>
-      _partidas.fold(0, (sum, p) => sum + p.qtdErros);
-
-  // ─────────────────────────────────────────────
-  // BUILD
-  // ─────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _cinzaFundo,
-      appBar: _buildAppBar(),
-      body: _carregando ? _buildLoading() : _buildConteudo(),
-    );
-  }
+    final isWide = MediaQuery.of(context).size.width > 700;
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: _azulPrincipal,
-      foregroundColor: _branco,
-      elevation: 0,
-      title: const Text(
-        'Meu Desempenho',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
-          letterSpacing: 0.5,
-        ),
-      ),
-      actions: [
-        IconButton(
-          tooltip: 'Atualizar',
-          icon: const Icon(Icons.refresh_rounded),
-          onPressed: () {
-            setState(() => _carregando = true);
-            _carregarDados();
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoading() {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(color: _azulPrincipal),
-          SizedBox(height: 16),
-          Text('Carregando seus dados...', style: TextStyle(color: _azulPrincipal)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConteudo() {
-    return RefreshIndicator(
-      color: _azulPrincipal,
-      onRefresh: _carregarDados,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildCabecalhoAluno(),
-          const SizedBox(height: 20),
-          _buildTituloSecao('Resumo Geral'),
-          const SizedBox(height: 12),
-          _buildCardsResumo(),
-          const SizedBox(height: 24),
-          _buildTituloSecao('Desempenho por Nível'),
-          const SizedBox(height: 12),
-          _buildBarrasNivel(),
-          const SizedBox(height: 24),
-          _buildTituloSecao('Histórico de Partidas'),
-          const SizedBox(height: 12),
-          if (_partidas.isEmpty)
-            _buildSemDados()
-          else
-            ..._partidas.map(_buildCardPartida),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  // ── Cabeçalho com nome e avatar ──
-  Widget _buildCabecalhoAluno() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_azulPrincipal, _azulClaro],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: _azulPrincipal.withOpacity(0.35),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: _laranja,
-            child: Text(
-              widget.nomeAluno.isNotEmpty
-                  ? widget.nomeAluno[0].toUpperCase()
-                  : 'A',
-              style: const TextStyle(
-                color: _branco,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Olá, ${widget.nomeAluno}!',
-                  style: const TextStyle(
-                    color: _branco,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$_totalPartidas partida${_totalPartidas != 1 ? 's' : ''} jogada${_totalPartidas != 1 ? 's' : ''}',
-                  style: TextStyle(
-                    color: _branco.withOpacity(0.85),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Medalha de taxa de acerto
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: _laranja,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '${_taxaMediaAcerto.toStringAsFixed(0)}% ✓',
-              style: const TextStyle(
-                color: _branco,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Cards de resumo ──
-  Widget _buildCardsResumo() {
-    final melhorTempoStr = _partidas.isEmpty
-        ? '--:--'
-        : Partida(
-            nivelDificuldade: 1,
-            tempoSegundos: _melhorTempo,
-            qtdAcertos: 0,
-            qtdErros: 0,
-            dataPartida: DateTime.now(),
-          ).tempoFormatado;
-
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.45,
-      children: [
-        _buildCardResumo(
-          icone: Icons.check_circle_outline_rounded,
-          valor: '$_totalAcertos',
-          label: 'Total de Acertos',
-          cor: _verde,
-        ),
-        _buildCardResumo(
-          icone: Icons.cancel_outlined,
-          valor: '$_totalErros',
-          label: 'Total de Erros',
-          cor: _vermelho,
-        ),
-        _buildCardResumo(
-          icone: Icons.timer_outlined,
-          valor: melhorTempoStr,
-          label: 'Melhor Tempo',
-          cor: _azulPrincipal,
-        ),
-        _buildCardResumo(
-          icone: Icons.emoji_events_outlined,
-          valor: '${_taxaMediaAcerto.toStringAsFixed(1)}%',
-          label: 'Média de Acerto',
-          cor: _laranja,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCardResumo({
-    required IconData icone,
-    required String valor,
-    required String label,
-    required Color cor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _branco,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icone, color: cor, size: 26),
-          const SizedBox(height: 8),
-          Text(
-            valor,
-            style: TextStyle(
-              color: cor,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.black54,
-              fontSize: 11.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Barras de desempenho por nível ──
-  Widget _buildBarrasNivel() {
-    final niveis = [
-      {'label': 'Fácil', 'nivel': 1, 'cor': _verde},
-      {'label': 'Médio', 'nivel': 2, 'cor': _laranja},
-      {'label': 'Difícil', 'nivel': 3, 'cor': _vermelho},
+    final List<PartidaReporte> historicoPartidas = [
+      PartidaReporte(nivel: 1, data: "05/05/2026", acertos: 10, erros: 2, tempo: "02:15"),
+      PartidaReporte(nivel: 1, data: "03/05/2026", acertos: 12, erros: 0, tempo: "01:58"),
+      PartidaReporte(nivel: 2, data: "01/05/2026", acertos: 8, erros: 4, tempo: "03:10"),
+      PartidaReporte(nivel: 1, data: "28/04/2026", acertos: 11, erros: 1, tempo: "02:05"),
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _branco,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return Scaffold(
+      backgroundColor: _cinzaFundo,
+      appBar: AppBar(
+        title: Text(
+          'Relatório do Aluno',
+          style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+        backgroundColor: _vermelho,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        centerTitle: true,
       ),
-      child: Column(
-        children: niveis.map((n) {
-          final partidasNivel = _partidas
-              .where((p) => p.nivelDificuldade == n['nivel'])
-              .toList();
-          final media = partidasNivel.isEmpty
-              ? 0.0
-              : partidasNivel.map((p) => p.taxaAcerto).reduce((a, b) => a + b) /
-                  partidasNivel.length;
-          final cor = n['cor'] as Color;
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(isWide ? 32.0 : 16.0),
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 1000),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      n['label'] as String,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
-                      ),
-                    ),
-                    Text(
-                      partidasNivel.isEmpty
-                          ? 'Sem partidas'
-                          : '${media.toStringAsFixed(0)}% (${partidasNivel.length} partida${partidasNivel.length != 1 ? 's' : ''})',
-                      style: TextStyle(
-                        color: cor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                _buildPerfilAlunoCard(),
+                const SizedBox(height: 24),
+                Text(
+                  'Histórico de Partidas',
+                  style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w700, color: _preto87),
                 ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: media / 100,
-                    minHeight: 10,
-                    backgroundColor: cor.withOpacity(0.12),
-                    valueColor: AlwaysStoppedAnimation<Color>(cor),
-                  ),
-                ),
+                const SizedBox(height: 12),
+                _buildTabelaPartidasCard(historicoPartidas),
               ],
             ),
-          );
-        }).toList(),
+          ),
+        ),
       ),
     );
   }
 
-  // ── Card de cada partida no histórico ──
-  Widget _buildCardPartida(Partida p) {
-    final corNivel = p.nivelDificuldade == 1
-        ? _verde
-        : p.nivelDificuldade == 2
-            ? _laranja
-            : _vermelho;
-
-    final agora = DateTime.now();
-    final diff = agora.difference(p.dataPartida);
-    String dataStr;
-    if (diff.inMinutes < 60) {
-      dataStr = 'Há ${diff.inMinutes} min';
-    } else if (diff.inHours < 24) {
-      dataStr = 'Há ${diff.inHours}h';
-    } else {
-      dataStr = 'Há ${diff.inDays} dia${diff.inDays != 1 ? 's' : ''}';
-    }
-
+  Widget _buildPerfilAlunoCard() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _branco,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border(
-          left: BorderSide(color: corNivel, width: 4),
-        ),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3))],
       ),
       child: Row(
         children: [
-          // Nível
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: corNivel.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  p.nivelLabel,
-                  style: TextStyle(
-                    color: corNivel,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                dataStr,
-                style: const TextStyle(
-                  fontSize: 10.5,
-                  color: Colors.black45,
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(color: Color(0x15C0392B), shape: BoxShape.circle),
+            child: const Icon(Icons.account_circle_outlined, size: 50, color: _vermelho),
           ),
-          const SizedBox(width: 14),
-          // Acertos e erros
+          const SizedBox(width: 20),
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildMiniStat(
-                  Icons.check_rounded,
-                  '${p.qtdAcertos}',
-                  'Acertos',
-                  _verde,
-                ),
-                _buildMiniStat(
-                  Icons.close_rounded,
-                  '${p.qtdErros}',
-                  'Erros',
-                  _vermelho,
-                ),
-                _buildMiniStat(
-                  Icons.timer_rounded,
-                  p.tempoFormatado,
-                  'Tempo',
-                  _azulPrincipal,
-                ),
+                Text(nomeAluno, style: GoogleFonts.nunito(fontSize: 22, fontWeight: FontWeight.w900, color: _preto87)),
+                Text(turmaAluno, style: GoogleFonts.nunito(fontSize: 14, color: _cinzaTexto, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
-          // Taxa de acerto
-          Column(
-            children: [
-              Text(
-                '${p.taxaAcerto.toStringAsFixed(0)}%',
-                style: TextStyle(
-                  color: corNivel,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const Text(
-                'acerto',
-                style: TextStyle(fontSize: 10, color: Colors.black45),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildMiniStat(
-      IconData icone, String valor, String label, Color cor) {
-    return Column(
-      children: [
-        Icon(icone, color: cor, size: 16),
-        const SizedBox(height: 2),
-        Text(
-          valor,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            color: cor,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 10, color: Colors.black45),
-        ),
-      ],
-    );
-  }
-
-  // ── Utilitários ──
-  Widget _buildTituloSecao(String titulo) {
-    return Text(
-      titulo,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: _azulPrincipal,
-        letterSpacing: 0.3,
-      ),
-    );
-  }
-
-  Widget _buildSemDados() {
+  Widget _buildTabelaPartidasCard(List<PartidaReporte> partidas) {
     return Container(
-      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: _branco,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3))],
       ),
-      child: const Column(
-        children: [
-          Icon(Icons.hourglass_empty_rounded, size: 48, color: Colors.black26),
-          SizedBox(height: 12),
-          Text(
-            'Nenhuma partida registrada ainda.\nJogue para ver seu desempenho aqui!',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black45, fontSize: 14),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(const Color(0x08C0392B)), 
+            dataRowMaxHeight: 60,
+            dataRowMinHeight: 60,
+            horizontalMargin: 20,
+            columnSpacing: 24,
+            columns: [
+              _buildDataColumn('Nível'),
+              _buildDataColumn('Data'),
+              _buildDataColumn('Acertos', isNumeric: true),
+              _buildDataColumn('Erros', isNumeric: true),
+              _buildDataColumn('Tempo'),
+            ],
+            rows: partidas.map((partida) {
+              return DataRow(cells: [
+                DataCell(Text('Lvl ${partida.nivel}', style: GoogleFonts.nunito(fontWeight: FontWeight.w700, color: _preto87))),
+                DataCell(Text(partida.data, style: GoogleFonts.nunito(color: _cinzaTexto))),
+                DataCell(Center(child: Text('${partida.acertos}', style: GoogleFonts.nunito(color: Colors.green[700], fontWeight: FontWeight.bold, fontSize: 16)))),
+                DataCell(Center(child: Text('${partida.erros}', style: GoogleFonts.nunito(color: _vermelho, fontWeight: FontWeight.bold, fontSize: 16)))),
+                DataCell(Text(partida.tempo, style: GoogleFonts.nunito(color: _cinzaTexto, fontWeight: FontWeight.w600))),
+              ]);
+            }).toList(),
           ),
-        ],
+        ),
       ),
+    );
+  }
+
+  DataColumn _buildDataColumn(String label, {bool isNumeric = false}) {
+    return DataColumn(
+      numeric: isNumeric,
+      label: Text(label.toUpperCase(), style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w800, color: _vermelho, letterSpacing: 1.2)),
     );
   }
 }

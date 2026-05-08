@@ -170,17 +170,16 @@ class TelaInicialProfessor extends StatelessWidget {
                             ),
                             _buildMenuCard(
                               context: context,
-                              title: 'Relatórios dos Alunos',
+                              title: 'Relatórios',
                               subtitle: 'Acompanhar desempenho',
-                              icon: Icons.analytics_rounded,
+                              icon: Icons.bar_chart_rounded,
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        const RelatoriosProfessorPage(
-                                          nomeProfessor: 'Professor',
-                                        ),
+                                    // ATENÇÃO PARA ESTE NOME 👇
+                                    builder: (context) =>
+                                        const RelatoriosProfessorScreen(),
                                   ),
                                 );
                               },
