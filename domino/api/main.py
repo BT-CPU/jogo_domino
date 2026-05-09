@@ -34,6 +34,10 @@ class CadastroUsuario(BaseModel):
     aceite_lgpd: bool
     perfil: str = 'aluno'  # 'aluno' ou 'professor'
 
+class LoginUsuario(BaseModel):
+    email: EmailStr
+    senha: str
+
 # ─── ROTAS ──────────────────────────────────────────────────────────────────
 
 @app.get("/")
@@ -116,3 +120,57 @@ def excluir_usuario(id_usuario: int):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/login")
+def login(dados: LoginUsuario):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT id_usuario, nome, email, senha_hash, perfil
+            FROM tb_usuario
+            WHERE email = %s
+            """,
+            (dados.email,),
+        )
+
+        usuario = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if not usuario:
+            raise HTTPException(
+                status_code=401,
+                detail="Usuário não encontrado."
+            )
+
+        senha_correta = bcrypt.checkpw(
+            dados.senha.encode(),
+            usuario["senha_hash"].encode()
+        )
+
+        if not senha_correta:
+            raise HTTPException(
+                status_code=401,
+                detail="Senha incorreta."
+            )
+
+        return {
+            "id_usuario": usuario["id_usuario"],
+            "nome": usuario["nome"],
+            "email": usuario["email"],
+            "perfil": usuario["perfil"],
+            "mensagem": "Login realizado com sucesso"
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )

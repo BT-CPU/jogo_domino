@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'telaInicial.dart';
 import 'telaInicial_Professor.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -77,7 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isWideScreen = constraints.maxWidth > 900;
-                final isTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
+                final isTablet =
+                    constraints.maxWidth > 600 && constraints.maxWidth <= 900;
                 final isMobile = constraints.maxWidth <= 600;
 
                 return Container(
@@ -86,15 +89,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: SingleChildScrollView(
                       child: Container(
                         constraints: BoxConstraints(
-                          maxWidth: isWideScreen ? 1200 : (isTablet ? 800 : double.infinity),
+                          maxWidth: isWideScreen
+                              ? 1200
+                              : (isTablet ? 800 : double.infinity),
                         ),
                         child: isWideScreen
                             ? IntrinsicHeight(
                                 child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                    Expanded(child: _buildLeftPanel(isMobile, isTablet)),
-                                    Expanded(child: _buildRightPanel(isMobile, isTablet)),
+                                    Expanded(
+                                      child: _buildLeftPanel(
+                                        isMobile,
+                                        isTablet,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: _buildRightPanel(
+                                        isMobile,
+                                        isTablet,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               )
@@ -127,9 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Container(
       padding: EdgeInsets.all(padding),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: Stack(
         children: [
           // Moléculas decorativas de fundo (apenas em telas maiores)
@@ -263,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           SizedBox(height: isMobile ? 20 : 24),
-          
+
           // Toggle Aluno/Professor
           Row(
             children: [
@@ -274,14 +288,19 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _buildToggleButton('Professor', !isStudent, isMobile, () {
-                  setState(() => isStudent = false);
-                }),
+                child: _buildToggleButton(
+                  'Professor',
+                  !isStudent,
+                  isMobile,
+                  () {
+                    setState(() => isStudent = false);
+                  },
+                ),
               ),
             ],
           ),
           SizedBox(height: isMobile ? 16 : 20),
-          
+
           // Campo de usuário/email
           _buildCampo(
             controller: _emailController,
@@ -291,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
             verticalPadding: inputVerticalPadding,
           ),
           const SizedBox(height: 12),
-          
+
           // Campo de senha
           _buildCampo(
             controller: _passwordController,
@@ -302,7 +321,7 @@ class _LoginScreenState extends State<LoginScreen> {
             verticalPadding: inputVerticalPadding,
           ),
           SizedBox(height: isMobile ? 20 : 28),
-          
+
           // Botão Entrar
           ElevatedButton(
             onPressed: _handleLogin,
@@ -329,7 +348,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildToggleButton(String text, bool isActive, bool isMobile, VoidCallback onTap) {
+  Widget _buildToggleButton(
+    String text,
+    bool isActive,
+    bool isMobile,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -417,9 +441,7 @@ class _LoginScreenState extends State<LoginScreen> {
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.3),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.grey.withOpacity(0.2),
-          ),
+          border: Border.all(color: Colors.grey.withOpacity(0.2)),
         ),
         child: Text(
           formula,
@@ -433,38 +455,68 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin() {
-    final usuario = _emailController.text.trim();
-    final senha = _passwordController.text;
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final senha = _passwordController.text.trim();
 
-
-      if (usuario == 'aluno' && senha == 'aluno' && isStudent) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const TelaInicial()),
-      );
-      return;
-    }
-
-    // LOGIN PROFESSOR
-    if (usuario == 'professor' && senha == 'professor' && !isStudent) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const TelaInicialProfessor()),
-      );
-      return;
-    }
-
-    // ERRO
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Usuário ou senha incorretos',
-          style: GoogleFonts.nunito(),
+    if (email.isEmpty || senha.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Preencha todos os campos',
+            style: GoogleFonts.nunito(),
+          ),
+          backgroundColor: _vermelhoEscuro,
         ),
-        backgroundColor: _vermelhoEscuro,
-      ),
-    );
+      );
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://domino-api-production.up.railway.app/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'senha': senha}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final perfil = data['perfil'];
+
+        if (perfil == 'aluno') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const TelaInicial()),
+          );
+        } else if (perfil == 'professor') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const TelaInicialProfessor()),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              data['detail'] ?? 'Erro no login',
+              style: GoogleFonts.nunito(),
+            ),
+            backgroundColor: _vermelhoEscuro,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Erro de conexão com servidor',
+            style: GoogleFonts.nunito(),
+          ),
+          backgroundColor: _vermelhoEscuro,
+        ),
+      );
+    }
   }
 
   @override
