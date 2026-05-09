@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// Importando o arquivo do aluno exatamente com o nome que está na sua pasta
 import 'relatoriosAluno.dart'; 
 
 class AlunoResumo {
@@ -41,14 +40,30 @@ class AlunoResumo {
 List<AlunoResumo> _mockAlunos() {
   final now = DateTime.now();
   return [
-    AlunoResumo(idUsuario: 1, nome: 'Ana Beatriz Silva',     turma: '1º Ano A', totalPartidas: 8,  taxaAcertoMedia: 87.5, melhorTempoSegundos: 72,  ultimaPartida: now.subtract(const Duration(hours: 3))),
-    AlunoResumo(idUsuario: 2, nome: 'Bruno Henrique Costa',  turma: '1º Ano A', totalPartidas: 5,  taxaAcertoMedia: 64.0, melhorTempoSegundos: 105, ultimaPartida: now.subtract(const Duration(days: 1))),
-    AlunoResumo(idUsuario: 3, nome: 'Carla Mendes Oliveira', turma: '1º Ano B', totalPartidas: 12, taxaAcertoMedia: 92.3, melhorTempoSegundos: 58,  ultimaPartida: now.subtract(const Duration(hours: 1))),
-    AlunoResumo(idUsuario: 4, nome: 'Diego Ferreira Souza',  turma: '1º Ano B', totalPartidas: 3,  taxaAcertoMedia: 50.0, melhorTempoSegundos: 140, ultimaPartida: now.subtract(const Duration(days: 4))),
-    AlunoResumo(idUsuario: 5, nome: 'Eduarda Lima Martins',  turma: '2º Ano A', totalPartidas: 0,  taxaAcertoMedia: 0,    melhorTempoSegundos: 0,   ultimaPartida: null),
-    AlunoResumo(idUsuario: 6, nome: 'Felipe Rodrigues Neto', turma: '2º Ano A', totalPartidas: 7,  taxaAcertoMedia: 75.0, melhorTempoSegundos: 88,  ultimaPartida: now.subtract(const Duration(days: 2))),
-    AlunoResumo(idUsuario: 7, nome: 'Gabriela Santos Cruz',  turma: '2º Ano B', totalPartidas: 10, taxaAcertoMedia: 80.0, melhorTempoSegundos: 65,  ultimaPartida: now.subtract(const Duration(days: 1))),
-    AlunoResumo(idUsuario: 8, nome: 'Hugo Alves Pereira',    turma: '2º Ano B', totalPartidas: 2,  taxaAcertoMedia: 45.0, melhorTempoSegundos: 180, ultimaPartida: now.subtract(const Duration(days: 6))),
+    // ── 1º Ano A ──
+    AlunoResumo(idUsuario: 1,  nome: 'Ana Beatriz Silva',       turma: '1º Ano A', totalPartidas: 8,  taxaAcertoMedia: 87.5, melhorTempoSegundos: 72,  ultimaPartida: now.subtract(const Duration(hours: 3))),
+    AlunoResumo(idUsuario: 2,  nome: 'Bruno Henrique Costa',    turma: '1º Ano A', totalPartidas: 5,  taxaAcertoMedia: 64.0, melhorTempoSegundos: 105, ultimaPartida: now.subtract(const Duration(days: 1))),
+    // ── 1º Ano B ──
+    AlunoResumo(idUsuario: 3,  nome: 'Carla Mendes Oliveira',   turma: '1º Ano B', totalPartidas: 12, taxaAcertoMedia: 92.3, melhorTempoSegundos: 58,  ultimaPartida: now.subtract(const Duration(hours: 1))),
+    AlunoResumo(idUsuario: 4,  nome: 'Diego Ferreira Souza',    turma: '1º Ano B', totalPartidas: 3,  taxaAcertoMedia: 50.0, melhorTempoSegundos: 140, ultimaPartida: now.subtract(const Duration(days: 4))),
+    // ── 1º Ano C ──
+    AlunoResumo(idUsuario: 5,  nome: 'Elisa Cardoso Ramos',     turma: '1º Ano C', totalPartidas: 6,  taxaAcertoMedia: 70.0, melhorTempoSegundos: 95,  ultimaPartida: now.subtract(const Duration(days: 2))),
+    AlunoResumo(idUsuario: 6,  nome: 'Fernando Lima Torres',    turma: '1º Ano C', totalPartidas: 0,  taxaAcertoMedia: 0,    melhorTempoSegundos: 0,   ultimaPartida: null),
+    // ── 1º Ano D ──
+    AlunoResumo(idUsuario: 7,  nome: 'Giovana Pires Nascimento',turma: '1º Ano D', totalPartidas: 4,  taxaAcertoMedia: 55.0, melhorTempoSegundos: 120, ultimaPartida: now.subtract(const Duration(days: 3))),
+    AlunoResumo(idUsuario: 8,  nome: 'Henrique Barros Fonseca', turma: '1º Ano D', totalPartidas: 9,  taxaAcertoMedia: 80.0, melhorTempoSegundos: 68,  ultimaPartida: now.subtract(const Duration(hours: 5))),
+    // ── 2º Ano A ──
+    AlunoResumo(idUsuario: 9,  nome: 'Isabela Rocha Campos',    turma: '2º Ano A', totalPartidas: 7,  taxaAcertoMedia: 75.0, melhorTempoSegundos: 88,  ultimaPartida: now.subtract(const Duration(days: 2))),
+    AlunoResumo(idUsuario: 10, nome: 'João Pedro Almeida',      turma: '2º Ano A', totalPartidas: 0,  taxaAcertoMedia: 0,    melhorTempoSegundos: 0,   ultimaPartida: null),
+    // ── 2º Ano B ──
+    AlunoResumo(idUsuario: 11, nome: 'Karen Souza Monteiro',    turma: '2º Ano B', totalPartidas: 10, taxaAcertoMedia: 80.0, melhorTempoSegundos: 65,  ultimaPartida: now.subtract(const Duration(days: 1))),
+    AlunoResumo(idUsuario: 12, nome: 'Lucas Teixeira Barbosa',  turma: '2º Ano B', totalPartidas: 2,  taxaAcertoMedia: 45.0, melhorTempoSegundos: 180, ultimaPartida: now.subtract(const Duration(days: 6))),
+    // ── 2º Ano C ──
+    AlunoResumo(idUsuario: 13, nome: 'Mariana Duarte Correia',  turma: '2º Ano C', totalPartidas: 11, taxaAcertoMedia: 90.0, melhorTempoSegundos: 60,  ultimaPartida: now.subtract(const Duration(hours: 2))),
+    AlunoResumo(idUsuario: 14, nome: 'Nicolas Andrade Freitas', turma: '2º Ano C', totalPartidas: 1,  taxaAcertoMedia: 40.0, melhorTempoSegundos: 200, ultimaPartida: now.subtract(const Duration(days: 7))),
+    // ── 2º Ano D ──
+    AlunoResumo(idUsuario: 15, nome: 'Olivia Castro Silveira',  turma: '2º Ano D', totalPartidas: 5,  taxaAcertoMedia: 68.0, melhorTempoSegundos: 99,  ultimaPartida: now.subtract(const Duration(days: 3))),
+    AlunoResumo(idUsuario: 16, nome: 'Pedro Gonçalves Melo',    turma: '2º Ano D', totalPartidas: 0,  taxaAcertoMedia: 0,    melhorTempoSegundos: 0,   ultimaPartida: null),
   ];
 }
 
@@ -61,11 +76,11 @@ class RelatoriosProfessorScreen extends StatefulWidget {
 }
 
 class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
-  static const Color _vermelho      = Color(0xFFC0392B);
-  static const Color _cinzaFundo    = Color(0xFFF0F0F0);
-  static const Color _branco        = Colors.white;
-  static const Color _verde         = Color(0xFF27AE60);
-  static const Color _laranja       = Color(0xFFF39C12);
+  static const Color _vermelho   = Color(0xFFC0392B);
+  static const Color _cinzaFundo = Color(0xFFF0F0F0);
+  static const Color _branco     = Colors.white;
+  static const Color _verde      = Color(0xFF27AE60);
+  static const Color _laranja    = Color(0xFFF39C12);
 
   List<AlunoResumo> _todos     = [];
   List<AlunoResumo> _filtrados = [];
@@ -209,16 +224,16 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
   }
 
   Widget _buildCardsResumo() {
-    final comPartidas = _todos.where((a) => a.totalPartidas > 0).toList();
-    final mediaGeral = comPartidas.isEmpty ? 0.0 : comPartidas.map((a) => a.taxaAcertoMedia).reduce((x, y) => x + y) / comPartidas.length;
+    final comPartidas   = _todos.where((a) => a.totalPartidas > 0).toList();
+    final mediaGeral    = comPartidas.isEmpty ? 0.0 : comPartidas.map((a) => a.taxaAcertoMedia).reduce((x, y) => x + y) / comPartidas.length;
     final totalPartidas = _todos.fold(0, (sum, a) => sum + a.totalPartidas);
 
     return Wrap(
       spacing: 16,
       runSpacing: 16,
       children: [
-        _buildCardResumo(Icons.trending_up_rounded, '${mediaGeral.toStringAsFixed(0)}%', 'Média da Turma', _verde),
-        _buildCardResumo(Icons.sports_esports_rounded, '$totalPartidas', 'Partidas Jogadas', _laranja),
+        _buildCardResumo(Icons.trending_up_rounded,    '${mediaGeral.toStringAsFixed(0)}%', 'Média da Turma',    _verde),
+        _buildCardResumo(Icons.sports_esports_rounded, '$totalPartidas',                    'Partidas Jogadas',  _laranja),
       ],
     );
   }
@@ -304,6 +319,20 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
   }
 
   Widget _buildTabelaAlunos() {
+    if (_filtrados.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(color: _branco, borderRadius: BorderRadius.circular(14)),
+        child: Column(
+          children: [
+            const Icon(Icons.search_off_rounded, size: 48, color: Colors.black26),
+            const SizedBox(height: 12),
+            Text('Nenhum aluno encontrado.', style: GoogleFonts.nunito(color: Colors.black45, fontSize: 14)),
+          ],
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: _branco,
@@ -346,17 +375,28 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
   }
 
   Widget _buildHeaderCol(String label) {
-    return Expanded(flex: 2, child: Text(label, textAlign: TextAlign.center, style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[600])));
+    return Expanded(
+      flex: 2,
+      child: Text(label, textAlign: TextAlign.center,
+          style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[600])),
+    );
   }
 
   Widget _buildLinhaAluno(AlunoResumo aluno) {
-    final cor = aluno.taxaAcertoMedia >= 70 ? _verde : aluno.taxaAcertoMedia >= 50 ? _laranja : aluno.totalPartidas == 0 ? Colors.grey[400]! : _vermelho;
+    final cor = aluno.taxaAcertoMedia >= 70
+        ? _verde
+        : aluno.taxaAcertoMedia >= 50
+            ? _laranja
+            : aluno.totalPartidas == 0
+                ? Colors.grey[400]!
+                : _vermelho;
 
     return InkWell(
       onTap: () => Navigator.push(
         context,
-        // Conexão exata com a classe que criamos no arquivo relatoriosAluno.dart
-        MaterialPageRoute(builder: (_) => RelatoriosAlunoScreen(nomeAluno: aluno.nome, turmaAluno: aluno.turma)),
+        MaterialPageRoute(
+          builder: (_) => RelatoriosAlunoScreen(nomeAluno: aluno.nome, turmaAluno: aluno.turma),
+        ),
       ),
       borderRadius: BorderRadius.circular(14),
       hoverColor: _vermelho.withOpacity(0.04),
@@ -368,7 +408,12 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
               flex: 3,
               child: Row(
                 children: [
-                  CircleAvatar(radius: 18, backgroundColor: cor.withOpacity(0.12), child: Text(aluno.nome[0].toUpperCase(), style: GoogleFonts.nunito(color: cor, fontWeight: FontWeight.bold, fontSize: 16))),
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: cor.withOpacity(0.12),
+                    child: Text(aluno.nome[0].toUpperCase(),
+                        style: GoogleFonts.nunito(color: cor, fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -382,7 +427,19 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
                 ],
               ),
             ),
-            Expanded(flex: 2, child: Center(child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: cor.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Text(aluno.totalPartidas == 0 ? '--' : '${aluno.taxaAcertoMedia.toStringAsFixed(0)}%', style: GoogleFonts.nunito(color: cor, fontWeight: FontWeight.w800, fontSize: 13))))),
+            Expanded(
+              flex: 2,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: cor.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+                  child: Text(
+                    aluno.totalPartidas == 0 ? '--' : '${aluno.taxaAcertoMedia.toStringAsFixed(0)}%',
+                    style: GoogleFonts.nunito(color: cor, fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ),
+              ),
+            ),
             Expanded(flex: 2, child: Center(child: Text('${aluno.totalPartidas}', style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)))),
             Expanded(flex: 2, child: Center(child: Text(aluno.melhorTempoFormatado, style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[600])))),
             Expanded(flex: 2, child: Center(child: Text(aluno.ultimaPartidaStr, textAlign: TextAlign.center, style: GoogleFonts.nunito(fontSize: 12, color: aluno.ultimaPartida == null ? Colors.grey[400] : Colors.grey[600])))),
