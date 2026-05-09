@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'jogo_models.dart';
@@ -69,40 +67,7 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                   constraints: const BoxConstraints(maxWidth: 960),
                   child: Column(
                     children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildLogoHexagono(),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                'DOMINÓ DA\nQUÍMICA',
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.nunito(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  color: _vermelho,
-                                  letterSpacing: 1.5,
-                                  height: 1.1,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'FUNÇÕES INORGÂNICAS',
-                                style: GoogleFonts.nunito(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.grey[500],
-                                  letterSpacing: 2.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 15),
                       Text(
                         'Escolha a Dificuldade',
                         textAlign: TextAlign.center,
@@ -326,84 +291,4 @@ class _DifficultyCard extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget _buildLogoHexagono() {
-  return SizedBox(
-    width: 90,
-    height: 90,
-    child: CustomPaint(painter: _HexLogoPainter()),
-  );
-}
-
-class _HexLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width / 2;
-
-    final path = Path();
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 60 - 30) * 3.14159 / 180;
-      final x = cx + r * 0.95 * cos(angle);
-      final y = cy + r * 0.95 * sin(angle);
-      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-    }
-    path.close();
-
-    canvas.drawPath(path, Paint()..color = const Color(0xFFC0392B));
-
-    final innerPath = Path();
-    final ir = r * 0.82;
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 60 - 30) * 3.14159 / 180;
-      final x = cx + ir * cos(angle);
-      final y = cy + ir * sin(angle);
-      i == 0 ? innerPath.moveTo(x, y) : innerPath.lineTo(x, y);
-    }
-    innerPath.close();
-    canvas.drawPath(innerPath, Paint()..color = const Color(0xFFA93226));
-
-    final iconPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.95)
-      ..style = PaintingStyle.fill;
-
-    final flask = Path()
-      ..moveTo(cx - 10, cy - 16)
-      ..lineTo(cx - 10, cy - 4)
-      ..lineTo(cx - 18, cy + 14)
-      ..quadraticBezierTo(cx - 20, cy + 20, cx, cy + 20)
-      ..quadraticBezierTo(cx + 20, cy + 20, cx + 18, cy + 14)
-      ..lineTo(cx + 10, cy - 4)
-      ..lineTo(cx + 10, cy - 16)
-      ..close();
-    canvas.drawPath(flask, iconPaint);
-
-    final liquid = Path()
-      ..moveTo(cx - 14, cy + 10)
-      ..quadraticBezierTo(cx, cy + 8, cx + 14, cy + 10)
-      ..lineTo(cx + 18, cy + 14)
-      ..quadraticBezierTo(cx + 20, cy + 20, cx, cy + 20)
-      ..quadraticBezierTo(cx - 20, cy + 20, cx - 18, cy + 14)
-      ..close();
-    canvas.drawPath(
-      liquid,
-      Paint()..color = const Color(0xFFE74C3C).withValues(alpha: 0.75),
-    );
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx, cy - 18), width: 22, height: 5),
-        const Radius.circular(3),
-      ),
-      Paint()..color = Colors.white,
-    );
-  }
-
-  double cos(double a) => math.cos(a);
-  double sin(double a) => math.sin(a);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -141,7 +141,7 @@ class HowToPlayScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildPecaDomino('H₂SO₄', 'Ácido'),
+                _buildPecaDomino('H₂SO₄', 'Base'),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -160,7 +160,7 @@ class HowToPlayScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                _buildPecaDomino('NaOH', 'Base'),
+                _buildPecaDomino('NaOH', 'Ácido'),
               ],
             ),
           ),
