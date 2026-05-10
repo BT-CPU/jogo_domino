@@ -1,6 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+class PartidaResumoAluno {
+  const PartidaResumoAluno({
+    required this.nivel,
+    required this.data,
+    required this.tempo,
+    required this.acertos,
+    required this.erros,
+    required this.corNivel,
+  });
+
+  final String nivel;
+  final String data;
+  final String tempo;
+  final int acertos;
+  final int erros;
+  final Color corNivel;
+}
+
 class TelaDesempenho extends StatefulWidget {
   const TelaDesempenho({super.key});
 
@@ -11,7 +29,34 @@ class TelaDesempenho extends StatefulWidget {
 class _TelaDesempenhoState extends State<TelaDesempenho> {
   static const _vermelho = Color(0xFFC0392B);
   static const _cinzaFundo = Color(0xFFF9F9F9);
-  
+
+  final List<PartidaResumoAluno> _ultimasPartidas = const [
+    PartidaResumoAluno(
+      nivel: 'Nivel 1',
+      data: '26/05/2026',
+      tempo: '01:12',
+      acertos: 11,
+      erros: 1,
+      corNivel: Colors.green,
+    ),
+    PartidaResumoAluno(
+      nivel: 'Nivel 1',
+      data: '24/05/2026',
+      tempo: '01:45',
+      acertos: 9,
+      erros: 2,
+      corNivel: Colors.amber,
+    ),
+    PartidaResumoAluno(
+      nivel: 'Nivel 2',
+      data: '23/05/2026',
+      tempo: '02:10',
+      acertos: 8,
+      erros: 3,
+      corNivel: _vermelho,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 800;
@@ -21,16 +66,24 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ─── CABEÇALHO (BOTÃO VOLTAR E TÍTULO) ──────────────────────────
           Padding(
-            padding: const EdgeInsets.only(left: 16, top: 24, right: 16, bottom: 8),
+            padding: const EdgeInsets.only(
+              left: 16,
+              top: 24,
+              right: 16,
+              bottom: 8,
+            ),
             child: Stack(
               alignment: Alignment.center,
               children: [
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: _vermelho, size: 32), // Ícone Vermelho
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: _vermelho,
+                      size: 32,
+                    ),
                     onPressed: () => Navigator.pop(context),
                     tooltip: 'Voltar para o Menu',
                   ),
@@ -38,16 +91,14 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
                 Text(
                   'Meu Desempenho',
                   style: GoogleFonts.nunito(
-                    fontSize: 24, 
-                    fontWeight: FontWeight.w900, 
-                    color: _vermelho // Título Vermelho
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: _vermelho,
                   ),
                 ),
               ],
             ),
           ),
-          
-          // ─── CONTEÚDO ORIGINAL ─────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(isWide ? 32 : 16),
@@ -56,10 +107,8 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: Column(
                     children: [
-                      // Quadrados de resumo geral (Bem coloridos)
                       _buildEstatisticasGerais(isWide),
                       const SizedBox(height: 32),
-                      // Sua lista original de Últimas Partidas
                       _buildUltimasPartidas(),
                     ],
                   ),
@@ -81,10 +130,30 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
       mainAxisSpacing: 16,
       childAspectRatio: isWide ? 1.5 : 1.2,
       children: [
-        _buildStatCard(Icons.sports_esports_rounded, 'Partidas', '47', Colors.blue),
-        _buildStatCard(Icons.emoji_events_rounded, 'Pontos', '1.240', Colors.amber[600]!),
-        _buildStatCard(Icons.check_circle_rounded, 'Acertos', '82%', Colors.green),
-        _buildStatCard(Icons.timer_rounded, 'Tempo Médio', '01:45', _vermelho),
+        _buildStatCard(
+          Icons.sports_esports_rounded,
+          'Partidas',
+          '47',
+          Colors.blue,
+        ),
+        _buildStatCard(
+          Icons.timer_rounded,
+          'Melhor Tempo',
+          '01:12',
+          Colors.amber[600]!,
+        ),
+        _buildStatCard(
+          Icons.check_circle_rounded,
+          'Acertos',
+          '82%',
+          Colors.green,
+        ),
+        _buildStatCard(
+          Icons.history_toggle_off_rounded,
+          'Ultima Jogada',
+          'Hoje',
+          _vermelho,
+        ),
       ],
     );
   }
@@ -94,10 +163,10 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cor.withOpacity(0.3), width: 2), // Borda da cor do card
+        border: Border.all(color: cor.withValues(alpha: 0.3), width: 2),
         boxShadow: [
           BoxShadow(
-            color: cor.withOpacity(0.1), // Sombra da cor do card
+            color: cor.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -110,27 +179,38 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.black87),
+            style: GoogleFonts.nunito(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
+            ),
           ),
           Text(
             label,
-            style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.grey[600]),
+            style: GoogleFonts.nunito(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[600],
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Mantive a sua estrutura original para essa lista, apenas adicionei destaques!
   Widget _buildUltimasPartidas() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _vermelho.withOpacity(0.2), width: 1),
+        border: Border.all(color: _vermelho.withValues(alpha: 0.2), width: 1),
         boxShadow: [
-          BoxShadow(color: _vermelho.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5)),
+          BoxShadow(
+            color: _vermelho.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
         ],
       ),
       child: Column(
@@ -141,50 +221,78 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
               const Icon(Icons.history_rounded, color: _vermelho, size: 28),
               const SizedBox(width: 8),
               Text(
-                'Últimas Partidas',
-                style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w900, color: _vermelho),
+                'Ultimas Partidas',
+                style: GoogleFonts.nunito(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: _vermelho,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
-          _buildLinhaPartida('Nível 1', '26/05/2026', '260 pts', Colors.green),
-          const Divider(height: 24, thickness: 1),
-          _buildLinhaPartida('Nível 1', '24/05/2026', '180 pts', Colors.amber[600]!),
-          const Divider(height: 24, thickness: 1),
-          _buildLinhaPartida('Nível 2', '23/05/2026', '210 pts', _vermelho),
+          for (int i = 0; i < _ultimasPartidas.length; i++) ...[
+            _buildLinhaPartida(_ultimasPartidas[i]),
+            if (i != _ultimasPartidas.length - 1)
+              const Divider(height: 24, thickness: 1),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildLinhaPartida(String nivel, String data, String pontos, Color corNivel) {
+  Widget _buildLinhaPartida(PartidaResumoAluno partida) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            // Caixinha colorida de destaque para o Nível
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: corNivel.withOpacity(0.15),
+                color: partida.corNivel.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                nivel,
-                style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w900, color: corNivel),
+                partida.nivel,
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: partida.corNivel,
+                ),
               ),
             ),
             const SizedBox(width: 16),
-            Text(
-              data,
-              style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  partida.data,
+                  style: GoogleFonts.nunito(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                Text(
+                  '${partida.acertos} acertos • ${partida.erros} erros',
+                  style: GoogleFonts.nunito(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
         Text(
-          pontos,
-          style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87),
+          partida.tempo,
+          style: GoogleFonts.nunito(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: Colors.black87,
+          ),
         ),
       ],
     );
