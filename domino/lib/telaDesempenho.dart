@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class PartidaResumoAluno {
-  const PartidaResumoAluno({
-    required this.nivel,
-    required this.data,
-    required this.tempo,
-    required this.acertos,
-    required this.erros,
-    required this.corNivel,
-  });
-
-  final String nivel;
-  final String data;
-  final String tempo;
-  final int acertos;
-  final int erros;
-  final Color corNivel;
-}
+import 'relatorio_models.dart';
+import 'relatorio_service.dart';
 
 class TelaDesempenho extends StatefulWidget {
-  const TelaDesempenho({super.key});
+  const TelaDesempenho({
+    super.key,
+    required this.idUsuario,
+    required this.nomeUsuario,
+  });
+
+  final int idUsuario;
+  final String nomeUsuario;
 
   @override
   State<TelaDesempenho> createState() => _TelaDesempenhoState();
@@ -30,32 +22,45 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
   static const _vermelho = Color(0xFFC0392B);
   static const _cinzaFundo = Color(0xFFF9F9F9);
 
-  final List<PartidaResumoAluno> _ultimasPartidas = const [
-    PartidaResumoAluno(
-      nivel: 'Nivel 1',
-      data: '26/05/2026',
-      tempo: '01:12',
-      acertos: 11,
-      erros: 1,
-      corNivel: Colors.green,
-    ),
-    PartidaResumoAluno(
-      nivel: 'Nivel 1',
-      data: '24/05/2026',
-      tempo: '01:45',
-      acertos: 9,
-      erros: 2,
-      corNivel: Colors.amber,
-    ),
-    PartidaResumoAluno(
-      nivel: 'Nivel 2',
-      data: '23/05/2026',
-      tempo: '02:10',
-      acertos: 8,
-      erros: 3,
-      corNivel: _vermelho,
-    ),
-  ];
+  final RelatorioService _service = const RelatorioService();
+
+  RelatorioAluno? _relatorio;
+  bool _carregando = true;
+  String? _erro;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarRelatorio();
+  }
+
+  Future<void> _carregarRelatorio() async {
+    setState(() {
+      _carregando = true;
+      _erro = null;
+    });
+
+    try {
+      final relatorio = await _service.obterRelatorioAluno(widget.idUsuario);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _relatorio = relatorio;
+        _carregando = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _erro = e.toString().replaceAll('Exception: ', '');
+        _carregando = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +90,7 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
                       size: 32,
                     ),
                     onPressed: () => Navigator.pop(context),
-                    tooltip: 'Voltar para o Menu',
+                    tooltip: 'Voltar para o menu',
                   ),
                 ),
                 Text(
@@ -100,28 +105,70 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(isWide ? 32 : 16),
-              child: Center(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: Column(
-                    children: [
-                      _buildEstatisticasGerais(isWide),
-                      const SizedBox(height: 32),
-                      _buildUltimasPartidas(),
-                    ],
+            child: _carregando
+                ? const Center(
+                    child: CircularProgressIndicator(color: _vermelho),
+                  )
+                : _erro != null
+                ? _buildErro()
+                : SingleChildScrollView(
+                    padding: EdgeInsets.all(isWide ? 32 : 16),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 800),
+                        child: Column(
+                          children: [
+                            _buildEstatisticasGerais(isWide),
+                            const SizedBox(height: 32),
+                            _buildUltimasPartidas(),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildErro() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: _vermelho, size: 44),
+            const SizedBox(height: 12),
+            Text(
+              _erro ?? 'Nao foi possivel carregar seu desempenho.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunito(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: _carregarRelatorio,
+              icon: const Icon(Icons.refresh_rounded, color: _vermelho),
+              label: Text(
+                'Tentar novamente',
+                style: GoogleFonts.nunito(
+                  color: _vermelho,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEstatisticasGerais(bool isWide) {
+    final relatorio = _relatorio!;
     return GridView.count(
       crossAxisCount: isWide ? 4 : 2,
       shrinkWrap: true,
@@ -133,25 +180,27 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
         _buildStatCard(
           Icons.sports_esports_rounded,
           'Partidas',
-          '47',
+          '${relatorio.totalPartidas}',
           Colors.blue,
         ),
         _buildStatCard(
           Icons.timer_rounded,
           'Melhor Tempo',
-          '01:12',
+          relatorio.melhorTempoFormatado,
           Colors.amber[600]!,
         ),
         _buildStatCard(
           Icons.check_circle_rounded,
           'Acertos',
-          '82%',
+          relatorio.totalPartidas == 0
+              ? '--'
+              : '${relatorio.taxaAcertoMedia.toStringAsFixed(0)}%',
           Colors.green,
         ),
         _buildStatCard(
           Icons.history_toggle_off_rounded,
           'Ultima Jogada',
-          'Hoje',
+          relatorio.ultimaJogadaLabel,
           _vermelho,
         ),
       ],
@@ -179,6 +228,7 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
           const SizedBox(height: 8),
           Text(
             value,
+            textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               fontSize: 28,
               fontWeight: FontWeight.w900,
@@ -199,6 +249,7 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
   }
 
   Widget _buildUltimasPartidas() {
+    final partidas = _relatorio!.historico.take(5).toList();
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -231,63 +282,83 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
             ],
           ),
           const SizedBox(height: 24),
-          for (int i = 0; i < _ultimasPartidas.length; i++) ...[
-            _buildLinhaPartida(_ultimasPartidas[i]),
-            if (i != _ultimasPartidas.length - 1)
-              const Divider(height: 24, thickness: 1),
-          ],
+          if (partidas.isEmpty)
+            Text(
+              'Voce ainda nao possui partidas registradas.',
+              style: GoogleFonts.nunito(color: Colors.grey[600]),
+            )
+          else
+            for (int i = 0; i < partidas.length; i++) ...[
+              _buildLinhaPartida(partidas[i]),
+              if (i != partidas.length - 1)
+                const Divider(height: 24, thickness: 1),
+            ],
         ],
       ),
     );
   }
 
-  Widget _buildLinhaPartida(PartidaResumoAluno partida) {
+  Widget _buildLinhaPartida(PartidaRelatorio partida) {
+    final corNivel = switch (partida.nivelDificuldade) {
+      1 => Colors.green,
+      2 => Colors.amber,
+      _ => _vermelho,
+    };
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: partida.corNivel.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                partida.nivel,
-                style: GoogleFonts.nunito(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: partida.corNivel,
+        Flexible(
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
                 ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  partida.data,
+                decoration: BoxDecoration(
+                  color: corNivel.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  partida.nivelLabel,
                   style: GoogleFonts.nunito(
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w900,
+                    color: corNivel,
                   ),
                 ),
-                Text(
-                  '${partida.acertos} acertos • ${partida.erros} erros',
-                  style: GoogleFonts.nunito(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey[500],
-                  ),
+              ),
+              const SizedBox(width: 16),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      partida.dataFormatada,
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      '${partida.qtdAcertos} acertos • ${partida.qtdErros} erros',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
+        const SizedBox(width: 12),
         Text(
-          partida.tempo,
+          partida.tempoFormatado,
           style: GoogleFonts.nunito(
             fontSize: 16,
             fontWeight: FontWeight.w900,

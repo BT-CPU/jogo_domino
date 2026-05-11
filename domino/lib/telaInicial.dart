@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'telaLogin.dart';
-import 'telaDesempenho.dart';
-import 'comoJogar.dart';
-import 'telaDificuldade.dart';
 
-// ─── TELA INICIAL (MENU PRINCIPAL) ────────────────────────────────────────
+import 'comoJogar.dart';
+import 'telaDesempenho.dart';
+import 'telaDificuldade.dart';
+import 'telaLogin.dart';
+import 'usuario_sessao.dart';
+
 class TelaInicial extends StatelessWidget {
-  const TelaInicial({super.key});
+  const TelaInicial({super.key, required this.sessao});
+
+  final UsuarioSessao sessao;
 
   static const _vermelho = Color(0xFFC0392B);
   static const _cinzaFundo = Color(0xFFF0F0F0);
@@ -15,14 +18,12 @@ class TelaInicial extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 600;
-    // CORREÇÃO: Tamanho no mobile passou de 30.0 para 70.0 (Igual ao do professor)
     final logoSize = isWide ? 90.0 : 70.0;
 
     return Scaffold(
       backgroundColor: _cinzaFundo,
       body: Column(
         children: [
-          // Barra Vermelha
           Container(
             width: double.infinity,
             color: const Color.fromARGB(255, 255, 126, 112),
@@ -40,107 +41,96 @@ class TelaInicial extends StatelessWidget {
                   ),
                 ),
                 if (isWide)
-                  Row(
-                    children: [
-                      const SizedBox(width: 8),
-                      Text(
-                        'Olá, Aluno!',
-                        style: GoogleFonts.nunito(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Ola, ${sessao.nome}!',
+                    style: GoogleFonts.nunito(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
               ],
             ),
           ),
-
-          // Conteúdo do Menu
           Expanded(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Container(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: logoSize,
-                              height: logoSize,
-                              decoration: BoxDecoration(
-                                color: _vermelho,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              padding: EdgeInsets.all(logoSize * 0.12),
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: EdgeInsets.all(logoSize * 0.12),
-                                child: Image.asset(
-                                  'imagens/logo_quimico.png',
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: _vermelho.withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.science,
-                                          size: logoSize * 0.4,
-                                          color: _vermelho,
-                                        ),
-                                      ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'DOMINÓ DA\nQUÍMICA',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.nunito(
-                                    fontSize: isWide ? 26 : 22,
-                                    fontWeight: FontWeight.w900,
-                                    color: _vermelho,
-                                    letterSpacing: 1.5,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'FUNÇÕES INORGÂNICAS',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.grey[500],
-                                    letterSpacing: 2.5,
-                                  ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: logoSize,
+                            height: logoSize,
+                            decoration: BoxDecoration(
+                              color: _vermelho,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                            padding: EdgeInsets.all(logoSize * 0.12),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              padding: EdgeInsets.all(logoSize * 0.12),
+                              child: Image.asset(
+                                'imagens/logo_quimico.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: _vermelho.withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.science,
+                                        size: logoSize * 0.4,
+                                        color: _vermelho,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Column(
+                            children: [
+                              Text(
+                                'DOMINO DA\nQUIMICA',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.nunito(
+                                  fontSize: isWide ? 26 : 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: _vermelho,
+                                  letterSpacing: 1.5,
+                                  height: 1.1,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'FUNCOES INORGANICAS',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey[500],
+                                  letterSpacing: 2.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 40),
                       Text(
@@ -154,7 +144,7 @@ class TelaInicial extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Escolha uma das opções abaixo para continuar',
+                        'Escolha uma das opcoes abaixo para continuar',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.nunito(
                           fontSize: 14,
@@ -162,8 +152,6 @@ class TelaInicial extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 40),
-
-                      // ─── BOTÕES DO MENU ───
                       Wrap(
                         spacing: 24,
                         runSpacing: 24,
@@ -172,28 +160,33 @@ class TelaInicial extends StatelessWidget {
                           _buildMenuCard(
                             context: context,
                             title: 'Nova Partida',
-                            subtitle: 'Iniciar jogo de classificação',
+                            subtitle: 'Iniciar jogo de classificacao',
                             icon: Icons.play_arrow_rounded,
                             isPrimary: true,
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const TelaDificuldade(),
+                                  builder: (context) => TelaDificuldade(
+                                    idUsuario: sessao.idUsuario,
+                                  ),
                                 ),
                               );
                             },
                           ),
                           _buildMenuCard(
                             context: context,
-                            title: 'Meus Relatórios',
+                            title: 'Meus Relatorios',
                             subtitle: 'Veja seu desempenho',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const TelaDesempenho(),
+                                  builder: (context) => TelaDesempenho(
+                                    idUsuario: sessao.idUsuario,
+                                    nomeUsuario: sessao.nome,
+                                  ),
                                 ),
                               );
                             },
@@ -201,7 +194,7 @@ class TelaInicial extends StatelessWidget {
                           _buildMenuCard(
                             context: context,
                             title: 'Regras do Jogo',
-                            subtitle: 'Como jogar o dominó',
+                            subtitle: 'Como jogar o domino',
                             icon: Icons.menu_book_rounded,
                             onTap: () {
                               Navigator.push(
@@ -215,7 +208,7 @@ class TelaInicial extends StatelessWidget {
                           _buildMenuCard(
                             context: context,
                             title: 'Sair',
-                            subtitle: 'Encerrar sessão',
+                            subtitle: 'Encerrar sessao',
                             icon: Icons.logout_rounded,
                             iconColor: Colors.grey[600],
                             onTap: () {
@@ -273,7 +266,7 @@ class TelaInicial extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isPrimary
-                      ? Colors.white.withOpacity(0.2)
+                      ? Colors.white.withValues(alpha: 0.2)
                       : _cinzaFundo,
                   shape: BoxShape.circle,
                 ),

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
+import 'api_config.dart';
 import 'jogo_models.dart';
 
 class JogoService {
@@ -10,7 +11,6 @@ class JogoService {
     : _client = client ?? http.Client(),
       _engine = _LocalGameEngine(random: random ?? Random());
 
-  static const String _baseUrl = 'https://domino-api-production.up.railway.app';
   static const bool _usarApiRemotaNoGameplay = false;
 
   final http.Client _client;
@@ -23,7 +23,7 @@ class JogoService {
     if (_usarApiRemotaNoGameplay) {
       try {
         final response = await _client.post(
-          Uri.parse('$_baseUrl/partidas/iniciar'),
+          Uri.parse('${ApiConfig.gameplayBaseUrl}/partidas/iniciar'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'id_usuario': idUsuario,
@@ -54,7 +54,7 @@ class JogoService {
     if (_usarApiRemotaNoGameplay) {
       try {
         final response = await _client.post(
-          Uri.parse('$_baseUrl/partidas/jogada'),
+          Uri.parse('${ApiConfig.gameplayBaseUrl}/partidas/jogada'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'estado': estado.toJson(), 'peca': peca.toJson()}),
         );
@@ -75,7 +75,7 @@ class JogoService {
   Future<void> finalizarPartida({required EstadoPartida estado}) async {
     try {
       await _client.post(
-        Uri.parse('$_baseUrl/partidas/finalizar'),
+        Uri.parse('${ApiConfig.gameplayBaseUrl}/partidas/finalizar'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'id_usuario': estado.idUsuario,
@@ -193,12 +193,15 @@ class _LocalGameEngine {
     );
 
     if (respostaBot == null) {
-      proximoEstado = proximoEstado.copyWith(turnoAtual: TurnoPartida.jogador);
+      proximoEstado = proximoEstado.copyWith(
+        turnoAtual: TurnoPartida.jogador,
+        status: StatusPartida.finalizada,
+      );
       return ResultadoJogada(
         jogadaValida: true,
         estado: proximoEstado,
         mensagem:
-            'Jogada correta. O bot nao encontrou resposta e voce pode usar pecas esgotadas.',
+            'Jogada correta. O bot nao encontrou resposta e a rodada foi encerrada.',
       );
     }
 

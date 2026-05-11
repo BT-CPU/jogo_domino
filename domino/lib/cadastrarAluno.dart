@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
 
 // ─── MODELO DE USUÁRIO ──────────────────────────────────────────────────────
 class Usuario {
@@ -20,20 +21,20 @@ class Usuario {
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
-        id: json['id_usuario'],
-        nome: json['nome'],
-        email: json['email'],
-        perfil: json['perfil'] ?? 'aluno',
-        dataCadastro: json['data_cadastro'] ?? '',
-      );
+    id: json['id_usuario'],
+    nome: json['nome'],
+    email: json['email'],
+    perfil: json['perfil'] ?? 'aluno',
+    dataCadastro: json['data_cadastro'] ?? '',
+  );
 }
 
 // ─── SERVIÇO DE API ─────────────────────────────────────────────────────────
 class UsuarioService {
-  static const String _baseUrl = 'https://domino-api-production.up.railway.app';
-
   static Future<List<Usuario>> listarUsuarios() async {
-    final response = await http.get(Uri.parse('$_baseUrl/usuarios'));
+    final response = await http.get(
+      Uri.parse('${ApiConfig.authBaseUrl}/usuarios'),
+    );
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((e) => Usuario.fromJson(e)).toList();
@@ -49,7 +50,7 @@ class UsuarioService {
     required String perfil,
   }) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/usuarios'),
+      Uri.parse('${ApiConfig.authBaseUrl}/usuarios'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'nome': nome,
@@ -68,7 +69,9 @@ class UsuarioService {
   }
 
   static Future<void> excluirUsuario(int id) async {
-    final response = await http.delete(Uri.parse('$_baseUrl/usuarios/$id'));
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.authBaseUrl}/usuarios/$id'),
+    );
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body);
       throw Exception(body['detail'] ?? 'Erro ao excluir.');
@@ -142,8 +145,10 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text('Excluir ${usuario.perfil == 'professor' ? 'Professor' : 'Aluno'}',
-            style: GoogleFonts.nunito(fontWeight: FontWeight.w800)),
+        title: Text(
+          'Excluir ${usuario.perfil == 'professor' ? 'Professor' : 'Aluno'}',
+          style: GoogleFonts.nunito(fontWeight: FontWeight.w800),
+        ),
         content: Text(
           'Deseja realmente excluir "${usuario.nome}"?\nEsta ação não pode ser desfeita.',
           style: GoogleFonts.nunito(fontSize: 14, color: Colors.black87),
@@ -151,16 +156,24 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancelar', style: GoogleFonts.nunito(color: Colors.grey[600])),
+            child: Text(
+              'Cancelar',
+              style: GoogleFonts.nunito(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: _vermelho,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Excluir', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            child: Text(
+              'Excluir',
+              style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -225,7 +238,11 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 36),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.black87,
+                  size: 36,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -265,7 +282,11 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
@@ -282,7 +303,11 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
           Text(
             'Cadastrar Usuário',
             textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.black87),
+            style: GoogleFonts.nunito(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -303,15 +328,27 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             child: Row(
               children: [
                 _buildPerfilOpcao('aluno', 'Aluno', Icons.person_rounded),
-                _buildPerfilOpcao('professor', 'Professor', Icons.school_rounded),
+                _buildPerfilOpcao(
+                  'professor',
+                  'Professor',
+                  Icons.school_rounded,
+                ),
               ],
             ),
           ),
           const SizedBox(height: 24),
 
-          _buildCampo(controller: _nomeCtrl, hint: 'Nome Completo', icon: Icons.badge_outlined),
+          _buildCampo(
+            controller: _nomeCtrl,
+            hint: 'Nome Completo',
+            icon: Icons.badge_outlined,
+          ),
           const SizedBox(height: 16),
-          _buildCampo(controller: _emailCtrl, hint: 'E-mail', icon: Icons.email_outlined),
+          _buildCampo(
+            controller: _emailCtrl,
+            hint: 'E-mail',
+            icon: Icons.email_outlined,
+          ),
           const SizedBox(height: 16),
           _buildCampo(
             controller: _senhaCtrl,
@@ -319,7 +356,8 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             icon: Icons.lock_outline,
             isPassword: true,
             obscureToggle: _obscureSenha,
-            onToggleObscure: () => setState(() => _obscureSenha = !_obscureSenha),
+            onToggleObscure: () =>
+                setState(() => _obscureSenha = !_obscureSenha),
           ),
           const SizedBox(height: 16),
           _buildCampo(
@@ -328,7 +366,8 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             icon: Icons.lock_reset_outlined,
             isPassword: true,
             obscureToggle: _obscureConfirma,
-            onToggleObscure: () => setState(() => _obscureConfirma = !_obscureConfirma),
+            onToggleObscure: () =>
+                setState(() => _obscureConfirma = !_obscureConfirma),
           ),
           const SizedBox(height: 24),
 
@@ -349,14 +388,19 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                   child: Checkbox(
                     value: _aceiteLgpd,
                     activeColor: _vermelho,
-                    onChanged: (val) => setState(() => _aceiteLgpd = val ?? false),
+                    onChanged: (val) =>
+                        setState(() => _aceiteLgpd = val ?? false),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'O usuário autoriza a coleta e o armazenamento de dados de desempenho no jogo para fins pedagógicos, conforme a LGPD.',
-                    style: GoogleFonts.nunito(fontSize: 12, color: Colors.black87, height: 1.4),
+                    style: GoogleFonts.nunito(
+                      fontSize: 12,
+                      color: Colors.black87,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
@@ -371,18 +415,27 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
               foregroundColor: Colors.white,
               disabledBackgroundColor: Colors.grey[300],
               padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               elevation: 0,
             ),
             child: _carregando
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : Text(
                     'Concluir Cadastro',
-                    style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                    style: GoogleFonts.nunito(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
                   ),
           ),
         ],
@@ -406,7 +459,11 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: selecionado ? Colors.white : Colors.grey[500]),
+              Icon(
+                icon,
+                size: 18,
+                color: selecionado ? Colors.white : Colors.grey[500],
+              ),
               const SizedBox(width: 8),
               Text(
                 label,
@@ -441,7 +498,11 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
@@ -456,11 +517,18 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                 children: [
                   Text(
                     'Usuários Cadastrados',
-                    style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.black87),
+                    style: GoogleFonts.nunito(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
                   ),
                   Text(
                     '${usuariosFiltrados.length} de ${_usuarios.length} usuário${_usuarios.length != 1 ? 's' : ''}',
-                    style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey[500]),
+                    style: GoogleFonts.nunito(
+                      fontSize: 13,
+                      color: Colors.grey[500],
+                    ),
                   ),
                 ],
               ),
@@ -480,47 +548,84 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             style: GoogleFonts.nunito(fontSize: 14, color: Colors.black87),
             decoration: InputDecoration(
               hintText: 'Pesquisar por nome, e-mail ou perfil...',
-              hintStyle: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[400]),
-              prefixIcon: const Icon(Icons.search_rounded, size: 20, color: _vermelho),
+              hintStyle: GoogleFonts.nunito(
+                fontSize: 14,
+                color: Colors.grey[400],
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: _vermelho,
+              ),
               suffixIcon: _termoBusca.isNotEmpty
                   ? IconButton(
-                      icon: Icon(Icons.close_rounded, size: 18, color: Colors.grey[400]),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Colors.grey[400],
+                      ),
                       onPressed: () {
                         _buscaCtrl.clear();
                         setState(() => _termoBusca = '');
                       },
                     )
                   : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
               filled: true,
               fillColor: _cinzaFundo,
               border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
               enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
               focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: _vermelho, width: 1.5)),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _vermelho, width: 1.5),
+              ),
             ),
           ),
           const SizedBox(height: 20),
 
           if (_carregandoUsuarios)
-            const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator(color: _vermelho)))
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(color: _vermelho),
+              ),
+            )
           else if (_erroUsuarios != null)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    const Icon(Icons.wifi_off_rounded, size: 40, color: Colors.grey),
+                    const Icon(
+                      Icons.wifi_off_rounded,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
                     const SizedBox(height: 8),
-                    Text('Não foi possível carregar os usuários.', style: GoogleFonts.nunito(color: Colors.grey[600])),
+                    Text(
+                      'Não foi possível carregar os usuários.',
+                      style: GoogleFonts.nunito(color: Colors.grey[600]),
+                    ),
                     const SizedBox(height: 12),
                     TextButton.icon(
                       onPressed: _carregarUsuarios,
                       icon: const Icon(Icons.refresh, color: _vermelho),
-                      label: Text('Tentar novamente', style: GoogleFonts.nunito(color: _vermelho, fontWeight: FontWeight.w700)),
+                      label: Text(
+                        'Tentar novamente',
+                        style: GoogleFonts.nunito(
+                          color: _vermelho,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -532,9 +637,19 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                 padding: const EdgeInsets.all(32),
                 child: Column(
                   children: [
-                    Icon(Icons.group_outlined, size: 48, color: Colors.grey[300]),
+                    Icon(
+                      Icons.group_outlined,
+                      size: 48,
+                      color: Colors.grey[300],
+                    ),
                     const SizedBox(height: 12),
-                    Text('Nenhum usuário cadastrado ainda.', style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[500])),
+                    Text(
+                      'Nenhum usuário cadastrado ainda.',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -545,9 +660,19 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                 padding: const EdgeInsets.all(32),
                 child: Column(
                   children: [
-                    Icon(Icons.search_off_rounded, size: 48, color: Colors.grey[300]),
+                    Icon(
+                      Icons.search_off_rounded,
+                      size: 48,
+                      color: Colors.grey[300],
+                    ),
                     const SizedBox(height: 12),
-                    Text('Nenhum resultado para "$_termoBusca".', style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[500])),
+                    Text(
+                      'Nenhum resultado para "$_termoBusca".',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -579,16 +704,24 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                     final usuario = entry.value;
                     final isEven = i % 2 == 0;
                     return TableRow(
-                      decoration: BoxDecoration(color: isEven ? _cinzaFundo : Colors.white),
+                      decoration: BoxDecoration(
+                        color: isEven ? _cinzaFundo : Colors.white,
+                      ),
                       children: [
                         _dataCell(usuario.nome),
                         _dataCell(usuario.email),
                         TableCell(
                           verticalAlignment: TableCellVerticalAlignment.middle,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: usuario.perfil == 'professor'
                                     ? Colors.blue[50]
@@ -601,7 +734,9 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                                 ),
                               ),
                               child: Text(
-                                usuario.perfil == 'professor' ? 'Professor' : 'Aluno',
+                                usuario.perfil == 'professor'
+                                    ? 'Professor'
+                                    : 'Aluno',
                                 style: GoogleFonts.nunito(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -619,7 +754,10 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                           child: Center(
                             child: IconButton(
                               tooltip: 'Excluir',
-                              icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                size: 20,
+                              ),
                               color: Colors.red[400],
                               onPressed: () => _confirmarExclusao(usuario),
                             ),
@@ -637,20 +775,30 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
   }
 
   TableCell _headerCell(String text) => TableCell(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Text(text,
-              style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.5)),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Text(
+        text,
+        style: GoogleFonts.nunito(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          letterSpacing: 0.5,
         ),
-      );
+      ),
+    ),
+  );
 
   TableCell _dataCell(String text) => TableCell(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Text(text,
-              style: GoogleFonts.nunito(fontSize: 13, color: Colors.black87), overflow: TextOverflow.ellipsis),
-        ),
-      );
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Text(
+        text,
+        style: GoogleFonts.nunito(fontSize: 13, color: Colors.black87),
+        overflow: TextOverflow.ellipsis,
+      ),
+    ),
+  );
 
   Widget _buildCampo({
     required TextEditingController controller,
@@ -671,19 +819,33 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
-                  obscureToggle ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  obscureToggle
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   size: 20,
                   color: Colors.grey[400],
                 ),
                 onPressed: onToggleObscure,
               )
             : null,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _vermelho, width: 1.5)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: _vermelho, width: 1.5),
+        ),
       ),
     );
   }
@@ -703,7 +865,10 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
       return;
     }
     if (!_aceiteLgpd) {
-      _mostrarSnack('É necessário aceitar os termos da LGPD para cadastrar.', isErro: true);
+      _mostrarSnack(
+        'É necessário aceitar os termos da LGPD para cadastrar.',
+        isErro: true,
+      );
       return;
     }
 
@@ -733,7 +898,10 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
   void _mostrarSnack(String mensagem, {required bool isErro}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(mensagem, style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+        content: Text(
+          mensagem,
+          style: GoogleFonts.nunito(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: isErro ? _vermelhoEscuro : Colors.green[700],
         behavior: SnackBarBehavior.floating,
       ),

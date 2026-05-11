@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'telaInicial.dart';
-import 'telaInicial_Professor.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
+import 'telaInicial.dart';
+import 'telaInicial_Professor.dart';
+import 'usuario_sessao.dart';
 
 void main() {
   runApp(const MyApp());
@@ -474,25 +476,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://domino-api-production.up.railway.app/login'),
+        Uri.parse('${ApiConfig.authBaseUrl}/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'senha': senha}),
       );
+
+      if (!mounted) {
+        return;
+      }
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
         final perfil = data['perfil'];
+        final sessao = UsuarioSessao(
+          idUsuario: data['id_usuario'] as int,
+          nome: data['nome'] as String,
+          email: data['email'] as String,
+          perfil: perfil as String,
+        );
 
         if (perfil == 'aluno') {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const TelaInicial()),
+            MaterialPageRoute(builder: (_) => TelaInicial(sessao: sessao)),
           );
         } else if (perfil == 'professor') {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const TelaInicialProfessor()),
+            MaterialPageRoute(
+              builder: (_) => TelaInicialProfessor(sessao: sessao),
+            ),
           );
         }
       } else {
@@ -507,6 +521,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

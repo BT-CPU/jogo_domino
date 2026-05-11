@@ -1,40 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Importações das telas que o professor pode acessar
-import 'telaLogin.dart';
 import 'cadastrarAluno.dart';
 import 'relatoriosProfessor.dart';
+import 'telaDificuldade.dart';
+import 'telaLogin.dart';
+import 'usuario_sessao.dart';
 
-// ─── TELA INICIAL DO PROFESSOR (MENU PRINCIPAL) ──────────────────────────
 class TelaInicialProfessor extends StatelessWidget {
-  const TelaInicialProfessor({super.key});
+  const TelaInicialProfessor({super.key, required this.sessao});
 
-  // Paleta de cores definida anteriormente
+  final UsuarioSessao sessao;
+
   static const _vermelho = Color(0xFFC0392B);
   static const _cinzaFundo = Color(0xFFF0F0F0);
 
   @override
   Widget build(BuildContext context) {
-    // Verificação de responsividade (Web vs Mobile)
     final isWide = MediaQuery.of(context).size.width > 600;
-    
-    // Define o tamanho do logo central baseado na largura da tela
     final logoSize = isWide ? 90.0 : 70.0;
 
     return Scaffold(
       backgroundColor: _cinzaFundo,
       body: Column(
         children: [
-          // ─── BARRA SUPERIOR VERMELHA ────────────────────────────────────
           Container(
             width: double.infinity,
-            color: const Color.fromARGB(255, 255, 126, 112), // Vermelho mais claro
+            color: const Color.fromARGB(255, 255, 126, 112),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Logo da ETEC no canto esquerdo
                 Image.asset(
                   'imagens/etec_santo_andre.png',
                   height: 75,
@@ -44,121 +40,97 @@ class TelaInicialProfessor extends StatelessWidget {
                     child: Placeholder(color: Colors.white),
                   ),
                 ),
-                
-                // Texto de boas-vindas no canto direito (apenas em telas largas)
                 if (isWide)
-                  Row(
-                    children: [
-                      const SizedBox(width: 8),
-                      Text(
-                        'Olá, Professor!',
-                        style: GoogleFonts.nunito(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Ola, ${sessao.nome}!',
+                    style: GoogleFonts.nunito(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
               ],
             ),
           ),
-
-          // ─── CONTEÚDO DO MENU (CENTRALIZADO) ─────────────────────────────
           Expanded(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 800), // Limita largura na Web
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // ─── CORREÇÃO: ADICIONADO O LOGO DO BECKER AQUI ───
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Círculo externo vermelho com sombra
-                            Container(
-                              width: logoSize,
-                              height: logoSize,
-                              decoration: BoxDecoration(
-                                color: _vermelho,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              padding: EdgeInsets.all(logoSize * 0.12),
-                              child: Container(
-                                // Círculo interno branco
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: EdgeInsets.all(logoSize * 0.12),
-                                child: Image.asset(
-                                  'imagens/logo_quimico.png', // Símbolo do Becker
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      // Fallback caso a imagem não carregue
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: _vermelho.withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.science,
-                                          size: logoSize * 0.4,
-                                          color: _vermelho,
-                                        ),
-                                      ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            // Texto do Título ao lado do logo
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'DOMINÓ DA\nQUÍMICA',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.nunito(
-                                    fontSize: isWide ? 26 : 22,
-                                    fontWeight: FontWeight.w900,
-                                    color: _vermelho,
-                                    letterSpacing: 1.5,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'FUNÇÕES INORGÂNICAS',
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.grey[500],
-                                    letterSpacing: 2.5,
-                                  ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: logoSize,
+                            height: logoSize,
+                            decoration: BoxDecoration(
+                              color: _vermelho,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                            padding: EdgeInsets.all(logoSize * 0.12),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              padding: EdgeInsets.all(logoSize * 0.12),
+                              child: Image.asset(
+                                'imagens/logo_quimico.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: _vermelho.withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.science,
+                                        size: logoSize * 0.4,
+                                        color: _vermelho,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Column(
+                            children: [
+                              Text(
+                                'DOMINO DA\nQUIMICA',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.nunito(
+                                  fontSize: isWide ? 26 : 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: _vermelho,
+                                  letterSpacing: 1.5,
+                                  height: 1.1,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'FUNCOES INORGANICAS',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey[500],
+                                  letterSpacing: 2.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      // ─── FIM DA CORREÇÃO DO LOGO ──────────────────────
-
                       const SizedBox(height: 40),
-                      
-                      // Título do Menu
                       Text(
                         'Menu Principal',
                         textAlign: TextAlign.center,
@@ -170,37 +142,36 @@ class TelaInicialProfessor extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Escolha uma das opções abaixo para continuar',
+                        'Escolha uma das opcoes abaixo para continuar',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.nunito(
                           fontSize: 14,
                           color: Colors.grey[600],
                         ),
                       ),
-                      
                       const SizedBox(height: 40),
-
-                      // ─── BOTÕES DO MENU (CARDS) ────────────────────────────────
                       Wrap(
                         spacing: 24,
                         runSpacing: 24,
                         alignment: WrapAlignment.center,
                         children: [
-                          // Botão JOGAR
                           _buildMenuCard(
                             context: context,
                             title: 'Jogar',
                             subtitle: 'Testar ou demonstrar o jogo',
                             icon: Icons.sports_esports_rounded,
-                            isPrimary: true, // Cor de destaque (vermelha)
+                            isPrimary: true,
                             onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Tela do Jogo em construção!')),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TelaDificuldade(
+                                    idUsuario: sessao.idUsuario,
+                                  ),
+                                ),
                               );
                             },
                           ),
-                          
-                          // Botão CADASTRAR ALUNO
                           _buildMenuCard(
                             context: context,
                             title: 'Cadastrar Aluno',
@@ -210,33 +181,34 @@ class TelaInicialProfessor extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CadastrarAlunoScreen(),
+                                  builder: (context) =>
+                                      const CadastrarAlunoScreen(),
                                 ),
                               );
                             },
                           ),
-                          
-                          // Botão RELATÓRIOS
                           _buildMenuCard(
                             context: context,
-                            title: 'Relatórios',
+                            title: 'Relatorios',
                             subtitle: 'Acompanhar desempenho',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const RelatoriosProfessorScreen(),
+                                  builder: (context) =>
+                                      RelatoriosProfessorScreen(
+                                        idProfessor: sessao.idUsuario,
+                                        nomeProfessor: sessao.nome,
+                                      ),
                                 ),
                               );
                             },
                           ),
-                          
-                          // Botão SAIR
                           _buildMenuCard(
                             context: context,
                             title: 'Sair',
-                            subtitle: 'Encerrar sessão',
+                            subtitle: 'Encerrar sessao',
                             icon: Icons.logout_rounded,
                             iconColor: Colors.grey[600],
                             onTap: () {
@@ -261,7 +233,6 @@ class TelaInicialProfessor extends StatelessWidget {
     );
   }
 
-  // ─── WIDGET AUXILIAR PARA CRIAR OS CARDS DO MENU ───────────────────────
   Widget _buildMenuCard({
     required BuildContext context,
     required String title,
@@ -291,12 +262,11 @@ class TelaInicialProfessor extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Ícone dentro de um círculo
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isPrimary
-                      ? Colors.white.withOpacity(0.2)
+                      ? Colors.white.withValues(alpha: 0.2)
                       : _cinzaFundo,
                   shape: BoxShape.circle,
                 ),
@@ -307,7 +277,6 @@ class TelaInicialProfessor extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              // Textos (Título e Subtítulo)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

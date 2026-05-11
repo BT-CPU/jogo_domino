@@ -4,7 +4,9 @@ import 'jogo_models.dart';
 import 'telaJogo.dart';
 
 class TelaDificuldade extends StatefulWidget {
-  const TelaDificuldade({super.key});
+  const TelaDificuldade({super.key, this.idUsuario});
+
+  final int? idUsuario;
 
   @override
   State<TelaDificuldade> createState() => _TelaDificuldadeState();
@@ -159,6 +161,7 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                                   MaterialPageRoute(
                                     builder: (context) => TelaJogo(
                                       dificuldade: _dificuldadeAtual!,
+                                      idUsuario: widget.idUsuario,
                                     ),
                                   ),
                                 );
