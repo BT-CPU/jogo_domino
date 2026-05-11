@@ -30,6 +30,10 @@ CREATE TABLE tb_aluno_turma (
     FOREIGN KEY (id_turma) REFERENCES tb_turma(id_turma) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_turma_professor ON tb_turma(id_professor);
+CREATE INDEX idx_aluno_turma_usuario ON tb_aluno_turma(id_usuario);
+CREATE INDEX idx_aluno_turma_turma ON tb_aluno_turma(id_turma);
+
 -- Base de dados do conteúdo de química.
 -- Fornece os valores exatos para preencher e validar as peças do dominó.
 CREATE TABLE tb_composto (
@@ -55,6 +59,9 @@ CREATE TABLE tb_partida (
     data_partida DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_usuario) REFERENCES tb_usuario(id_usuario) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_partida_usuario_data ON tb_partida(id_usuario, data_partida DESC);
+CREATE INDEX idx_partida_usuario_tempo ON tb_partida(id_usuario, tempo_segundos);
 
 -- Insere as peças utilizadas como exemplo na tela "Como Jogar".
 INSERT INTO tb_composto (formula, nome_oficial, funcao, propriedade) VALUES 

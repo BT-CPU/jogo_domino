@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import mysql.connector
+from mysql.connector import pooling
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
@@ -28,9 +29,16 @@ DB_CONFIG = {
     "ssl_disabled": False,
 }
 
+DB_POOL = pooling.MySQLConnectionPool(
+    pool_name="domino_pool",
+    pool_size=8,
+    pool_reset_session=True,
+    **DB_CONFIG,
+)
+
 
 def get_connection():
-    return mysql.connector.connect(**DB_CONFIG)
+    return DB_POOL.get_connection()
 
 
 class CadastroUsuario(BaseModel):
@@ -94,6 +102,15 @@ def _buscar_turma_aluno(cursor, id_usuario):
     return row["turma"] if row and row["turma"] else "Sem turma"
 
 
+def _taxa_acerto(soma_acertos, soma_erros):
+    total_acoes = (soma_acertos or 0) + (soma_erros or 0)
+    return (
+        float(round(((soma_acertos or 0) / total_acoes) * 100, 1))
+        if total_acoes > 0
+        else 0.0
+    )
+
+
 def _buscar_resumo_aluno(cursor, id_usuario):
     cursor.execute(
         """
@@ -109,15 +126,12 @@ def _buscar_resumo_aluno(cursor, id_usuario):
         (id_usuario,),
     )
     resumo = cursor.fetchone()
-    total_acoes = (resumo["soma_acertos"] or 0) + (resumo["soma_erros"] or 0)
-    taxa = (
-        float(round(((resumo["soma_acertos"] or 0) / total_acoes) * 100, 1))
-        if total_acoes > 0
-        else 0.0
-    )
     return {
         "total_partidas": resumo["total_partidas"] or 0,
-        "taxa_acerto_media": taxa,
+        "taxa_acerto_media": _taxa_acerto(
+            resumo["soma_acertos"],
+            resumo["soma_erros"],
+        ),
         "melhor_tempo_segundos": resumo["melhor_tempo_segundos"],
         "ultima_jogada": _iso_datetime(resumo["ultima_jogada"]),
     }
@@ -147,23 +161,49 @@ def _buscar_historico_aluno(cursor, id_usuario, limite=20):
 
 
 def _montar_relatorio_aluno(cursor, id_usuario):
-    usuario = _buscar_usuario(cursor, id_usuario)
-    if not usuario or usuario["perfil"] != "aluno":
+    cursor.execute(
+        """
+        SELECT
+            u.id_usuario,
+            u.nome,
+            COALESCE(MIN(t.nome_turma), 'Sem turma') AS turma,
+            COUNT(p.id_partida) AS total_partidas,
+            COALESCE(SUM(p.qtd_acertos), 0) AS soma_acertos,
+            COALESCE(SUM(p.qtd_erros), 0) AS soma_erros,
+            MIN(NULLIF(p.tempo_segundos, 0)) AS melhor_tempo_segundos,
+            MAX(p.data_partida) AS ultima_jogada
+        FROM tb_usuario u
+        LEFT JOIN tb_aluno_turma at ON at.id_usuario = u.id_usuario
+        LEFT JOIN tb_turma t ON t.id_turma = at.id_turma
+        LEFT JOIN tb_partida p ON p.id_usuario = u.id_usuario
+        WHERE u.id_usuario = %s
+          AND u.perfil = 'aluno'
+        GROUP BY u.id_usuario, u.nome
+        """,
+        (id_usuario,),
+    )
+    resumo_aluno = cursor.fetchone()
+    if not resumo_aluno:
         raise HTTPException(status_code=404, detail="Aluno nao encontrado.")
 
-    resumo = _buscar_resumo_aluno(cursor, id_usuario)
     historico = _buscar_historico_aluno(cursor, id_usuario)
 
     return {
-        "id_usuario": usuario["id_usuario"],
-        "nome": usuario["nome"],
-        "turma": _buscar_turma_aluno(cursor, id_usuario),
-        **resumo,
+        "id_usuario": resumo_aluno["id_usuario"],
+        "nome": resumo_aluno["nome"],
+        "turma": resumo_aluno["turma"],
+        "total_partidas": resumo_aluno["total_partidas"] or 0,
+        "taxa_acerto_media": _taxa_acerto(
+            resumo_aluno["soma_acertos"],
+            resumo_aluno["soma_erros"],
+        ),
+        "melhor_tempo_segundos": resumo_aluno["melhor_tempo_segundos"],
+        "ultima_jogada": _iso_datetime(resumo_aluno["ultima_jogada"]),
         "historico": historico,
     }
 
 
-def _listar_alunos_do_professor(cursor, id_professor):
+def _listar_resumos_alunos_professor(cursor, id_professor):
     cursor.execute(
         """
         SELECT COUNT(*) AS total
@@ -177,12 +217,22 @@ def _listar_alunos_do_professor(cursor, id_professor):
     if professor_tem_turma:
         cursor.execute(
             """
-            SELECT DISTINCT u.id_usuario, u.nome, COALESCE(t.nome_turma, 'Sem turma') AS turma
+            SELECT
+                u.id_usuario,
+                u.nome,
+                COALESCE(MIN(t.nome_turma), 'Sem turma') AS turma,
+                COUNT(p.id_partida) AS total_partidas,
+                COALESCE(SUM(p.qtd_acertos), 0) AS soma_acertos,
+                COALESCE(SUM(p.qtd_erros), 0) AS soma_erros,
+                MIN(NULLIF(p.tempo_segundos, 0)) AS melhor_tempo_segundos,
+                MAX(p.data_partida) AS ultima_jogada
             FROM tb_usuario u
             LEFT JOIN tb_aluno_turma at ON at.id_usuario = u.id_usuario
             LEFT JOIN tb_turma t ON t.id_turma = at.id_turma
+            LEFT JOIN tb_partida p ON p.id_usuario = u.id_usuario
             WHERE u.perfil = 'aluno'
               AND t.id_professor = %s
+            GROUP BY u.id_usuario, u.nome
             ORDER BY u.nome ASC
             """,
             (id_professor,),
@@ -190,10 +240,19 @@ def _listar_alunos_do_professor(cursor, id_professor):
     else:
         cursor.execute(
             """
-            SELECT u.id_usuario, u.nome, COALESCE(MIN(t.nome_turma), 'Sem turma') AS turma
+            SELECT
+                u.id_usuario,
+                u.nome,
+                COALESCE(MIN(t.nome_turma), 'Sem turma') AS turma,
+                COUNT(p.id_partida) AS total_partidas,
+                COALESCE(SUM(p.qtd_acertos), 0) AS soma_acertos,
+                COALESCE(SUM(p.qtd_erros), 0) AS soma_erros,
+                MIN(NULLIF(p.tempo_segundos, 0)) AS melhor_tempo_segundos,
+                MAX(p.data_partida) AS ultima_jogada
             FROM tb_usuario u
             LEFT JOIN tb_aluno_turma at ON at.id_usuario = u.id_usuario
             LEFT JOIN tb_turma t ON t.id_turma = at.id_turma
+            LEFT JOIN tb_partida p ON p.id_usuario = u.id_usuario
             WHERE u.perfil = 'aluno'
             GROUP BY u.id_usuario, u.nome
             ORDER BY u.nome ASC
@@ -398,18 +457,28 @@ def relatorio_professor(id_professor: int):
         if not professor or professor["perfil"] != "professor":
             raise HTTPException(status_code=404, detail="Professor nao encontrado.")
 
-        alunos_base = _listar_alunos_do_professor(cursor, id_professor)
+        alunos_base = _listar_resumos_alunos_professor(cursor, id_professor)
         alunos = []
         total_partidas_turma = 0
         taxas = []
 
         for aluno in alunos_base:
-            relatorio = _montar_relatorio_aluno(cursor, aluno["id_usuario"])
-            relatorio["turma"] = aluno.get("turma") or relatorio["turma"]
-            alunos.append(relatorio)
-            total_partidas_turma += relatorio["total_partidas"]
-            if relatorio["total_partidas"] > 0:
-                taxas.append(relatorio["taxa_acerto_media"])
+            taxa = _taxa_acerto(aluno["soma_acertos"], aluno["soma_erros"])
+            total_partidas = aluno["total_partidas"] or 0
+            alunos.append(
+                {
+                    "id_usuario": aluno["id_usuario"],
+                    "nome": aluno["nome"],
+                    "turma": aluno["turma"],
+                    "total_partidas": total_partidas,
+                    "taxa_acerto_media": taxa,
+                    "melhor_tempo_segundos": aluno["melhor_tempo_segundos"],
+                    "ultima_jogada": _iso_datetime(aluno["ultima_jogada"]),
+                }
+            )
+            total_partidas_turma += total_partidas
+            if total_partidas > 0:
+                taxas.append(taxa)
 
         media_acerto_turma = round(sum(taxas) / len(taxas), 1) if taxas else 0.0
 
