@@ -5,7 +5,6 @@ from mysql.connector import pooling
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-import random
 
 try:
     import bcrypt
@@ -62,27 +61,6 @@ class PartidaFinalizadaPayload(BaseModel):
     qtd_acertos: int = 0
     qtd_erros: int = 0
 
-class Peca(BaseModel):
-    id: int
-
-    lado_esquerdo: str
-    tipo_esquerdo: str
-
-    lado_direito: str
-    tipo_direito: str
-
-    classificacao: str
-
-
-class CriarPartidaRequest(BaseModel):
-    nivel: int
-    quantidade_pecas: int = 12
-
-
-class PartidaResponse(BaseModel):
-    pecas_jogador: list[Peca]
-    pecas_bot: list[Peca]
-    primeira_peca: Peca
 
 
 def _iso_datetime(value):
@@ -283,98 +261,6 @@ def _listar_resumos_alunos_professor(cursor, id_professor):
         )
 
     return cursor.fetchall()
-
-def gerar_peca(composto, nivel, id_peca, cursor):
-
-    formula = composto["formula"]
-    nome = composto["nome"]
-    classificacao = composto["classificacao"]
-
-    # ─────────────────────────────
-    # NÍVEL 1
-    # Fórmula ↔ Classificação
-    # ─────────────────────────────
-
-    if nivel == 1:
-
-        return Peca(
-            id=id_peca,
-
-            lado_esquerdo=formula,
-            tipo_esquerdo="formula",
-
-            lado_direito=classificacao,
-            tipo_direito="classificacao",
-
-            classificacao=classificacao
-        )
-
-    # ─────────────────────────────
-    # NÍVEL 2
-    # Fórmula ↔ Nome
-    # ─────────────────────────────
-
-    elif nivel == 2:
-
-        return Peca(
-            id=id_peca,
-
-            lado_esquerdo=formula,
-            tipo_esquerdo="formula",
-
-            lado_direito=nome,
-            tipo_direito="nome",
-
-            classificacao=classificacao
-        )
-
-    # ─────────────────────────────
-    # NÍVEL 3
-    # Fórmula ↔ Propriedade
-    # ─────────────────────────────
-
-    elif nivel == 3:
-
-        cursor.execute(
-            """
-            SELECT p.propriedade
-            FROM tb_propriedade_funcao p
-            INNER JOIN tb_classificacao c
-            ON p.id_classificacao = c.id_classificacao
-            WHERE c.nome = %s
-            ORDER BY RAND()
-            LIMIT 1
-            """,
-            (classificacao,),
-        )
-
-        resultado = cursor.fetchone()
-
-        if not resultado:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Nenhuma propriedade encontrada para {classificacao}."
-            )
-
-        propriedade = resultado["propriedade"]
-
-        return Peca(
-            id=id_peca,
-
-            lado_esquerdo=formula,
-            tipo_esquerdo="formula",
-
-            lado_direito=propriedade,
-            tipo_direito="propriedade",
-
-            classificacao=classificacao
-        )
-
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail="Nivel invalido."
-        )
 
 
 @app.get("/")
@@ -611,98 +497,3 @@ def relatorio_professor(id_professor: int):
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
-
-@app.post("/partida/criar", response_model=PartidaResponse)
-def criar_partida(dados: CriarPartidaRequest):
-
-    if dados.nivel not in (1, 2, 3):
-        raise HTTPException(
-            status_code=400,
-            detail="Nivel invalido."
-        )
-    
-    if dados.quantidade_pecas < 1:
-        raise HTTPException(
-            status_code=400,
-            detail="Quantidade de pecas invalida."
-        )
-
-    try:
-
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute(
-            """
-            SELECT
-                co.formula,
-                co.nome,
-                cl.nome AS classificacao
-            FROM tb_composto co
-            INNER JOIN tb_classificacao cl
-            ON co.id_classificacao = cl.id_classificacao
-            """
-        )
-
-        compostos = cursor.fetchall()
-
-        total_necessario = (dados.quantidade_pecas * 2) + 1
-
-        if len(compostos) < total_necessario:
-            raise HTTPException(
-                status_code=400,
-                detail="Nao ha compostos suficientes no banco."
-            )
-
-        random.shuffle(compostos)
-
-        compostos_selecionados = compostos[:total_necessario]
-
-        pecas = []
-
-        for i, composto in enumerate(compostos_selecionados):
-
-            peca = gerar_peca(
-                composto=composto,
-                nivel=dados.nivel,
-                id_peca=i + 1,
-                cursor = cursor
-            )
-
-            pecas.append(peca)
-
-        primeira_peca = pecas[0]
-
-        pecas_jogador = pecas[
-            1 : dados.quantidade_pecas + 1
-        ]
-
-        pecas_bot = pecas[
-            dados.quantidade_pecas + 1 :
-        ]
-
-        cursor.close()
-        conn.close()
-
-        return PartidaResponse(
-            pecas_jogador=pecas_jogador,
-            pecas_bot=pecas_bot,
-            primeira_peca=primeira_peca
-        )
-    
-
-    except HTTPException:
-        raise
-
-    except Exception as exc:
-
-        try:
-            cursor.close()
-            conn.close()
-        except:
-            pass
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(exc)
-        )
