@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 import 'api_config.dart';
@@ -45,9 +44,9 @@ class RelatorioService {
   String _extrairErro(String body) {
     try {
       final json = jsonDecode(body) as Map<String, dynamic>;
-      return json['detail'] as String? ?? 'Falha ao carregar relatorio.';
+      return json['detail'] as String? ?? 'Falha ao carregar relatório.';
     } catch (_) {
-      return 'Falha ao carregar relatorio.';
+      return 'Falha ao carregar relatório.';
     }
   }
 }
