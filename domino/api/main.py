@@ -5,6 +5,9 @@ from mysql.connector import pooling
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
+import random
+
+PARTIDAS_ATIVAS = {}
 
 try:
     import bcrypt
@@ -61,7 +64,28 @@ class PartidaFinalizadaPayload(BaseModel):
     qtd_acertos: int = 0
     qtd_erros: int = 0
 
+class CriarPartidaPayload(BaseModel):
+    id_usuario: int
+    nivel_dificuldade: int
 
+class JogarPecaPayload(BaseModel):
+    id_partida: str
+    id_peca: int
+    ponta: str 
+
+class PecaDomino(BaseModel):
+    id_peca: int
+    visivel_esquerdo: str  # O que aparece na tela (ex: "HCl")
+    visivel_direito: str   # O que aparece na tela (ex: "Ácido", "Nitrato de Sódio")
+    validador_esquerdo: int # ID da classificação (1 a 4) para o back checar a química
+    validador_direito: int  # ID da classificação (1 a 4) para o back checar a química
+
+class StatusPartidaResponse(BaseModel):
+    id_partida: str  # <--- ADICIONADO AQUI
+    mesa: list[PecaDomino]          
+    mao_jogador: list[PecaDomino]    
+    status: str
+    fim_de_jogo: bool
 
 def _iso_datetime(value):
     if value is None:
@@ -261,6 +285,85 @@ def _listar_resumos_alunos_professor(cursor, id_professor):
         )
 
     return cursor.fetchall()
+
+def _gerar_corrente_domino(nivel: int) -> list:
+    """
+    Busca os dados no banco e monta uma corrente fechada de 40 peças válidas.
+    Cada peça é um dicionário com: id_peca, esquerdo, direito e as chaves de validação.
+    """
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Buscar dados do banco dependendo do nível
+    cursor.execute("SELECT id_composto, formula, nome, id_classificacao FROM tb_composto")
+    compostos = cursor.fetchall()
+    
+    # Agrupa compostos por classificação para facilitar o sorteio equilibrado
+    compostos_por_classe = {1: [], 2: [], 3: [], 4: []}
+    for c in compostos:
+        compostos_por_classe[c["id_classificacao"]].append(c)
+        
+    classificacoes_nomes = {1: "Ácido", 2: "Base", 3: "Sal", 4: "Óxido"}
+    
+    propriedades_por_classe = {1: [], 2: [], 3: [], 4: []}
+    if nivel == 3:
+        cursor.execute("SELECT id_classificacao, propriedade FROM tb_propriedade_funcao")
+        propriedades = cursor.fetchall()
+        for p in propriedades:
+            propriedades_por_classe[p["id_classificacao"]].append(p["propriedade"])
+            
+    cursor.close()
+    conn.close()
+
+    # 2. Criar uma sequência lógica e equilibrada de 40 encaixes químicos (IDs de classificação)
+    # Ex: [1, 2, 2, 4, 4, 3, 3, 1...] onde cada par adjacente (e as pontas) formam uma peça
+    sequencia_classes = []
+    classes = [1, 2, 3, 4]
+    
+    # Garante distribuição perfeita: 10 aparições para cada uma das 4 funções nas pontas das peças
+    for _ in range(10):
+        random.shuffle(classes)
+        sequencia_classes.extend(classes)
+        
+    # Duplica os elementos para criar os encaixes internos das peças de dominó
+    # Sequência vira: [C1, C1, C2, C2, C3, C3...] -> Peça 1: (C1|C1), Peça 2: (C2|C2)... Não queremos duplos perfeitos.
+    # Vamos rotacionar a lista de correspondência para cruzar os dados de forma que esquerdo != direito
+    sequencia_esquerda = sequencia_classes.copy()
+    sequencia_direita = sequencia_classes[1:] + [sequencia_classes[0]] # Rotaciona 1 elemento para o lado
+    
+    pecas_geradas = []
+    id_peca_tracker = 1
+    
+    # 3. Construir as peças textuais com base no nível técnico selecionado
+    for cl_esq, cl_dir in zip(sequencia_esquerda, sequencia_direita):
+        # Sorteia elementos do banco sem repetir na mesma peça
+        comp_esq = random.choice(compostos_por_classe[cl_esq])
+        
+        # Define o que vai escrito no lado Esquerdo (Sempre Fórmula)
+        conteudo_esq = comp_esq["formula"]
+        
+        # Define o que vai escrito no lado Direito dependendo da Dificuldade
+        if nivel == 1:
+            conteudo_dir = classificacoes_nomes[cl_dir]
+        elif nivel == 2:
+            # Nível 2: Fórmula liga com Nome Exato do Composto correspondente.
+            # Para a peça não ser um espelho estático do mesmo composto (o que travaria o dominó),
+            # o lado direito traz o Nome de OUTRO composto pertencente à classe da direita.
+            comp_dir = random.choice(compostos_por_classe[cl_dir])
+            conteudo_dir = comp_dir["nome"]
+        else: # nivel == 3
+            conteudo_dir = random.choice(propriedades_por_classe[cl_dir])
+            
+        pecas_geradas.append({
+            "id_peca": id_peca_tracker,
+            "visivel_esquerdo": conteudo_esq,
+            "visivel_direito": conteudo_dir,
+            "validador_esquerdo": cl_esq, # ID Químico da Fórmula
+            "validador_direito": cl_dir    # ID Químico do Conceito/Nome/Propriedade
+        })
+        id_peca_tracker += 1
+        
+    return pecas_geradas
 
 
 @app.get("/")
@@ -497,3 +600,148 @@ def relatorio_professor(id_professor: int):
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+@app.post("/partidas/criar", status_code=201, response_model=StatusPartidaResponse)
+def criar_partida(payload: CriarPartidaPayload):
+    # ... todo o código que já fizemos continua igual ...
+    if payload.nivel_dificuldade not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="Nível de dificuldade inválido.")
+        
+    # 1. Gera as 40 peças amarradas pela engenharia reversa
+    todas_pecas = _gerar_corrente_domino(payload.nivel_dificuldade)
+    
+    # 2. Distribuição alternada para garantir o fechamento matemático
+    # Ímpares para o Bot, Pares para o Jogador
+    mao_bot = [todas_pecas[i] for i in range(len(todas_pecas)) if i % 2 == 0]
+    mao_jogador = [todas_pecas[i] for i in range(len(todas_pecas)) if i % 2 != 0]
+    
+    # 3. O Bot inicia o jogo sacrificando a sua primeira peça na mesa
+    peca_inicial_bot = mao_bot.pop(0)
+    mesa = [peca_inicial_bot]
+    
+    # Embaralha as mãos individualmente para o jogador ter o desafio de procurar o encaixe
+    random.shuffle(mao_jogador)
+    random.shuffle(mao_bot)
+    
+    # 4. Salva o estado da partida na memória do servidor usando um ID único string
+    id_partida = f"partida_{payload.id_usuario}_{int(datetime.now().timestamp())}"
+    PARTIDAS_ATIVAS[id_partida] = {
+        "id_usuario": payload.id_usuario,
+        "nivel": payload.nivel_dificuldade,
+        "mesa": mesa,
+        "mao_jogador": mao_jogador,
+        "mao_bot": mao_bot,
+        "fim_de_jogo": False,
+        "resultado": None
+    }
+    
+    # 5. Retorna para o Flutter (Apenas a mão do jogador e a mesa são expostas!)
+    return {
+        "id_partida": id_partida,
+        "mesa": mesa,
+        "mao_jogador": mao_jogador,
+        "status": "Seu turno",
+        "fim_de_jogo": False
+    }
+
+@app.post("/partidas/jogar", response_model=StatusPartidaResponse)
+def jogar_peca(payload: JogarPecaPayload):
+    # Verifica se a partida existe na memória
+    if payload.id_partida not in PARTIDAS_ATIVAS:
+        raise HTTPException(status_code=404, detail="Partida não encontrada ou expirada.")
+        
+    partida = PARTIDAS_ATIVAS[payload.id_partida]
+    if partida["fim_de_jogo"]:
+        raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
+
+    # 1. Localizar a peça na mão do jogador
+    peca_jogador = next((p for p in partida["mao_jogador"] if p["id_peca"] == payload.id_peca), None)
+    if not peca_jogador:
+        raise HTTPException(status_code=400, detail="Você não possui essa peça na sua mão.")
+        
+    mesa = partida["mesa"]
+    ponta_esquerda_mesa = mesa[0]
+    ponta_direita_mesa = mesa[-1]
+    
+    jogada_valida = False
+    nova_peca_mesa = peca_jogador.copy()
+    
+    # 2. Validação da Jogada Química do Aluno
+    if payload.ponta == "esquerda":
+        # Direito da peça do jogador se conecta com o Esquerdo da mesa
+        if peca_jogador["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"]:
+            mesa.insert(0, nova_peca_mesa)
+            jogada_valida = True
+            
+    elif payload.ponta == "direita":
+        # Esquerdo da peça do jogador se conecta com o Direito da mesa
+        if peca_jogador["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]:
+            mesa.append(nova_peca_mesa)
+            jogada_valida = True
+
+    if not jogada_valida:
+        raise HTTPException(status_code=422, detail="Combinação química incorreta! Tente outra peça ou outra extremidade.")
+
+    # Remove a peça jogada com sucesso da mão do jogador
+    partida["mao_jogador"].remove(peca_jogador)
+
+    # 3. Checa se o Jogador venceu imediatamente (Mão zerada)
+    if len(partida["mao_jogador"]) == 0:
+        partida["fim_de_jogo"] = True
+        partida["resultado"] = "Vitória do Jogador"
+        return {
+            "id_partida": payload.id_partida,
+            "mesa": mesa,
+            "mao_jogador": partida["mao_jogador"],
+            "status": "Você venceu! Todas as peças foram descartadas.",
+            "fim_de_jogo": True
+        }
+
+    # 4. Turno do Bot Automatizado
+    ponta_esquerda_mesa = mesa[0]
+    ponta_direita_mesa = mesa[-1]
+    peca_bot_escolhida = None
+    ponta_bot_escolhida = ""
+
+    # O bot varre a mão dele procurando um encaixe válido
+    for p_bot in partida["mao_bot"]:
+        if p_bot["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"]:
+            peca_bot_escolhida = p_bot
+            ponta_bot_escolhida = "esquerda"
+            break
+        elif p_bot["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]:
+            peca_bot_escolhida = p_bot
+            ponta_bot_escolhida = "direita"
+            break
+
+    # Se o Bot achou uma jogada
+    if peca_bot_escolhida:
+        partida["mao_bot"].remove(peca_bot_escolhida)
+        if ponta_bot_escolhida == "esquerda":
+            mesa.insert(0, peca_bot_escolhida)
+        else:
+            mesa.append(peca_bot_escolhida)
+        status_bot = f"O Bot jogou uma peça na {ponta_bot_escolhida}. Sua vez!"
+    else:
+        status_bot = "O Bot não encontrou combinação química e passou a vez. Sua vez!"
+
+    # 5. Checa se o Bot zerou a mão
+    if len(partida["mao_bot"]) == 0:
+        partida["fim_de_jogo"] = True
+        partida["resultado"] = "Vitória do Bot"
+        return {
+            "id_partida": payload.id_partida,
+            "mesa": mesa,
+            "mao_jogador": partida["mao_jogador"],
+            "status": "O Bot fechou o jogo antes de você!",
+            "fim_de_jogo": True
+        }
+
+    # Retorna o novo estado estável da mesa após a jogada
+    return {
+        "id_partida": payload.id_partida,
+        "mesa": mesa,
+        "mao_jogador": partida["mao_jogador"],
+        "status": status_bot,
+        "fim_de_jogo": False
+    }
