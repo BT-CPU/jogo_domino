@@ -76,7 +76,7 @@ class Peca(BaseModel):
 
 class CriarPartidaRequest(BaseModel):
     nivel: int
-    quantidade_pecas: int = 20
+    quantidade_pecas: int = 12
 
 
 class PartidaResponse(BaseModel):
@@ -284,7 +284,7 @@ def _listar_resumos_alunos_professor(cursor, id_professor):
 
     return cursor.fetchall()
 
-def gerar_peca(composto, nivel, id_peca):
+def gerar_peca(composto, nivel, id_peca, cursor):
 
     formula = composto["formula"]
     nome = composto["nome"]
@@ -335,9 +335,6 @@ def gerar_peca(composto, nivel, id_peca):
 
     elif nivel == 3:
 
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-
         cursor.execute(
             """
             SELECT p.propriedade
@@ -353,8 +350,11 @@ def gerar_peca(composto, nivel, id_peca):
 
         resultado = cursor.fetchone()
 
-        cursor.close()
-        conn.close()
+        if not resultado:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Nenhuma propriedade encontrada para {classificacao}."
+            )
 
         propriedade = resultado["propriedade"]
 
@@ -620,6 +620,12 @@ def criar_partida(dados: CriarPartidaRequest):
             status_code=400,
             detail="Nivel invalido."
         )
+    
+    if dados.quantidade_pecas < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Quantidade de pecas invalida."
+        )
 
     try:
 
@@ -640,9 +646,6 @@ def criar_partida(dados: CriarPartidaRequest):
 
         compostos = cursor.fetchall()
 
-        cursor.close()
-        conn.close()
-
         total_necessario = (dados.quantidade_pecas * 2) + 1
 
         if len(compostos) < total_necessario:
@@ -662,7 +665,8 @@ def criar_partida(dados: CriarPartidaRequest):
             peca = gerar_peca(
                 composto=composto,
                 nivel=dados.nivel,
-                id_peca=i + 1
+                id_peca=i + 1,
+                cursor = cursor
             )
 
             pecas.append(peca)
@@ -677,16 +681,27 @@ def criar_partida(dados: CriarPartidaRequest):
             dados.quantidade_pecas + 1 :
         ]
 
+        cursor.close()
+        conn.close()
+
         return PartidaResponse(
             pecas_jogador=pecas_jogador,
             pecas_bot=pecas_bot,
             primeira_peca=primeira_peca
         )
+    
 
     except HTTPException:
         raise
 
     except Exception as exc:
+
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
+
         raise HTTPException(
             status_code=500,
             detail=str(exc)
