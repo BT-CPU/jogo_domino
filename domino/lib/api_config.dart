@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 class ApiConfig {
   static const String _producao =
-      'https://domino-api-production.up.railway.app';
+      'jogodomino-production.up.railway.app';
 
   static String get authBaseUrl => _producao;
 
