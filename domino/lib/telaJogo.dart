@@ -687,12 +687,18 @@ class _TelaJogoState extends State<TelaJogo> {
     );
   }
 
-  // Widget visual que brilha ao arrastar a peça por cima
   Widget _buildZonaSoltura({required String ponta}) {
     return DragTarget<PecaDomino>(
-      onWillAcceptWithDetails: (details) => true,
+      // Só aceita o disparo se o usuário realmente soltar uma PecaDomino válida
+      onWillAcceptWithDetails: (details) {
+        // ignore: unnecessary_type_check
+        return details.data is PecaDomino;
+      },
       onAcceptWithDetails: (details) {
-        _confirmarJogada(details.data, ponta);
+        // Garante que o scroll do tabuleiro não interfira no processamento
+        if (!_processandoJogada) {
+          _confirmarJogada(details.data, ponta);
+        }
       },
       builder: (context, candidateData, rejectedData) {
         final estaPorCima = candidateData.isNotEmpty;
@@ -708,7 +714,6 @@ class _TelaJogoState extends State<TelaJogo> {
             border: Border.all(
               color: estaPorCima ? _vermelho : Colors.white30,
               width: estaPorCima ? 3 : 2,
-              style: BorderStyle.solid,
             ),
           ),
           child: Column(
@@ -837,7 +842,7 @@ class _TelaJogoState extends State<TelaJogo> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Toque e segure na peça para arrastá-la até o tabuleiro',
+            'Arraste a peça até uma das setas no tabuleiro',
             style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey[600]),
           ),
           const SizedBox(height: 20),
@@ -851,15 +856,14 @@ class _TelaJogoState extends State<TelaJogo> {
               spacing: 16,
               runSpacing: 20,
               children: estado.maoJogador.map((peca) {
-                // Desabilita o arrasto se o jogo estiver processando algo
                 final podeInteragir = !_processandoJogada && !estado.fimDeJogo;
 
                 return Opacity(
                   opacity: podeInteragir ? 1.0 : 0.5,
+                  // Voltamos para o Draggable normal. O arrasto é imediato!
                   child: Draggable<PecaDomino>(
                     data: peca,
                     maxSimultaneousDrags: podeInteragir ? 1 : 0,
-                    // O que aparece flutuando sob o dedo do usuário enquanto ele arrasta:
                     feedback: Material(
                       color: Colors.transparent,
                       child: Opacity(
@@ -867,12 +871,10 @@ class _TelaJogoState extends State<TelaJogo> {
                         child: _buildPecaEstilizada(peca, emMesa: false),
                       ),
                     ),
-                    // O que fica no lugar original enquanto a peça está voando:
                     childWhenDragging: Opacity(
                       opacity: 0.2,
                       child: _buildPecaEstilizada(peca, emMesa: false),
                     ),
-                    // Peça em estado normal de repouso:
                     child: _buildPecaEstilizada(peca, emMesa: false),
                   ),
                 );
