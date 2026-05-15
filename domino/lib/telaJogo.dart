@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'jogo_models.dart';
-import 'jogo_service.dart';
+// Atualizado para os seus novos modelos e service do backend em Python
+import 'partida_model.dart'; 
+import 'partida_service.dart';
+import 'jogo_models.dart' hide StatusPartida; // Mantido para carregar a DificuldadeJogo do seu Enum
 
 class TelaJogo extends StatefulWidget {
   const TelaJogo({
@@ -25,11 +27,17 @@ class _TelaJogoState extends State<TelaJogo> {
   static const _cinzaEscuro = Color(0xFF333333);
   static const _cinzaFundo = Color(0xFFF7F7F7);
 
-  final JogoService _jogoService = JogoService();
+  final PartidaService _partidaService = PartidaService();
   final ScrollController _tabuleiroScrollController = ScrollController();
 
-  EstadoPartida? _estado;
+  StatusPartida? _estado;
   Timer? _timer;
+  
+  // Variáveis locais para manter os seus contadores visuais funcionando
+  int _tempoSegundos = 0;
+  int _qtdAcertos = 0;
+  int _qtdErros = 0;
+  
   bool _carregando = true;
   bool _processandoJogada = false;
   bool _partidaPersistida = false;
@@ -54,12 +62,15 @@ class _TelaJogoState extends State<TelaJogo> {
       _carregando = true;
       _erro = null;
       _mensagemStatus = 'Preparando partida...';
+      _tempoSegundos = 0;
+      _qtdAcertos = 0;
+      _qtdErros = 0;
     });
 
     try {
-      final estado = await _jogoService.iniciarPartida(
-        dificuldade: widget.dificuldade,
-        idUsuario: widget.idUsuario,
+      final estado = await _partidaService.criarPartida(
+        widget.idUsuario ?? 1,
+        widget.dificuldade.index + 1, // Mapeando seu Enum para o nível do backend
       );
 
       if (!mounted) {
@@ -69,19 +80,17 @@ class _TelaJogoState extends State<TelaJogo> {
       setState(() {
         _estado = estado;
         _carregando = false;
-        _mensagemStatus = 'Sua vez. Escolha uma peça compativel.';
+        _mensagemStatus = estado.status;
       });
       _rolarTabuleiroParaDireita();
 
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (!mounted || _estado == null || _estado!.finalizada) {
+        if (!mounted || _estado == null || _estado!.fimDeJogo) {
           return;
         }
         setState(() {
-          _estado = _estado!.copyWith(
-            tempoSegundos: _estado!.tempoSegundos + 1,
-          );
+          _tempoSegundos++;
         });
       });
     } catch (e) {
@@ -97,21 +106,83 @@ class _TelaJogoState extends State<TelaJogo> {
     }
   }
 
-  Future<void> _jogarPeca(PecaJogo peca) async {
+  // --- NOVA FUNÇÃO: ABRE A ESCOLHA DA PONTA ---
+  void _mostrarEscolhaDePonta(PecaDomino peca) {
+    if (_processandoJogada || _estado!.fimDeJogo) return;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Onde deseja encaixar a peça?',
+                style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _confirmarJogada(peca, 'esquerda');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueGrey,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: Text('Ponta Esquerda', style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _confirmarJogada(peca, 'direita');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _vermelho,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: Text('Ponta Direita', style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // --- FUNÇÃO ORIGINAL ADAPTADA ---
+  Future<void> _confirmarJogada(PecaDomino peca, String ponta) async {
     final estado = _estado;
-    if (estado == null || _processandoJogada || estado.finalizada) {
+    if (estado == null || _processandoJogada || estado.fimDeJogo) {
       return;
     }
 
     setState(() {
       _processandoJogada = true;
-      _mensagemStatus = 'Validando jogada...';
+      _mensagemStatus = 'Validando jogada na ponta $ponta...';
     });
 
     try {
-      final resultado = await _jogoService.jogarPeca(
-        estado: estado,
-        peca: peca,
+      final resultado = await _partidaService.jogarPeca(
+        estado.idPartida,
+        peca.idPeca,
+        ponta,
       );
 
       if (!mounted) {
@@ -119,13 +190,14 @@ class _TelaJogoState extends State<TelaJogo> {
       }
 
       setState(() {
-        _estado = resultado.estado;
-        _mensagemStatus = resultado.mensagem;
+        _estado = resultado;
+        _mensagemStatus = resultado.status;
+        _qtdAcertos++; // Computa o acerto
         _processandoJogada = false;
       });
       _rolarTabuleiroParaDireita();
 
-      if (resultado.estado.finalizada) {
+      if (resultado.fimDeJogo) {
         await _encerrarPartida();
       }
     } catch (e) {
@@ -135,10 +207,11 @@ class _TelaJogoState extends State<TelaJogo> {
 
       setState(() {
         _processandoJogada = false;
-        _mensagemStatus = 'Falha ao processar a jogada.';
+        _mensagemStatus = 'Combinação incorreta.';
+        _qtdErros++; // Computa o erro
       });
 
-      _mostrarSnack(e.toString(), isErro: true);
+      _mostrarSnack(e.toString().replaceAll('Exception: ', ''), isErro: true);
     }
   }
 
@@ -150,7 +223,9 @@ class _TelaJogoState extends State<TelaJogo> {
 
     _timer?.cancel();
     _partidaPersistida = true;
-    await _jogoService.finalizarPartida(estado: estado);
+    
+    // Se você tiver um método para salvar a partida no backend, chame-o aqui
+    // await _partidaService.finalizarPartida(estado: estado);
 
     if (!mounted) {
       return;
@@ -173,15 +248,15 @@ class _TelaJogoState extends State<TelaJogo> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Acertos: ${estado.qtdAcertos}',
+                'Acertos: $_qtdAcertos',
                 style: GoogleFonts.nunito(fontSize: 14),
               ),
               Text(
-                'Erros: ${estado.qtdErros}',
+                'Erros: $_qtdErros',
                 style: GoogleFonts.nunito(fontSize: 14),
               ),
               Text(
-                'Tempo: ${_formatarTempo(estado.tempoSegundos)}',
+                'Tempo: ${_formatarTempo(_tempoSegundos)}',
                 style: GoogleFonts.nunito(fontSize: 14),
               ),
             ],
@@ -302,7 +377,7 @@ class _TelaJogoState extends State<TelaJogo> {
     );
   }
 
-  Widget _buildHeader(EstadoPartida estado) {
+  Widget _buildHeader(StatusPartida estado) {
     return Container(
       color: _cinzaEscuro,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -318,7 +393,7 @@ class _TelaJogoState extends State<TelaJogo> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  estado.dificuldade.titulo.toUpperCase(),
+                  widget.dificuldade.titulo.toUpperCase(),
                   style: GoogleFonts.nunito(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -326,7 +401,7 @@ class _TelaJogoState extends State<TelaJogo> {
                   ),
                 ),
                 Text(
-                  estado.dificuldade.descricao,
+                  widget.dificuldade.descricao,
                   style: GoogleFonts.nunito(
                     color: Colors.white70,
                     fontSize: 10,
@@ -345,18 +420,18 @@ class _TelaJogoState extends State<TelaJogo> {
                 _buildHeaderItem(
                   icon: Icons.access_time,
                   label: 'Tempo',
-                  value: _formatarTempo(estado.tempoSegundos),
+                  value: _formatarTempo(_tempoSegundos),
                 ),
                 _buildHeaderItem(
                   icon: Icons.check_circle_outline,
                   label: 'Acertos',
-                  value: '${estado.qtdAcertos}',
+                  value: '$_qtdAcertos',
                   iconColor: Colors.greenAccent,
                 ),
                 _buildHeaderItem(
                   icon: Icons.cancel_outlined,
                   label: 'Erros',
-                  value: '${estado.qtdErros}',
+                  value: '$_qtdErros',
                   iconColor: Colors.redAccent,
                 ),
               ],
@@ -415,10 +490,15 @@ class _TelaJogoState extends State<TelaJogo> {
     );
   }
 
-  Widget _buildStatus(EstadoPartida estado) {
-    final turno = estado.turnoAtual == TurnoPartida.jogador
-        ? 'Sua vez'
-        : 'Vez do bot';
+  Widget _buildStatus(StatusPartida estado) {
+    // Como o backend agora gerencia o bot internamente em cada jogada, a vez no app é sempre do jogador.
+    final turno = estado.fimDeJogo ? 'Fim de Jogo' : 'Sua vez';
+    
+    // Obtém as pontas ativas atuais da mesa
+    String pontas = "";
+    if (estado.mesa.isNotEmpty) {
+      pontas = "Esq: ${estado.mesa.first.visivelEsquerdo} | Dir: ${estado.mesa.last.visivelDireito}";
+    }
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -449,7 +529,7 @@ class _TelaJogoState extends State<TelaJogo> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Ponta ativa: ${estado.pontaAtiva.valor}',
+            'Pontas ativas: $pontas',
             style: GoogleFonts.nunito(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -461,7 +541,7 @@ class _TelaJogoState extends State<TelaJogo> {
     );
   }
 
-  Widget _buildTabuleiro(EstadoPartida estado) {
+  Widget _buildTabuleiro(StatusPartida estado) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -485,11 +565,10 @@ class _TelaJogoState extends State<TelaJogo> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                for (final peca in estado.tabuleiro) ...[
+                for (final peca in estado.mesa) ...[
                   _buildPecaTabuleiro(peca),
-                  _buildSeta(),
+                  if (peca != estado.mesa.last) _buildSeta(), // Evita seta depois da última peça
                 ],
-                _buildPontaAtiva(estado.pontaAtiva),
               ],
             ),
           ),
@@ -498,19 +577,7 @@ class _TelaJogoState extends State<TelaJogo> {
     );
   }
 
-  Widget _buildPecaTabuleiro(PecaPosicionada peca) {
-    final corOrigem = switch (peca.origem) {
-      OrigemPeca.inicial => Colors.blueGrey,
-      OrigemPeca.jogador => Colors.green,
-      OrigemPeca.bot => _vermelho,
-    };
-
-    final legenda = switch (peca.origem) {
-      OrigemPeca.inicial => 'Inicio',
-      OrigemPeca.jogador => 'Voce',
-      OrigemPeca.bot => 'Bot',
-    };
-
+  Widget _buildPecaTabuleiro(PecaDomino peca) {
     return Column(
       children: [
         Container(
@@ -530,9 +597,9 @@ class _TelaJogoState extends State<TelaJogo> {
           ),
           child: Row(
             children: [
-              Expanded(child: _buildLadoPeca(peca.esquerda)),
+              Expanded(child: _buildLadoPeca(peca.visivelEsquerdo)),
               Container(width: 1, color: Colors.grey[300]),
-              Expanded(child: _buildLadoPeca(peca.direita)),
+              Expanded(child: _buildLadoPeca(peca.visivelDireito)),
             ],
           ),
         ),
@@ -540,13 +607,13 @@ class _TelaJogoState extends State<TelaJogo> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: corOrigem.withValues(alpha: 0.12),
+            color: Colors.blueGrey.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            legenda,
+            'Mesa',
             style: GoogleFonts.nunito(
-              color: corOrigem,
+              color: Colors.blueGrey,
               fontWeight: FontWeight.w800,
               fontSize: 11,
             ),
@@ -556,38 +623,16 @@ class _TelaJogoState extends State<TelaJogo> {
     );
   }
 
-  Widget _buildPontaAtiva(LadoPeca lado) {
-    return Container(
-      width: 150,
-      height: 76,
-      decoration: BoxDecoration(
-        color: _vermelho.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _vermelho, width: 2),
-      ),
-      child: Center(
-        child: Text(
-          lado.valor,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.nunito(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            color: _vermelho,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLadoPeca(LadoPeca lado) {
+  // Alterado para receber String em vez do modelo antigo LadoPeca
+  Widget _buildLadoPeca(String valorLado) {
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Center(
         child: Text(
-          lado.valor,
+          valorLado,
           textAlign: TextAlign.center,
           style: GoogleFonts.nunito(
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.w800,
             color: Colors.black87,
           ),
@@ -596,7 +641,7 @@ class _TelaJogoState extends State<TelaJogo> {
     );
   }
 
-  Widget _buildMaoJogador(EstadoPartida estado) {
+  Widget _buildMaoJogador(StatusPartida estado) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -646,9 +691,9 @@ class _TelaJogoState extends State<TelaJogo> {
                         ),
                         child: Row(
                           children: [
-                            Expanded(child: _buildLadoPeca(peca.esquerda)),
+                            Expanded(child: _buildLadoPeca(peca.visivelEsquerdo)),
                             Container(width: 1, color: Colors.grey[300]),
-                            Expanded(child: _buildLadoPeca(peca.direita)),
+                            Expanded(child: _buildLadoPeca(peca.visivelDireito)),
                           ],
                         ),
                       ),
@@ -656,9 +701,9 @@ class _TelaJogoState extends State<TelaJogo> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _processandoJogada || estado.finalizada
+                          onPressed: _processandoJogada || estado.fimDeJogo
                               ? null
-                              : () => _jogarPeca(peca),
+                              : () => _mostrarEscolhaDePonta(peca), // CHAMA O NOVO MENU AQUI
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _vermelho,
                             foregroundColor: Colors.white,
