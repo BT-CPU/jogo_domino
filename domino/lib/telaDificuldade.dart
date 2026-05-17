@@ -1,6 +1,8 @@
+// tela_dificuldade.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'jogo_models.dart';
+
+import 'domino_models.dart'; // ← era jogo_models.dart
 import 'telaJogo.dart';
 
 class TelaDificuldade extends StatefulWidget {
@@ -19,9 +21,7 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
   int? _dificuldadeSelecionada;
 
   DificuldadeJogo? get _dificuldadeAtual {
-    if (_dificuldadeSelecionada == null) {
-      return null;
-    }
+    if (_dificuldadeSelecionada == null) return null;
     return DificuldadeJogo.fromId(_dificuldadeSelecionada!);
   }
 
@@ -36,14 +36,15 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
           Container(
             width: double.infinity,
             color: const Color.fromARGB(255, 255, 126, 112),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Image.asset(
                   'imagens/etec_santo_andre.png',
                   height: 75,
-                  errorBuilder: (context, error, stackTrace) => const SizedBox(
+                  errorBuilder: (_, __, ___) => const SizedBox(
                     height: 75,
                     width: 150,
                     child: Placeholder(color: Colors.white),
@@ -96,36 +97,36 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                         children: [
                           _DifficultyCard(
                             titulo: 'Dificuldade 1',
-                            subtitulo: 'Fórmula ↔ Função',
+                            // Label alinhado com DificuldadeJogo.formulaClasse
+                            subtitulo: 'Fórmula ↔ Classe',
                             descricao:
-                                'Relacione a fórmula química com a função inorgânica correspondente.',
+                                'Relacione a fórmula química com a classe funcional inorgânica correspondente (Ácido, Base, Sal ou Óxido).',
                             icon: Icons.science_outlined,
                             destaque: _dificuldadeSelecionada == 1,
-                            onTap: () => setState(() {
-                              _dificuldadeSelecionada = 1;
-                            }),
+                            onTap: () =>
+                                setState(() => _dificuldadeSelecionada = 1),
                           ),
                           _DifficultyCard(
                             titulo: 'Dificuldade 2',
-                            subtitulo: 'Propriedades ↔ Classificação',
+                            // Label alinhado com DificuldadeJogo.formulaNome
+                            subtitulo: 'Fórmula ↔ Nome',
                             descricao:
-                                'Associe as propriedades observadas à classificação correta da substância.',
+                                'Associe a fórmula química ao nome do composto inorgânico correto.',
                             icon: Icons.category_outlined,
                             destaque: _dificuldadeSelecionada == 2,
-                            onTap: () => setState(() {
-                              _dificuldadeSelecionada = 2;
-                            }),
+                            onTap: () =>
+                                setState(() => _dificuldadeSelecionada = 2),
                           ),
                           _DifficultyCard(
                             titulo: 'Dificuldade 3',
-                            subtitulo: 'Classificação ↔ Reação',
+                            // Label alinhado com DificuldadeJogo.formulaPropriedade
+                            subtitulo: 'Fórmula ↔ Propriedade',
                             descricao:
-                                'Relacione classes químicas que reagem entre si.',
+                                'Relacione a fórmula química a uma propriedade da sua função inorgânica.',
                             icon: Icons.hub_outlined,
                             destaque: _dificuldadeSelecionada == 3,
-                            onTap: () => setState(() {
-                              _dificuldadeSelecionada = 3;
-                            }),
+                            onTap: () =>
+                                setState(() => _dificuldadeSelecionada = 3),
                           ),
                         ],
                       ),
@@ -135,20 +136,15 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                         icon: const Icon(Icons.arrow_back_rounded),
                         label: Text(
                           'Voltar ao menu',
-                          style: GoogleFonts.nunito(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: GoogleFonts.nunito(fontWeight: FontWeight.w800),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _vermelho,
                           side: const BorderSide(color: _vermelho),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 22,
-                            vertical: 14,
-                          ),
+                              horizontal: 22, vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -159,7 +155,7 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => TelaJogo(
+                                    builder: (_) => TelaJogo(
                                       dificuldade: _dificuldadeAtual!,
                                       idUsuario: widget.idUsuario,
                                     ),
@@ -169,9 +165,7 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                         icon: const Icon(Icons.play_arrow_rounded),
                         label: Text(
                           'Iniciar partida',
-                          style: GoogleFonts.nunito(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: GoogleFonts.nunito(fontWeight: FontWeight.w800),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _vermelho,
@@ -179,12 +173,9 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                           disabledBackgroundColor: Colors.grey[300],
                           disabledForegroundColor: Colors.grey[600],
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
+                              horizontal: 24, vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                     ],
@@ -234,7 +225,8 @@ class _DifficultyCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: destaque ? _vermelho : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: destaque ? _vermelho : Colors.grey[300]!),
+            border:
+                Border.all(color: destaque ? _vermelho : Colors.grey[300]!),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.06),

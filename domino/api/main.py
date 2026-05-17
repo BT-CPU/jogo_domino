@@ -73,19 +73,26 @@ class JogarPecaPayload(BaseModel):
     id_peca: int
     ponta: str 
 
+# NOVA CLASSE ADICIONADA: Para permitir a compra de peças
+class ComprarPecaPayload(BaseModel):
+    id_partida: str
+
 class PecaDomino(BaseModel):
     id_peca: int
-    visivel_esquerdo: str  # O que aparece na tela (ex: "HCl")
-    visivel_direito: str   # O que aparece na tela (ex: "Ácido", "Nitrato de Sódio")
-    validador_esquerdo: int # ID da classificação (1 a 4) para o back checar a química
-    validador_direito: int  # ID da classificação (1 a 4) para o back checar a química
+    visivel_esquerdo: str  
+    visivel_direito: str   
+    validador_esquerdo: int 
+    validador_direito: int  
 
 class StatusPartidaResponse(BaseModel):
-    id_partida: str  # <--- ADICIONADO AQUI
+    id_partida: str  
     mesa: list[PecaDomino]          
     mao_jogador: list[PecaDomino]    
     status: str
     fim_de_jogo: bool
+    # ADICIONADO: Informa o Flutter quantas peças restam no monte
+    quantidade_monte: int = 0 
+
 
 def _iso_datetime(value):
     if value is None:
@@ -286,19 +293,14 @@ def _listar_resumos_alunos_professor(cursor, id_professor):
 
     return cursor.fetchall()
 
+
 def _gerar_corrente_domino(nivel: int) -> list:
-    """
-    Busca os dados no banco e monta uma corrente fechada de 40 peças válidas.
-    Cada peça é um dicionário com: id_peca, esquerdo, direito e as chaves de validação.
-    """
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     
-    # 1. Buscar dados do banco dependendo do nível
     cursor.execute("SELECT id_composto, formula, nome, id_classificacao FROM tb_composto")
     compostos = cursor.fetchall()
     
-    # Agrupa compostos por classificação para facilitar o sorteio equilibrado
     compostos_por_classe = {1: [], 2: [], 3: [], 4: []}
     for c in compostos:
         compostos_por_classe[c["id_classificacao"]].append(c)
@@ -315,55 +317,63 @@ def _gerar_corrente_domino(nivel: int) -> list:
     cursor.close()
     conn.close()
 
-    # 2. Criar uma sequência lógica e equilibrada de 40 encaixes químicos (IDs de classificação)
-    # Ex: [1, 2, 2, 4, 4, 3, 3, 1...] onde cada par adjacente (e as pontas) formam uma peça
     sequencia_classes = []
     classes = [1, 2, 3, 4]
     
-    # Garante distribuição perfeita: 10 aparições para cada uma das 4 funções nas pontas das peças
     for _ in range(10):
         random.shuffle(classes)
         sequencia_classes.extend(classes)
         
-    # Duplica os elementos para criar os encaixes internos das peças de dominó
-    # Sequência vira: [C1, C1, C2, C2, C3, C3...] -> Peça 1: (C1|C1), Peça 2: (C2|C2)... Não queremos duplos perfeitos.
-    # Vamos rotacionar a lista de correspondência para cruzar os dados de forma que esquerdo != direito
     sequencia_esquerda = sequencia_classes.copy()
-    sequencia_direita = sequencia_classes[1:] + [sequencia_classes[0]] # Rotaciona 1 elemento para o lado
+    sequencia_direita = sequencia_classes[1:] + [sequencia_classes[0]] 
     
     pecas_geradas = []
     id_peca_tracker = 1
     
-    # 3. Construir as peças textuais com base no nível técnico selecionado
     for cl_esq, cl_dir in zip(sequencia_esquerda, sequencia_direita):
-        # Sorteia elementos do banco sem repetir na mesma peça
         comp_esq = random.choice(compostos_por_classe[cl_esq])
-        
-        # Define o que vai escrito no lado Esquerdo (Sempre Fórmula)
         conteudo_esq = comp_esq["formula"]
         
-        # Define o que vai escrito no lado Direito dependendo da Dificuldade
         if nivel == 1:
             conteudo_dir = classificacoes_nomes[cl_dir]
         elif nivel == 2:
-            # Nível 2: Fórmula liga com Nome Exato do Composto correspondente.
-            # Para a peça não ser um espelho estático do mesmo composto (o que travaria o dominó),
-            # o lado direito traz o Nome de OUTRO composto pertencente à classe da direita.
             comp_dir = random.choice(compostos_por_classe[cl_dir])
             conteudo_dir = comp_dir["nome"]
-        else: # nivel == 3
+        else: 
             conteudo_dir = random.choice(propriedades_por_classe[cl_dir])
             
         pecas_geradas.append({
             "id_peca": id_peca_tracker,
             "visivel_esquerdo": conteudo_esq,
             "visivel_direito": conteudo_dir,
-            "validador_esquerdo": cl_esq, # ID Químico da Fórmula
-            "validador_direito": cl_dir    # ID Químico do Conceito/Nome/Propriedade
+            "validador_esquerdo": cl_esq, 
+            "validador_direito": cl_dir   
         })
         id_peca_tracker += 1
         
     return pecas_geradas
+
+# FUNÇÕES AUXILIARES PARA O BOT E TRANCAMENTO DE PARTIDA
+def _obter_peca_jogavel_bot(mao_bot, mesa):
+    ponta_esquerda_mesa = mesa[0]
+    ponta_direita_mesa = mesa[-1]
+    
+    for p_bot in mao_bot:
+        if p_bot["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"]:
+            return p_bot, "esquerda"
+        elif p_bot["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]:
+            return p_bot, "direita"
+    return None, ""
+
+def _verificar_jogadas_possiveis(mao, mesa):
+    ponta_esquerda_mesa = mesa[0]
+    ponta_direita_mesa = mesa[-1]
+    
+    for p in mao:
+        if p["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"] or \
+           p["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]:
+            return True
+    return False
 
 
 @app.get("/")
@@ -373,6 +383,7 @@ def root():
 
 @app.post("/usuarios", status_code=201)
 def cadastrar_usuario(dados: CadastroUsuario):
+    # ... código intacto ...
     if bcrypt is None:
         raise HTTPException(status_code=503, detail="Cadastro indisponivel neste ambiente local.")
 
@@ -408,6 +419,7 @@ def cadastrar_usuario(dados: CadastroUsuario):
 
 @app.get("/usuarios")
 def listar_usuarios():
+    # ... código intacto ...
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
@@ -430,6 +442,7 @@ def listar_usuarios():
 
 @app.delete("/usuarios/{id_usuario}", status_code=200)
 def excluir_usuario(id_usuario: int):
+    # ... código intacto ...
     try:
         conn = get_connection()
         cursor = conn.cursor()
@@ -451,6 +464,7 @@ def excluir_usuario(id_usuario: int):
 
 @app.post("/login")
 def login(dados: LoginUsuario):
+    # ... código intacto ...
     if bcrypt is None:
         raise HTTPException(status_code=503, detail="Login indisponivel neste ambiente local.")
 
@@ -491,6 +505,7 @@ def login(dados: LoginUsuario):
 
 @app.post("/partidas/finalizar", status_code=201)
 def finalizar_partida(dados: PartidaFinalizadaPayload):
+    # ... código intacto ...
     if dados.nivel_dificuldade not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Nivel de dificuldade invalido.")
 
@@ -538,6 +553,7 @@ def finalizar_partida(dados: PartidaFinalizadaPayload):
 
 @app.get("/relatorios/aluno/{id_usuario}")
 def relatorio_aluno(id_usuario: int):
+    # ... código intacto ...
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
@@ -553,6 +569,7 @@ def relatorio_aluno(id_usuario: int):
 
 @app.get("/relatorios/professor/{id_professor}")
 def relatorio_professor(id_professor: int):
+    # ... código intacto ...
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
@@ -601,29 +618,26 @@ def relatorio_professor(id_professor: int):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
+# ----------------------------------------------------------------------------------
+# LOGICA DO JOGO MODIFICADA - EXATAMENTE COMO COMBINADO
+# ----------------------------------------------------------------------------------
+
 @app.post("/partidas/criar", status_code=201, response_model=StatusPartidaResponse)
 def criar_partida(payload: CriarPartidaPayload):
-    # ... todo o código que já fizemos continua igual ...
     if payload.nivel_dificuldade not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Nível de dificuldade inválido.")
         
-    # 1. Gera as 40 peças amarradas pela engenharia reversa
+    # 1. Gera as 40 peças e EMBARALHA COMPLETAMENTE para o jogo ser aleatório
     todas_pecas = _gerar_corrente_domino(payload.nivel_dificuldade)
+    random.shuffle(todas_pecas)
     
-    # 2. Distribuição alternada para garantir o fechamento matemático
-    # Ímpares para o Bot, Pares para o Jogador
-    mao_bot = [todas_pecas[i] for i in range(len(todas_pecas)) if i % 2 == 0]
-    mao_jogador = [todas_pecas[i] for i in range(len(todas_pecas)) if i % 2 != 0]
+    # 2. Divide conforme a regra de ouro do Dominó:
+    mao_jogador = todas_pecas[0:7]       # 7 peças para você
+    mao_bot = todas_pecas[7:14]          # 7 peças para o Bot
+    mesa = [todas_pecas[14]]             # 1 peça inicia na mesa
+    monte_compras = todas_pecas[15:40]   # As 25 restantes formam o monte
     
-    # 3. O Bot inicia o jogo sacrificando a sua primeira peça na mesa
-    peca_inicial_bot = mao_bot.pop(0)
-    mesa = [peca_inicial_bot]
-    
-    # Embaralha as mãos individualmente para o jogador ter o desafio de procurar o encaixe
-    random.shuffle(mao_jogador)
-    random.shuffle(mao_bot)
-    
-    # 4. Salva o estado da partida na memória do servidor usando um ID único string
+    # 3. Salva o estado
     id_partida = f"partida_{payload.id_usuario}_{int(datetime.now().timestamp())}"
     PARTIDAS_ATIVAS[id_partida] = {
         "id_usuario": payload.id_usuario,
@@ -631,22 +645,48 @@ def criar_partida(payload: CriarPartidaPayload):
         "mesa": mesa,
         "mao_jogador": mao_jogador,
         "mao_bot": mao_bot,
+        "monte_compras": monte_compras,
         "fim_de_jogo": False,
         "resultado": None
     }
     
-    # 5. Retorna para o Flutter (Apenas a mão do jogador e a mesa são expostas!)
     return {
         "id_partida": id_partida,
         "mesa": mesa,
         "mao_jogador": mao_jogador,
-        "status": "Seu turno",
-        "fim_de_jogo": False
+        "status": "Partida iniciada! Faça uma combinação ou compre peças do monte.",
+        "fim_de_jogo": False,
+        "quantidade_monte": len(monte_compras)
+    }
+
+# ROTA NOVA (OPCIONAL NO APP, MAS NECESSÁRIA SE VOCÊ QUISER PERMITIR COMPRA)
+@app.post("/partidas/comprar", response_model=StatusPartidaResponse)
+def comprar_peca(payload: ComprarPecaPayload):
+    if payload.id_partida not in PARTIDAS_ATIVAS:
+        raise HTTPException(status_code=404, detail="Partida não encontrada.")
+        
+    partida = PARTIDAS_ATIVAS[payload.id_partida]
+    if partida["fim_de_jogo"]:
+        raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
+        
+    monte = partida["monte_compras"]
+    if len(monte) == 0:
+        raise HTTPException(status_code=422, detail="O monte está vazio!")
+        
+    nova_peca = monte.pop(0)
+    partida["mao_jogador"].append(nova_peca)
+    
+    return {
+        "id_partida": payload.id_partida,
+        "mesa": partida["mesa"],
+        "mao_jogador": partida["mao_jogador"],
+        "status": "Você comprou uma peça do monte.",
+        "fim_de_jogo": False,
+        "quantidade_monte": len(monte)
     }
 
 @app.post("/partidas/jogar", response_model=StatusPartidaResponse)
 def jogar_peca(payload: JogarPecaPayload):
-    # Verifica se a partida existe na memória
     if payload.id_partida not in PARTIDAS_ATIVAS:
         raise HTTPException(status_code=404, detail="Partida não encontrada ou expirada.")
         
@@ -654,7 +694,6 @@ def jogar_peca(payload: JogarPecaPayload):
     if partida["fim_de_jogo"]:
         raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
 
-    # 1. Localizar a peça na mão do jogador
     peca_jogador = next((p for p in partida["mao_jogador"] if p["id_peca"] == payload.id_peca), None)
     if not peca_jogador:
         raise HTTPException(status_code=400, detail="Você não possui essa peça na sua mão.")
@@ -666,26 +705,21 @@ def jogar_peca(payload: JogarPecaPayload):
     jogada_valida = False
     nova_peca_mesa = peca_jogador.copy()
     
-    # 2. Validação da Jogada Química do Aluno
     if payload.ponta == "esquerda":
-        # Direito da peça do jogador se conecta com o Esquerdo da mesa
         if peca_jogador["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"]:
             mesa.insert(0, nova_peca_mesa)
             jogada_valida = True
             
     elif payload.ponta == "direita":
-        # Esquerdo da peça do jogador se conecta com o Direito da mesa
         if peca_jogador["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]:
             mesa.append(nova_peca_mesa)
             jogada_valida = True
 
     if not jogada_valida:
-        raise HTTPException(status_code=422, detail="Combinação química incorreta! Tente outra peça ou outra extremidade.")
+        raise HTTPException(status_code=422, detail="Combinação química incorreta! Tente outra peça ou extremidade.")
 
-    # Remove a peça jogada com sucesso da mão do jogador
     partida["mao_jogador"].remove(peca_jogador)
 
-    # 3. Checa se o Jogador venceu imediatamente (Mão zerada)
     if len(partida["mao_jogador"]) == 0:
         partida["fim_de_jogo"] = True
         partida["resultado"] = "Vitória do Jogador"
@@ -694,38 +728,33 @@ def jogar_peca(payload: JogarPecaPayload):
             "mesa": mesa,
             "mao_jogador": partida["mao_jogador"],
             "status": "Você venceu! Todas as peças foram descartadas.",
-            "fim_de_jogo": True
+            "fim_de_jogo": True,
+            "quantidade_monte": len(partida["monte_compras"])
         }
 
-    # 4. Turno do Bot Automatizado
-    ponta_esquerda_mesa = mesa[0]
-    ponta_direita_mesa = mesa[-1]
-    peca_bot_escolhida = None
-    ponta_bot_escolhida = ""
+    # Turno do Bot Automatizado e Inteligente
+    peca_bot_escolhida, ponta_bot_escolhida = _obter_peca_jogavel_bot(partida["mao_bot"], mesa)
+    pecas_compradas_pelo_bot = 0
+    
+    # Se o bot não achar peça, ele consome o monte até achar (ou o monte acabar)
+    while not peca_bot_escolhida and len(partida["monte_compras"]) > 0:
+        carta_puxada = partida["monte_compras"].pop(0)
+        partida["mao_bot"].append(carta_puxada)
+        pecas_compradas_pelo_bot += 1
+        peca_bot_escolhida, ponta_bot_escolhida = _obter_peca_jogavel_bot(partida["mao_bot"], mesa)
 
-    # O bot varre a mão dele procurando um encaixe válido
-    for p_bot in partida["mao_bot"]:
-        if p_bot["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"]:
-            peca_bot_escolhida = p_bot
-            ponta_bot_escolhida = "esquerda"
-            break
-        elif p_bot["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]:
-            peca_bot_escolhida = p_bot
-            ponta_bot_escolhida = "direita"
-            break
-
-    # Se o Bot achou uma jogada
     if peca_bot_escolhida:
         partida["mao_bot"].remove(peca_bot_escolhida)
         if ponta_bot_escolhida == "esquerda":
             mesa.insert(0, peca_bot_escolhida)
         else:
             mesa.append(peca_bot_escolhida)
-        status_bot = f"O Bot jogou uma peça na {ponta_bot_escolhida}. Sua vez!"
+            
+        aviso_compra = f" comprou {pecas_compradas_pelo_bot} peça(s) do monte e" if pecas_compradas_pelo_bot > 0 else ""
+        status_bot = f"O Bot{aviso_compra} jogou na extremidade {ponta_bot_escolhida}. Sua vez!"
     else:
-        status_bot = "O Bot não encontrou combinação química e passou a vez. Sua vez!"
+        status_bot = "O monte secou e o Bot não encontrou combinação química. Ele passou a vez!"
 
-    # 5. Checa se o Bot zerou a mão
     if len(partida["mao_bot"]) == 0:
         partida["fim_de_jogo"] = True
         partida["resultado"] = "Vitória do Bot"
@@ -734,14 +763,41 @@ def jogar_peca(payload: JogarPecaPayload):
             "mesa": mesa,
             "mao_jogador": partida["mao_jogador"],
             "status": "O Bot fechou o jogo antes de você!",
-            "fim_de_jogo": True
+            "fim_de_jogo": True,
+            "quantidade_monte": len(partida["monte_compras"])
         }
 
-    # Retorna o novo estado estável da mesa após a jogada
+    # TRANCAMENTO DE PARTIDA
+    if len(partida["monte_compras"]) == 0:
+        bot_pode_jogar = _verificar_jogadas_possiveis(partida["mao_bot"], mesa)
+        jogador_pode_jogar = _verificar_jogadas_possiveis(partida["mao_jogador"], mesa)
+        
+        if not bot_pode_jogar and not jogador_pode_jogar:
+            partida["fim_de_jogo"] = True
+            qtd_jogador = len(partida["mao_jogador"])
+            qtd_bot = len(partida["mao_bot"])
+            
+            if qtd_jogador < qtd_bot:
+                msg_final = f"Jogo sem saídas! Você venceu por ter menos peças ({qtd_jogador} contra {qtd_bot})."
+            elif qtd_bot < qtd_jogador:
+                msg_final = f"Jogo sem saídas! O Bot venceu por ter menos peças ({qtd_bot} contra {qtd_jogador})."
+            else:
+                msg_final = "Jogo trancado! Empate técnico."
+                
+            return {
+                "id_partida": payload.id_partida,
+                "mesa": mesa,
+                "mao_jogador": partida["mao_jogador"],
+                "status": msg_final,
+                "fim_de_jogo": True,
+                "quantidade_monte": 0
+            }
+
     return {
         "id_partida": payload.id_partida,
         "mesa": mesa,
         "mao_jogador": partida["mao_jogador"],
         "status": status_bot,
-        "fim_de_jogo": False
+        "fim_de_jogo": False,
+        "quantidade_monte": len(partida["monte_compras"])
     }
