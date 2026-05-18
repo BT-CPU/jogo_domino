@@ -42,7 +42,7 @@ class TelaInicial extends StatelessWidget {
                 ),
                 if (isWide)
                   Text(
-                    'Ola, ${sessao.nome}!',
+                    'Olá, ${sessao.nome}!',
                     style: GoogleFonts.nunito(
                       color: Colors.white,
                       fontSize: 16,
