@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   errorBuilder: (context, error, stackTrace) => Container(
                     height: 75,
                     width: 150,
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     child: const Center(
                       child: Text(
                         'ETEC',
@@ -185,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -203,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => Container(
                         decoration: BoxDecoration(
-                          color: _vermelho.withOpacity(0.1),
+                          color: _vermelho.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -306,7 +306,9 @@ class _LoginScreenState extends State<LoginScreen> {
           // Campo de usuário/email
           _buildCampo(
             controller: _emailController,
-            hint: 'Usuário ou e-mail',
+            hint: isStudent
+                ? 'xxxxxx@aluno.cps.sp.gov.br'
+                : 'xxxxxx@cps.sp.gov.br',
             icon: Icons.person_outline,
             isMobile: isMobile,
             verticalPadding: inputVerticalPadding,
@@ -441,15 +443,15 @@ class _LoginScreenState extends State<LoginScreen> {
           vertical: isMobile ? 4 : 6,
         ),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         child: Text(
           formula,
           style: GoogleFonts.nunito(
             fontSize: isMobile ? 14 : 16,
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             fontWeight: FontWeight.w500,
           ),
         ),

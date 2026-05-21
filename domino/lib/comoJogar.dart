@@ -21,7 +21,11 @@ class HowToPlayScreen extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: _vermelho, size: 36), // Seta colorida
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: _vermelho,
+                  size: 36,
+                ), // Seta colorida
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -30,7 +34,12 @@ class HowToPlayScreen extends StatelessWidget {
           // ─── CONTEÚDO ────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(isWide ? 36 : 16, 8, isWide ? 36 : 16, 36),
+              padding: EdgeInsets.fromLTRB(
+                isWide ? 36 : 16,
+                8,
+                isWide ? 36 : 16,
+                36,
+              ),
               child: Center(
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 1000),
@@ -44,7 +53,7 @@ class HowToPlayScreen extends StatelessWidget {
                         style: GoogleFonts.nunito(
                           fontSize: 34,
                           fontWeight: FontWeight.w900,
-                          color: _vermelho, 
+                          color: _vermelho,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -93,7 +102,7 @@ class HowToPlayScreen extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              elevation: 4, 
+                              elevation: 4,
                             ),
                             child: Text(
                               'Entendi!',
@@ -123,10 +132,13 @@ class HowToPlayScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _vermelho.withOpacity(0.3), width: 2), // Borda com cor
+        border: Border.all(
+          color: _vermelho.withValues(alpha: 0.3),
+          width: 2,
+        ), // Borda com cor
         boxShadow: [
           BoxShadow(
-            color: _vermelho.withOpacity(0.1), // Sombra colorida
+            color: _vermelho.withValues(alpha: 0.1), // Sombra colorida
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -156,7 +168,11 @@ class HowToPlayScreen extends StatelessWidget {
                           color: _vermelho,
                         ),
                       ),
-                      const Icon(Icons.arrow_forward, color: _vermelho, size: 28),
+                      const Icon(
+                        Icons.arrow_forward,
+                        color: _vermelho,
+                        size: 28,
+                      ),
                     ],
                   ),
                 ),
@@ -168,8 +184,10 @@ class HowToPlayScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: _vermelho.withOpacity(0.1), // Fundo suave para o texto
-              borderRadius: BorderRadius.circular(8)
+              color: _vermelho.withValues(
+                alpha: 0.1,
+              ), // Fundo suave para o texto
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               'Conecte peças que tenham\ncorrespondência conceitual.',
@@ -193,7 +211,7 @@ class HowToPlayScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[400]!, width: 2),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6),
         ],
       ),
       child: IntrinsicHeight(
@@ -208,7 +226,11 @@ class HowToPlayScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadePeca(String texto, {bool bold = false, required bool isFormula}) {
+  Widget _buildMetadePeca(
+    String texto, {
+    bool bold = false,
+    required bool isFormula,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Text(
@@ -225,10 +247,22 @@ class HowToPlayScreen extends StatelessWidget {
   // ─── LADO DIREITO (Regras com Ícones Coloridos) ───────────────────
   Widget _buildDireita() {
     final itens = [
-      _RegraItem(Icons.grid_view_rounded, 'O objetivo é formar uma cadeia com todas as peças.'),
-      _RegraItem(Icons.text_fields_rounded, 'Você só pode conectar peças que tenham relação correta.'),
-      _RegraItem(Icons.lightbulb_outline_rounded, 'Use a lógica e o conhecimento sobre funções inorgânicas.'),
-      _RegraItem(Icons.handshake_outlined, 'Complete os níveis e desafie seus conhecimentos!'),
+      _RegraItem(
+        Icons.grid_view_rounded,
+        'O objetivo é formar uma cadeia com todas as peças.',
+      ),
+      _RegraItem(
+        Icons.text_fields_rounded,
+        'Você só pode conectar peças que tenham relação correta.',
+      ),
+      _RegraItem(
+        Icons.lightbulb_outline_rounded,
+        'Use a lógica e o conhecimento sobre funções inorgânicas.',
+      ),
+      _RegraItem(
+        Icons.handshake_outlined,
+        'Complete os níveis e desafie seus conhecimentos!',
+      ),
     ];
 
     return Container(
@@ -236,10 +270,10 @@ class HowToPlayScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _vermelho.withOpacity(0.3), width: 2),
+        border: Border.all(color: _vermelho.withValues(alpha: 0.3), width: 2),
         boxShadow: [
           BoxShadow(
-            color: _vermelho.withOpacity(0.1),
+            color: _vermelho.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -247,38 +281,42 @@ class HowToPlayScreen extends StatelessWidget {
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: itens.map((item) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Círculo colorido atrás do ícone
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _vermelho.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(item.icone, size: 28, color: _vermelho),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    item.texto,
-                    style: GoogleFonts.nunito(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                      height: 1.4,
+        children: itens
+            .map(
+              (item) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Círculo colorido atrás do ícone
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _vermelho.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(item.icone, size: 28, color: _vermelho),
                     ),
-                  ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          item.texto,
+                          style: GoogleFonts.nunito(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        )).toList(),
+            )
+            .toList(),
       ),
     );
   }

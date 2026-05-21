@@ -190,9 +190,7 @@ class _TelaJogoState extends State<TelaJogo>
     });
 
     try {
-      final resultado = await _service.comprarPeca(
-        idPartida: estado.idPartida,
-      );
+      final resultado = await _service.comprarPeca(idPartida: estado.idPartida);
 
       if (!mounted) return;
 
@@ -227,9 +225,7 @@ class _TelaJogoState extends State<TelaJogo>
     });
 
     try {
-      final resultado = await _service.passarVez(
-        idPartida: estado.idPartida,
-      );
+      final resultado = await _service.passarVez(idPartida: estado.idPartida);
 
       if (!mounted) return;
 
@@ -298,12 +294,15 @@ class _TelaJogoState extends State<TelaJogo>
             ),
             const SizedBox(height: 12),
             // Bug C corrigido: exibe o valor do servidor
-            Text('Acertos: ${_estado?.qtdAcertos ?? 0}',
-                style: GoogleFonts.nunito(fontSize: 14)),
-            Text('Erros: $_qtdErros',
-                style: GoogleFonts.nunito(fontSize: 14)),
-            Text('Tempo: ${_formatarTempo(_tempoSegundos)}',
-                style: GoogleFonts.nunito(fontSize: 14)),
+            Text(
+              'Acertos: ${_estado?.qtdAcertos ?? 0}',
+              style: GoogleFonts.nunito(fontSize: 14),
+            ),
+            Text('Erros: $_qtdErros', style: GoogleFonts.nunito(fontSize: 14)),
+            Text(
+              'Tempo: ${_formatarTempo(_tempoSegundos)}',
+              style: GoogleFonts.nunito(fontSize: 14),
+            ),
           ],
         ),
         actions: [
@@ -348,8 +347,8 @@ class _TelaJogoState extends State<TelaJogo>
         child: _carregando
             ? _buildCarregando()
             : _erro != null
-                ? _buildErro()
-                : _buildConteudo(),
+            ? _buildErro()
+            : _buildConteudo(),
       ),
     );
   }
@@ -389,7 +388,9 @@ class _TelaJogoState extends State<TelaJogo>
               _erro!,
               textAlign: TextAlign.center,
               style: GoogleFonts.nunito(
-                  fontSize: 18, fontWeight: FontWeight.w700),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
@@ -445,12 +446,10 @@ class _TelaJogoState extends State<TelaJogo>
       child: Row(
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: _vermelho,
-              borderRadius:
-                  BorderRadius.only(bottomRight: Radius.circular(16)),
+              borderRadius: BorderRadius.only(bottomRight: Radius.circular(16)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,7 +465,9 @@ class _TelaJogoState extends State<TelaJogo>
                 Text(
                   widget.dificuldade.descricao,
                   style: GoogleFonts.nunito(
-                      color: Colors.white70, fontSize: 10),
+                    color: Colors.white70,
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
@@ -512,8 +513,10 @@ class _TelaJogoState extends State<TelaJogo>
               backgroundColor: _vermelho,
               foregroundColor: Colors.white,
             ),
-            child: Text('Sair',
-                style: GoogleFonts.nunito(fontWeight: FontWeight.w800)),
+            child: Text(
+              'Sair',
+              style: GoogleFonts.nunito(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -566,7 +569,8 @@ class _TelaJogoState extends State<TelaJogo>
 
     // Bug B corrigido: detecta se o jogador está bloqueado (sem jogadas e
     // sem monte) para exibir o botão "Passar" automaticamente.
-    final jogadorBloqueado = !estado.fimDeJogo &&
+    final jogadorBloqueado =
+        !estado.fimDeJogo &&
         !estado.jogadorTemJogadas &&
         estado.quantidadeMonte == 0;
 
@@ -578,7 +582,7 @@ class _TelaJogoState extends State<TelaJogo>
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -606,8 +610,7 @@ class _TelaJogoState extends State<TelaJogo>
                   AnimatedBuilder(
                     animation: _pulseAnim,
                     builder: (_, __) => Opacity(
-                      opacity:
-                          _processandoJogada ? 0.3 : _pulseAnim.value,
+                      opacity: _processandoJogada ? 0.3 : _pulseAnim.value,
                       child: Container(
                         width: 10,
                         height: 10,
@@ -639,7 +642,9 @@ class _TelaJogoState extends State<TelaJogo>
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 6),
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(8),
@@ -647,8 +652,11 @@ class _TelaJogoState extends State<TelaJogo>
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded,
-                        size: 16, color: Colors.orange.shade700),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 16,
+                      color: Colors.orange.shade700,
+                    ),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
@@ -670,8 +678,7 @@ class _TelaJogoState extends State<TelaJogo>
               _mensagemStatus,
               style: GoogleFonts.nunito(
                 fontSize: 14,
-                color:
-                    _processandoJogada ? _vermelho : Colors.grey[700],
+                color: _processandoJogada ? _vermelho : Colors.grey[700],
                 fontWeight: _processandoJogada
                     ? FontWeight.w700
                     : FontWeight.w500,
@@ -684,7 +691,9 @@ class _TelaJogoState extends State<TelaJogo>
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: _cinzaFundo,
                       borderRadius: BorderRadius.circular(8),
@@ -692,8 +701,11 @@ class _TelaJogoState extends State<TelaJogo>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.layers_outlined,
-                            size: 14, color: Colors.grey[600]),
+                        Icon(
+                          Icons.layers_outlined,
+                          size: 14,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -715,22 +727,24 @@ class _TelaJogoState extends State<TelaJogo>
                   ElevatedButton.icon(
                     onPressed:
                         (_processandoJogada || estado.quantidadeMonte == 0)
-                            ? null
-                            : _comprarPeca,
+                        ? null
+                        : _comprarPeca,
                     icon: const Icon(Icons.add_card, size: 16),
                     label: Text(
                       'Comprar (${estado.quantidadeMonte})',
-                      style:
-                          GoogleFonts.nunito(fontWeight: FontWeight.w700),
+                      style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _cinzaEscuro,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: Colors.grey[300],
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
 
@@ -743,17 +757,19 @@ class _TelaJogoState extends State<TelaJogo>
                       icon: const Icon(Icons.skip_next, size: 16),
                       label: Text(
                         'Passar',
-                        style: GoogleFonts.nunito(
-                            fontWeight: FontWeight.w700),
+                        style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange.shade700,
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: Colors.grey[300],
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ],
@@ -777,7 +793,10 @@ class _TelaJogoState extends State<TelaJogo>
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
           BoxShadow(
-              color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -822,11 +841,11 @@ class _TelaJogoState extends State<TelaJogo>
                     scrollDirection: Axis.horizontal,
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minWidth: constraints.maxWidth),
+                      constraints: BoxConstraints(
+                        minWidth: constraints.maxWidth,
+                      ),
                       child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -836,13 +855,12 @@ class _TelaJogoState extends State<TelaJogo>
                             else
                               const SizedBox(width: 20),
                             const SizedBox(width: 16),
-                            for (int i = 0;
-                                i < estado.mesa.length;
-                                i++) ...[
-                              _buildPecaEstilizada(estado.mesa[i],
-                                  emMesa: true),
-                              if (i != estado.mesa.length - 1)
-                                _buildSeta(),
+                            for (int i = 0; i < estado.mesa.length; i++) ...[
+                              _buildPecaEstilizada(
+                                estado.mesa[i],
+                                emMesa: true,
+                              ),
+                              if (i != estado.mesa.length - 1) _buildSeta(),
                             ],
                             const SizedBox(width: 16),
                             if (!estado.fimDeJogo && !_processandoJogada)
@@ -878,8 +896,8 @@ class _TelaJogoState extends State<TelaJogo>
           height: 80,
           decoration: BoxDecoration(
             color: estaPorCima
-                ? _vermelho.withOpacity(0.4)
-                : Colors.white.withOpacity(0.1),
+                ? _vermelho.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: estaPorCima ? _vermelho : Colors.white30,
@@ -890,9 +908,7 @@ class _TelaJogoState extends State<TelaJogo>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                ponta == 'esquerda'
-                    ? Icons.arrow_back
-                    : Icons.arrow_forward,
+                ponta == 'esquerda' ? Icons.arrow_back : Icons.arrow_forward,
                 color: Colors.white70,
                 size: 20,
               ),
@@ -937,8 +953,7 @@ class _TelaJogoState extends State<TelaJogo>
           Row(
             children: [
               Expanded(
-                child: _buildLadoPeca(peca.visivelEsquerdo,
-                    emMesa: emMesa),
+                child: _buildLadoPeca(peca.visivelEsquerdo, emMesa: emMesa),
               ),
               Container(
                 width: 2,
@@ -947,8 +962,7 @@ class _TelaJogoState extends State<TelaJogo>
                 color: Colors.black26,
               ),
               Expanded(
-                child: _buildLadoPeca(peca.visivelDireito,
-                    emMesa: emMesa),
+                child: _buildLadoPeca(peca.visivelDireito, emMesa: emMesa),
               ),
             ],
           ),
@@ -960,9 +974,10 @@ class _TelaJogoState extends State<TelaJogo>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 1,
-                    offset: Offset(0, 1)),
+                  color: Colors.black26,
+                  blurRadius: 1,
+                  offset: Offset(0, 1),
+                ),
               ],
             ),
           ),
@@ -1006,25 +1021,27 @@ class _TelaJogoState extends State<TelaJogo>
           Text(
             'Sua mão',
             style: GoogleFonts.nunito(
-                fontSize: 20, fontWeight: FontWeight.w900),
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'Arraste a peça até uma das setas no tabuleiro',
-            style:
-                GoogleFonts.nunito(fontSize: 13, color: Colors.grey[600]),
+            style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey[600]),
           ),
           const SizedBox(height: 20),
           if (estado.maoJogador.isEmpty)
-            Text('Nenhuma peça restante.',
-                style: GoogleFonts.nunito(color: Colors.grey[600]))
+            Text(
+              'Nenhuma peça restante.',
+              style: GoogleFonts.nunito(color: Colors.grey[600]),
+            )
           else
             Wrap(
               spacing: 16,
               runSpacing: 20,
               children: estado.maoJogador.map((peca) {
-                final podeInteragir =
-                    !_processandoJogada && !estado.fimDeJogo;
+                final podeInteragir = !_processandoJogada && !estado.fimDeJogo;
                 return Opacity(
                   opacity: podeInteragir ? 1.0 : 0.5,
                   child: Draggable<PecaDomino>(
@@ -1034,14 +1051,12 @@ class _TelaJogoState extends State<TelaJogo>
                       color: Colors.transparent,
                       child: Opacity(
                         opacity: 0.85,
-                        child:
-                            _buildPecaEstilizada(peca, emMesa: false),
+                        child: _buildPecaEstilizada(peca, emMesa: false),
                       ),
                     ),
                     childWhenDragging: Opacity(
                       opacity: 0.2,
-                      child:
-                          _buildPecaEstilizada(peca, emMesa: false),
+                      child: _buildPecaEstilizada(peca, emMesa: false),
                     ),
                     child: _buildPecaEstilizada(peca, emMesa: false),
                   ),
@@ -1058,8 +1073,11 @@ class _TelaJogoState extends State<TelaJogo>
   Widget _buildSeta() {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 12),
-      child: Icon(Icons.arrow_forward_ios_rounded,
-          color: Colors.white70, size: 20),
+      child: Icon(
+        Icons.arrow_forward_ios_rounded,
+        color: Colors.white70,
+        size: 20,
+      ),
     );
   }
 
@@ -1073,9 +1091,7 @@ class _TelaJogoState extends State<TelaJogo>
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!_tabuleiroScrollController.hasClients) return;
       _tabuleiroScrollController.animateTo(
-        esquerda
-            ? 0
-            : _tabuleiroScrollController.position.maxScrollExtent,
+        esquerda ? 0 : _tabuleiroScrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeOut,
       );
