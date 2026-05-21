@@ -1,13 +1,7 @@
 // domino_models.dart
-// Modelos únicos consolidados para o Dominó Químico.
-// Substitui: jogo_models.dart e partida_model.dart
 
 // ---------------------------------------------------------------------------
 // Enum de dificuldade
-// Níveis espelham exatamente o backend Python:
-//   1 → Fórmula  ↔ Classe funcional
-//   2 → Fórmula  ↔ Nome do composto
-//   3 → Fórmula  ↔ Propriedade da função
 // ---------------------------------------------------------------------------
 enum DificuldadeJogo {
   formulaClasse(1, 'Nível 1', 'Fórmula ↔ Classe'),
@@ -28,7 +22,6 @@ enum DificuldadeJogo {
 
 // ---------------------------------------------------------------------------
 // Peça do dominó
-// Espelha PecaDomino do Python (StatusPartidaResponse).
 // ---------------------------------------------------------------------------
 class PecaDomino {
   const PecaDomino({
@@ -40,17 +33,9 @@ class PecaDomino {
   });
 
   final int idPeca;
-
-  /// Texto exibido no lado esquerdo da peça (sempre a fórmula do composto).
   final String visivelEsquerdo;
-
-  /// Texto exibido no lado direito (classe, nome ou propriedade, conforme nível).
   final String visivelDireito;
-
-  /// ID de classificação do lado esquerdo — usado para validar encaixe.
   final int validadorEsquerdo;
-
-  /// ID de classificação do lado direito — usado para validar encaixe.
   final int validadorDireito;
 
   factory PecaDomino.fromJson(Map<String, dynamic> json) => PecaDomino(
@@ -72,7 +57,6 @@ class PecaDomino {
 
 // ---------------------------------------------------------------------------
 // Estado da partida
-// Espelha StatusPartidaResponse do Python.
 // ---------------------------------------------------------------------------
 class EstadoPartida {
   const EstadoPartida({
@@ -82,24 +66,35 @@ class EstadoPartida {
     required this.status,
     required this.fimDeJogo,
     required this.quantidadeMonte,
+    // Bug C corrigido: acertos contados server-side.
+    this.qtdAcertos = 0,
+    // Bug B corrigido: sinaliza se há jogadas válidas disponíveis.
+    this.jogadorTemJogadas = true,
   });
 
   final String idPartida;
 
-  /// Peças atualmente visíveis na mesa, em ordem da esquerda para a direita.
+  /// Peças na mesa, da esquerda para a direita.
   final List<PecaDomino> mesa;
 
-  /// Peças na mão do jogador humano.
+  /// Peças na mão do jogador.
   final List<PecaDomino> maoJogador;
 
-  /// Mensagem descritiva do último evento (jogada do bot, compra, fim etc.).
+  /// Mensagem descritiva do último evento.
   final String status;
 
-  /// true quando a partida terminou (vitória, derrota ou empate).
+  /// true quando a partida terminou.
   final bool fimDeJogo;
 
-  /// Quantidade de peças restantes no monte de compras.
+  /// Quantidade de peças no monte de compras.
   final int quantidadeMonte;
+
+  /// Acertos contabilizados pelo servidor (imune a manipulação client-side).
+  final int qtdAcertos;
+
+  /// Bug B/E: false quando o jogador não tem peças jogáveis.
+  /// A UI usa este campo para exibir o botão "Passar".
+  final bool jogadorTemJogadas;
 
   factory EstadoPartida.fromJson(Map<String, dynamic> json) => EstadoPartida(
         idPartida: json['id_partida'] as String,
@@ -112,5 +107,7 @@ class EstadoPartida {
         status: json['status'] as String,
         fimDeJogo: json['fim_de_jogo'] as bool,
         quantidadeMonte: (json['quantidade_monte'] as int?) ?? 0,
+        qtdAcertos: (json['qtd_acertos'] as int?) ?? 0,
+        jogadorTemJogadas: (json['jogador_tem_jogadas'] as bool?) ?? true,
       );
 }

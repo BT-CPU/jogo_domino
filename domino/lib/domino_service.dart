@@ -1,19 +1,12 @@
 // domino_service.dart
-// Service único consolidado para o Dominó Químico.
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'domino_models.dart';
 
-// ---------------------------------------------------------------------------
-// Configuração de URL
-// ---------------------------------------------------------------------------
 const _kBaseUrl = 'https://jogodomino-production.up.railway.app';
 
-// ---------------------------------------------------------------------------
-// DominoService
-// ---------------------------------------------------------------------------
 class DominoService {
   DominoService({http.Client? client}) : _client = client ?? http.Client();
 
@@ -44,9 +37,9 @@ class DominoService {
     throw _erroHttp('criar partida', response);
   }
 
-  /// Envia a jogada do jogador.
+  /// Envia a jogada do jogador e retorna o estado atualizado.
   ///
-  /// Lança [JogadaInvalidaException] quando o backend retorna 422.
+  /// Lança [JogadaInvalidaException] quando a combinação química está errada.
   Future<EstadoPartida> jogarPeca({
     required String idPartida,
     required int idPeca,
@@ -77,7 +70,7 @@ class DominoService {
 
   /// Compra uma peça do monte.
   ///
-  /// Lança [MonteVazioException] quando o backend retorna 422.
+  /// Lança [MonteVazioException] se o monte estiver esgotado.
   Future<EstadoPartida> comprarPeca({required String idPartida}) async {
     final response = await _client.post(
       Uri.parse('$_kBaseUrl/partidas/comprar'),
@@ -98,15 +91,11 @@ class DominoService {
     throw _erroHttp('comprar peça', response);
   }
 
-  // [CORREÇÃO BUG 1] Passa a vez do jogador quando ele não tem jogadas válidas
-  // e o monte está vazio. Sem este método, o jogador ficava preso em loop
-  // infinito de erros 422 ao tentar jogar peças que não encaixam.
-  //
-  // O backend valida que o jogador realmente não pode jogar antes de aceitar
-  // a passagem de vez — então não é possível usar isso como atalho.
-  //
-  // Lança [PassarVezInvalidaException] quando o backend retorna 400
-  // (jogador ainda tem jogadas ou monte não está vazio).
+  /// Bug B corrigido: passa a vez quando o jogador não tem jogadas válidas
+  /// e o monte está vazio. O backend executa o turno do bot em seguida.
+  ///
+  /// Lança [PassarVezBloqueadaException] se o servidor rejeitar a passagem
+  /// (ainda há jogadas ou peças no monte disponíveis).
   Future<EstadoPartida> passarVez({required String idPartida}) async {
     final response = await _client.post(
       Uri.parse('$_kBaseUrl/partidas/passar'),
@@ -122,7 +111,7 @@ class DominoService {
 
     if (response.statusCode == 400) {
       final body = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      throw PassarVezInvalidaException(
+      throw PassarVezBloqueadaException(
         body['detail'] as String? ?? 'Não é possível passar a vez agora.',
       );
     }
@@ -130,12 +119,13 @@ class DominoService {
     throw _erroHttp('passar vez', response);
   }
 
-  /// Persiste o resultado da partida no banco de dados.
+  /// Bug C corrigido: envia o [idPartida] para que o backend use a contagem
+  /// de acertos registrada no servidor, evitando manipulação client-side.
   Future<void> finalizarPartida({
     required int idUsuario,
     required DificuldadeJogo dificuldade,
     required int tempoSegundos,
-    required int qtdAcertos,
+    required String idPartida,
     required int qtdErros,
   }) async {
     final response = await _client.post(
@@ -145,7 +135,7 @@ class DominoService {
         'id_usuario': idUsuario,
         'nivel_dificuldade': dificuldade.id,
         'tempo_segundos': tempoSegundos,
-        'qtd_acertos': qtdAcertos,
+        'id_partida': idPartida,
         'qtd_erros': qtdErros,
       }),
     );
@@ -155,7 +145,7 @@ class DominoService {
     }
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
+  // ─── Helper ───────────────────────────────────────────────────────────────
 
   Exception _erroHttp(String operacao, http.Response response) {
     return Exception(
@@ -168,15 +158,16 @@ class DominoService {
 // Exceções tipadas
 // ---------------------------------------------------------------------------
 
-/// Lançada quando o backend rejeita a jogada por combinação química incorreta.
+/// Combinação química incorreta.
 class JogadaInvalidaException implements Exception {
   const JogadaInvalidaException();
 
   @override
-  String toString() => 'Combinação química incorreta! Tente outra peça ou extremidade.';
+  String toString() =>
+      'Combinação química incorreta! Tente outra peça ou extremidade.';
 }
 
-/// Lançada quando se tenta comprar do monte e ele já está vazio.
+/// Monte esgotado ao tentar comprar.
 class MonteVazioException implements Exception {
   const MonteVazioException();
 
@@ -184,13 +175,13 @@ class MonteVazioException implements Exception {
   String toString() => 'O monte está vazio!';
 }
 
-// [CORREÇÃO BUG 1] Lançada quando o backend rejeita a passagem de vez
-// (jogador ainda tem jogadas disponíveis ou monte não está vazio).
-class PassarVezInvalidaException implements Exception {
-  const PassarVezInvalidaException(this.message);
+/// Bug B corrigido: servidor bloqueou a passagem de vez.
+/// Mensagem explica o motivo (ainda há jogadas ou peças no monte).
+class PassarVezBloqueadaException implements Exception {
+  const PassarVezBloqueadaException(this.motivo);
 
-  final String message;
+  final String motivo;
 
   @override
-  String toString() => message;
+  String toString() => motivo;
 }

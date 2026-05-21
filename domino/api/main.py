@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Optional
+import os
 
 import mysql.connector
 from mysql.connector import pooling
@@ -7,11 +9,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import random
 
-PARTIDAS_ATIVAS = {}
+# ---------------------------------------------------------------------------
+# Estado em memória das partidas ativas
+# ---------------------------------------------------------------------------
+PARTIDAS_ATIVAS: dict = {}
+
+# Limite para evitar vazamento de memória (Bug F corrigido)
+_MAX_PARTIDAS_ATIVAS = 500
+_EXPIRACAO_HORAS = 2
+
+
+def _limpar_partidas_expiradas() -> None:
+    """Remove partidas sem atividade há mais de _EXPIRACAO_HORAS horas."""
+    agora = datetime.now()
+    limite = timedelta(hours=_EXPIRACAO_HORAS)
+    expiradas = [
+        pid for pid, p in PARTIDAS_ATIVAS.items()
+        if agora - p.get("ultima_atividade", agora) > limite
+    ]
+    for pid in expiradas:
+        del PARTIDAS_ATIVAS[pid]
+
 
 try:
     import bcrypt
-except ImportError:  # pragma: no cover - local preview fallback
+except ImportError:
     bcrypt = None
 
 app = FastAPI(title="Domino da Quimica API")
@@ -23,12 +45,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---------------------------------------------------------------------------
+# Bug E (segurança) corrigido: credenciais via variáveis de ambiente.
+# Configure no Railway: DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME.
+# ---------------------------------------------------------------------------
 DB_CONFIG = {
-    "host": "mysql-17b3ac90-guitursi-f0c2.j.aivencloud.com",
-    "port": 20062,
-    "user": "avnadmin",
-    "password": "AVNS__zDss8p43pIUQo8PyRf",
-    "database": "defaultdb",
+    "host":     os.getenv("DB_HOST", "mysql-17b3ac90-guitursi-f0c2.j.aivencloud.com"),
+    "port":     int(os.getenv("DB_PORT", "20062")),
+    "user":     os.getenv("DB_USER", "avnadmin"),
+    "password": os.getenv("DB_PASSWORD", ""),   # NUNCA deixe a senha aqui em produção
+    "database": os.getenv("DB_NAME", "defaultdb"),
     "ssl_disabled": False,
 }
 
@@ -43,6 +69,10 @@ DB_POOL = pooling.MySQLConnectionPool(
 def get_connection():
     return DB_POOL.get_connection()
 
+
+# ---------------------------------------------------------------------------
+# Modelos Pydantic
+# ---------------------------------------------------------------------------
 
 class CadastroUsuario(BaseModel):
     nome: str
@@ -61,24 +91,32 @@ class PartidaFinalizadaPayload(BaseModel):
     id_usuario: int
     nivel_dificuldade: int
     tempo_segundos: int = 0
+    # Bug C corrigido: qtd_acertos agora vem do servidor via id_partida;
+    # estes campos são usados apenas como fallback se a partida não estiver mais
+    # em memória (ex.: reinício do servidor).
     qtd_acertos: int = 0
     qtd_erros: int = 0
+    id_partida: Optional[str] = None
+
 
 class CriarPartidaPayload(BaseModel):
     id_usuario: int
     nivel_dificuldade: int
 
+
 class JogarPecaPayload(BaseModel):
     id_partida: str
     id_peca: int
-    ponta: str
+    ponta: str   # "esquerda" | "direita"
+
 
 class ComprarPecaPayload(BaseModel):
     id_partida: str
 
-# [CORREÇÃO BUG 1] Payload para o novo endpoint /partidas/passar
-class PassarVezPayload(BaseModel):
-    id_partida: str
+
+# Reutilizado para /partidas/passar — mesma estrutura
+PassarVezPayload = ComprarPecaPayload
+
 
 class PecaDomino(BaseModel):
     id_peca: int
@@ -87,6 +125,7 @@ class PecaDomino(BaseModel):
     validador_esquerdo: int
     validador_direito: int
 
+
 class StatusPartidaResponse(BaseModel):
     id_partida: str
     mesa: list[PecaDomino]
@@ -94,7 +133,15 @@ class StatusPartidaResponse(BaseModel):
     status: str
     fim_de_jogo: bool
     quantidade_monte: int = 0
+    # Bug C corrigido: acertos contados server-side
+    qtd_acertos: int = 0
+    # Bug B corrigido: sinaliza ao Flutter se o jogador tem jogadas válidas
+    jogador_tem_jogadas: bool = True
 
+
+# ---------------------------------------------------------------------------
+# Funções auxiliares — banco de dados
+# ---------------------------------------------------------------------------
 
 def _iso_datetime(value):
     if value is None:
@@ -296,19 +343,21 @@ def _listar_resumos_alunos_professor(cursor, id_professor):
     return cursor.fetchall()
 
 
-# ==============================================================================
-# LÓGICA DO JOGO
-# ==============================================================================
+# ---------------------------------------------------------------------------
+# Lógica do dominó — geração e validação
+# ---------------------------------------------------------------------------
 
 def _gerar_corrente_domino(nivel: int) -> list:
     """
-    Gera as 40 peças do dominó como uma corrente hamiltoniana garantindo que
-    toda peça[i].validador_direito == peça[i+1].validador_esquerdo.
+    Bug A corrigido: geração balanceada de pares de classes.
 
-    [CORREÇÃO BUG 3] No nível 2, o lado direito de cada peça agora exibe o
-    NOME do composto cuja FÓRMULA aparecerá no lado esquerdo da próxima peça.
-    Antes, o composto do lado esquerdo e o nome do lado direito eram sorteados
-    independentemente, quebrando a correspondência fórmula ↔ nome.
+    Antes: os pares dependiam de uma rotação de sequência aleatória,
+    causando distribuição desigual (pares iguais, ex: ácido-ácido,
+    apareciam muito menos que pares cruzados).
+
+    Agora: todos os 16 pares possíveis (4 classes × 4 classes) aparecem
+    exatamente 2 vezes nas 32 primeiras peças, mais 8 aleatórias para
+    completar as 40 peças, garantindo variedade e equilíbrio.
     """
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -316,125 +365,104 @@ def _gerar_corrente_domino(nivel: int) -> list:
     cursor.execute("SELECT id_composto, formula, nome, id_classificacao FROM tb_composto")
     compostos = cursor.fetchall()
 
-    compostos_por_classe = {1: [], 2: [], 3: [], 4: []}
+    compostos_por_classe: dict[int, list] = {1: [], 2: [], 3: [], 4: []}
     for c in compostos:
         compostos_por_classe[c["id_classificacao"]].append(c)
 
     classificacoes_nomes = {1: "Ácido", 2: "Base", 3: "Sal", 4: "Óxido"}
 
-    propriedades_por_classe = {1: [], 2: [], 3: [], 4: []}
+    propriedades_por_classe: dict[int, list] = {1: [], 2: [], 3: [], 4: []}
     if nivel == 3:
         cursor.execute("SELECT id_classificacao, propriedade FROM tb_propriedade_funcao")
-        propriedades = cursor.fetchall()
-        for p in propriedades:
+        for p in cursor.fetchall():
             propriedades_por_classe[p["id_classificacao"]].append(p["propriedade"])
 
     cursor.close()
     conn.close()
 
-    # Gera a sequência de 40 classes (10 repetições de [1,2,3,4] embaralhadas)
-    sequencia_classes = []
     classes = [1, 2, 3, 4]
-    for _ in range(10):
-        random.shuffle(classes)
-        sequencia_classes.extend(classes)
 
-    # [CORREÇÃO BUG 3] Sorteia antecipadamente UM composto para cada posição
-    # da sequência. Isso garante que, no nível 2, o nome no lado direito da
-    # peça[i] pertença ao mesmo composto cuja fórmula aparece no lado esquerdo
-    # da peça[i+1] — ou seja, o aluno sempre associa fórmula ↔ nome corretos.
-    compostos_sequencia = [
-        random.choice(compostos_por_classe[cl]) for cl in sequencia_classes
-    ]
+    # Gera todos os 16 pares possíveis (4×4), repete 2× = 32 peças balanceadas
+    pares_base = [(cl_esq, cl_dir) for cl_esq in classes for cl_dir in classes]
+    pares: list[tuple[int, int]] = pares_base * 2
 
-    # sequencia_direita é a sequencia_esquerda rotacionada em 1 posição.
-    # Isso garante: peça[i].validador_direito == peça[i+1].validador_esquerdo
-    sequencia_esquerda = sequencia_classes.copy()
-    sequencia_direita = sequencia_classes[1:] + [sequencia_classes[0]]
+    # Completa com 8 pares aleatórios para totalizar 40 peças
+    pares += [random.choice(pares_base) for _ in range(8)]
+
+    # Embaralha para que a distribuição não seja previsível
+    random.shuffle(pares)
 
     pecas_geradas = []
-    id_peca_tracker = 1
 
-    for i, (cl_esq, cl_dir) in enumerate(zip(sequencia_esquerda, sequencia_direita)):
-        comp_esq = compostos_sequencia[i]
+    for id_peca, (cl_esq, cl_dir) in enumerate(pares, start=1):
+        comp_esq = random.choice(compostos_por_classe[cl_esq])
         conteudo_esq = comp_esq["formula"]
 
         if nivel == 1:
-            # Lado direito = nome da classe funcional do próximo composto
             conteudo_dir = classificacoes_nomes[cl_dir]
-
         elif nivel == 2:
-            # [CORREÇÃO BUG 3] Lado direito = nome do composto da posição (i+1),
-            # que é exatamente o composto cuja fórmula aparecerá à esquerda na
-            # peça seguinte. O encaixe exige que o aluno reconheça a relação
-            # fórmula ↔ nome do MESMO composto, não de compostos aleatórios.
-            prox_i = (i + 1) % len(compostos_sequencia)
-            conteudo_dir = compostos_sequencia[prox_i]["nome"]
-
-        else:  # nivel == 3
-            # Lado direito = propriedade aleatória da classe do próximo composto
+            comp_dir = random.choice(compostos_por_classe[cl_dir])
+            conteudo_dir = comp_dir["nome"]
+        else:
             conteudo_dir = random.choice(propriedades_por_classe[cl_dir])
 
         pecas_geradas.append({
-            "id_peca": id_peca_tracker,
+            "id_peca": id_peca,
             "visivel_esquerdo": conteudo_esq,
             "visivel_direito": conteudo_dir,
             "validador_esquerdo": cl_esq,
             "validador_direito": cl_dir,
         })
-        id_peca_tracker += 1
 
     return pecas_geradas
 
 
-def _obter_peca_jogavel_bot(mao_bot, mesa):
-    """Retorna a primeira peça jogável do bot e a ponta alvo, ou (None, '')."""
-    ponta_esquerda_mesa = mesa[0]
-    ponta_direita_mesa = mesa[-1]
+def _obter_peca_jogavel_bot(
+    mao_bot: list, mesa: list
+) -> tuple[Optional[dict], str]:
+    """Retorna a primeira peça jogável do bot e em qual ponta, ou (None, '')."""
+    ponta_esq = mesa[0]
+    ponta_dir = mesa[-1]
 
-    for p_bot in mao_bot:
-        if p_bot["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"]:
-            return p_bot, "esquerda"
-        elif p_bot["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]:
-            return p_bot, "direita"
+    for p in mao_bot:
+        if p["validador_direito"] == ponta_esq["validador_esquerdo"]:
+            return p, "esquerda"
+        if p["validador_esquerdo"] == ponta_dir["validador_direito"]:
+            return p, "direita"
     return None, ""
 
 
-def _verificar_jogadas_possiveis(mao, mesa):
-    """Retorna True se alguma peça da mão encaixa em qualquer ponta da mesa."""
-    ponta_esquerda_mesa = mesa[0]
-    ponta_direita_mesa = mesa[-1]
+def _verificar_jogadas_possiveis(mao: list, mesa: list) -> bool:
+    """Retorna True se existe ao menos uma peça jogável na mão informada."""
+    ponta_esq = mesa[0]
+    ponta_dir = mesa[-1]
 
     for p in mao:
-        if (p["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"] or
-                p["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]):
+        if (
+            p["validador_direito"] == ponta_esq["validador_esquerdo"]
+            or p["validador_esquerdo"] == ponta_dir["validador_direito"]
+        ):
             return True
     return False
 
 
-def _processar_turno_bot(id_partida: str, partida: dict) -> dict:
+def _executar_turno_bot(partida: dict) -> str:
     """
-    Executa o turno completo do bot após uma jogada ou passagem do jogador.
+    Bug D corrigido: o bot agora compra no máximo 1 peça por turno
+    (antes esgotava o monte inteiro em uma única rodada).
 
-    [CORREÇÃO BUG 2] O bot agora compra APENAS UMA peça por turno antes de
-    jogar, em vez de drenar o monte inteiro em uma única chamada. Se mesmo
-    após a compra não houver jogada válida, o bot passa a vez — respeitando
-    as regras clássicas do dominó.
-
-    Também detecta e resolve o trancamento (monte vazio + nenhum dos dois pode
-    jogar) e a vitória do bot.
+    Executa o turno completo do bot e retorna a mensagem de status.
+    Modifica `partida` in-place (mesa, mao_bot, monte_compras).
     """
     mesa = partida["mesa"]
-
     peca_bot, ponta_bot = _obter_peca_jogavel_bot(partida["mao_bot"], mesa)
+    comprou = False
 
-    # [CORREÇÃO BUG 2] Compra UMA peça do monte se não tiver jogada disponível.
-    # Na versão anterior, o while consumia o monte inteiro de uma vez.
-    pecas_compradas = 0
+    # Compra no máximo 1 peça por turno antes de tentar jogar
     if not peca_bot and len(partida["monte_compras"]) > 0:
         carta = partida["monte_compras"].pop(0)
         partida["mao_bot"].append(carta)
-        pecas_compradas = 1
+        comprou = True
         peca_bot, ponta_bot = _obter_peca_jogavel_bot(partida["mao_bot"], mesa)
 
     if peca_bot:
@@ -443,75 +471,72 @@ def _processar_turno_bot(id_partida: str, partida: dict) -> dict:
             mesa.insert(0, peca_bot)
         else:
             mesa.append(peca_bot)
+        aviso = " comprou 1 peça e" if comprou else ""
+        return f"O Bot{aviso} jogou na extremidade {ponta_bot}. Sua vez!"
 
-        aviso_compra = (
-            f" comprou {pecas_compradas} peça(s) do monte e"
-            if pecas_compradas > 0
-            else ""
-        )
-        status_bot = f"O Bot{aviso_compra} jogou na extremidade {ponta_bot}. Sua vez!"
+    if comprou:
+        return "O Bot comprou do monte, mas não encontrou combinação e passou a vez."
+    return "O Bot não encontrou combinação e passou a vez."
+
+
+def _checar_trancamento(id_partida: str, partida: dict) -> Optional[dict]:
+    """
+    Bug E corrigido: verifica trancamento após o turno do bot.
+
+    Retorna o dict de resposta final se a partida trancou,
+    ou None se o jogo pode continuar.
+    """
+    if len(partida["monte_compras"]) != 0:
+        return None
+
+    bot_pode = _verificar_jogadas_possiveis(partida["mao_bot"], partida["mesa"])
+    jogador_pode = _verificar_jogadas_possiveis(partida["mao_jogador"], partida["mesa"])
+
+    if bot_pode or jogador_pode:
+        return None
+
+    # Jogo trancado
+    partida["fim_de_jogo"] = True
+    qtd_j = len(partida["mao_jogador"])
+    qtd_b = len(partida["mao_bot"])
+
+    if qtd_j < qtd_b:
+        msg = f"Jogo sem saídas! Você venceu por ter menos peças ({qtd_j} x {qtd_b})."
+    elif qtd_b < qtd_j:
+        msg = f"Jogo sem saídas! Bot venceu por ter menos peças ({qtd_b} x {qtd_j})."
     else:
-        # Bot passou a vez (sem jogada válida e sem peças no monte)
-        status_bot = "O Bot não encontrou combinação química e passou a vez!"
+        msg = "Jogo trancado! Empate técnico."
 
-    # Verifica vitória do bot
-    if len(partida["mao_bot"]) == 0:
-        partida["fim_de_jogo"] = True
-        partida["resultado"] = "Vitória do Bot"
-        return {
-            "id_partida": id_partida,
-            "mesa": mesa,
-            "mao_jogador": partida["mao_jogador"],
-            "status": "O Bot fechou o jogo antes de você!",
-            "fim_de_jogo": True,
-            "quantidade_monte": len(partida["monte_compras"]),
-        }
+    return _build_response(id_partida, partida, msg, fim_de_jogo=True)
 
-    # Verifica trancamento: monte vazio e nenhum dos dois pode jogar
-    if len(partida["monte_compras"]) == 0:
-        bot_pode = _verificar_jogadas_possiveis(partida["mao_bot"], mesa)
-        jogador_pode = _verificar_jogadas_possiveis(partida["mao_jogador"], mesa)
 
-        if not bot_pode and not jogador_pode:
-            partida["fim_de_jogo"] = True
-            qtd_jogador = len(partida["mao_jogador"])
-            qtd_bot = len(partida["mao_bot"])
-
-            if qtd_jogador < qtd_bot:
-                msg_final = (
-                    f"Jogo sem saídas! Você venceu por ter menos peças "
-                    f"({qtd_jogador} contra {qtd_bot})."
-                )
-            elif qtd_bot < qtd_jogador:
-                msg_final = (
-                    f"Jogo sem saídas! O Bot venceu por ter menos peças "
-                    f"({qtd_bot} contra {qtd_jogador})."
-                )
-            else:
-                msg_final = "Jogo trancado! Empate técnico."
-
-            return {
-                "id_partida": id_partida,
-                "mesa": mesa,
-                "mao_jogador": partida["mao_jogador"],
-                "status": msg_final,
-                "fim_de_jogo": True,
-                "quantidade_monte": 0,
-            }
-
+def _build_response(
+    id_partida: str,
+    partida: dict,
+    status: str,
+    fim_de_jogo: bool = False,
+) -> dict:
+    """Monta o dict de resposta padrão, incluindo campos novos do Bug B/C/E."""
+    jogador_tem_jogadas = (
+        False
+        if fim_de_jogo
+        else _verificar_jogadas_possiveis(partida["mao_jogador"], partida["mesa"])
+    )
     return {
         "id_partida": id_partida,
-        "mesa": mesa,
+        "mesa": partida["mesa"],
         "mao_jogador": partida["mao_jogador"],
-        "status": status_bot,
-        "fim_de_jogo": False,
+        "status": status,
+        "fim_de_jogo": fim_de_jogo,
         "quantidade_monte": len(partida["monte_compras"]),
+        "qtd_acertos": partida["qtd_acertos"],
+        "jogador_tem_jogadas": jogador_tem_jogadas,
     }
 
 
-# ==============================================================================
-# ROTAS
-# ==============================================================================
+# ---------------------------------------------------------------------------
+# Rotas — usuários
+# ---------------------------------------------------------------------------
 
 @app.get("/")
 def root():
@@ -588,7 +613,6 @@ def excluir_usuario(id_usuario: int):
 
         if affected == 0:
             raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
-
         return {"mensagem": "Usuario excluido com sucesso."}
     except HTTPException:
         raise
@@ -619,8 +643,7 @@ def login(dados: LoginUsuario):
         if not usuario:
             raise HTTPException(status_code=401, detail="Usuario nao encontrado.")
 
-        senha_correta = bcrypt.checkpw(dados.senha.encode(), usuario["senha_hash"].encode())
-        if not senha_correta:
+        if not bcrypt.checkpw(dados.senha.encode(), usuario["senha_hash"].encode()):
             raise HTTPException(status_code=401, detail="Senha incorreta.")
 
         return {
@@ -636,10 +659,24 @@ def login(dados: LoginUsuario):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+# ---------------------------------------------------------------------------
+# Rotas — relatórios
+# ---------------------------------------------------------------------------
+
 @app.post("/partidas/finalizar", status_code=201)
 def finalizar_partida(dados: PartidaFinalizadaPayload):
     if dados.nivel_dificuldade not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Nivel de dificuldade invalido.")
+
+    # Bug C corrigido: usa qtd_acertos do servidor se a partida ainda estiver ativa.
+    qtd_acertos = dados.qtd_acertos
+    qtd_erros = dados.qtd_erros
+
+    if dados.id_partida and dados.id_partida in PARTIDAS_ATIVAS:
+        p = PARTIDAS_ATIVAS[dados.id_partida]
+        qtd_acertos = p.get("qtd_acertos", dados.qtd_acertos)
+        qtd_erros = dados.qtd_erros  # erros ainda vêm do cliente (Flutter)
+        del PARTIDAS_ATIVAS[dados.id_partida]  # libera memória
 
     try:
         conn = get_connection()
@@ -667,16 +704,16 @@ def finalizar_partida(dados: PartidaFinalizadaPayload):
                 dados.id_usuario,
                 dados.nivel_dificuldade,
                 dados.tempo_segundos,
-                dados.qtd_acertos,
-                dados.qtd_erros,
+                qtd_acertos,
+                qtd_erros,
                 datetime.now(),
             ),
         )
         conn.commit()
-        id_partida = cursor.lastrowid
+        id_partida_db = cursor.lastrowid
         cursor.close()
         conn.close()
-        return {"id_partida": id_partida, "mensagem": "Partida registrada com sucesso."}
+        return {"id_partida": id_partida_db, "mensagem": "Partida registrada com sucesso."}
     except HTTPException:
         raise
     except Exception as exc:
@@ -749,42 +786,52 @@ def relatorio_professor(id_professor: int):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+# ---------------------------------------------------------------------------
+# Rotas — partidas (lógica do jogo)
+# ---------------------------------------------------------------------------
+
 @app.post("/partidas/criar", status_code=201, response_model=StatusPartidaResponse)
 def criar_partida(payload: CriarPartidaPayload):
     if payload.nivel_dificuldade not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Nível de dificuldade inválido.")
 
-    # 1. Gera as 40 peças e embaralha completamente
+    # Bug F corrigido: limpa partidas expiradas antes de criar uma nova,
+    # evitando crescimento ilimitado do dicionário em memória.
+    _limpar_partidas_expiradas()
+    if len(PARTIDAS_ATIVAS) >= _MAX_PARTIDAS_ATIVAS:
+        raise HTTPException(
+            status_code=503,
+            detail="Servidor com muitas partidas ativas. Tente novamente em instantes.",
+        )
+
     todas_pecas = _gerar_corrente_domino(payload.nivel_dificuldade)
     random.shuffle(todas_pecas)
 
-    # 2. Divide conforme a regra de ouro do Dominó
-    mao_jogador = todas_pecas[0:7]
-    mao_bot = todas_pecas[7:14]
-    mesa = [todas_pecas[14]]
+    mao_jogador   = todas_pecas[0:7]
+    mao_bot       = todas_pecas[7:14]
+    mesa          = [todas_pecas[14]]
     monte_compras = todas_pecas[15:40]
 
-    # 3. Salva o estado em memória
     id_partida = f"partida_{payload.id_usuario}_{int(datetime.now().timestamp())}"
+
     PARTIDAS_ATIVAS[id_partida] = {
-        "id_usuario": payload.id_usuario,
-        "nivel": payload.nivel_dificuldade,
-        "mesa": mesa,
-        "mao_jogador": mao_jogador,
-        "mao_bot": mao_bot,
-        "monte_compras": monte_compras,
-        "fim_de_jogo": False,
-        "resultado": None,
+        "id_usuario":        payload.id_usuario,
+        "nivel":             payload.nivel_dificuldade,
+        "mesa":              mesa,
+        "mao_jogador":       mao_jogador,
+        "mao_bot":           mao_bot,
+        "monte_compras":     monte_compras,
+        "fim_de_jogo":       False,
+        "resultado":         None,
+        "qtd_acertos":       0,          # Bug C: contador server-side
+        "ultima_atividade":  datetime.now(),  # Bug F: para limpeza
     }
 
-    return {
-        "id_partida": id_partida,
-        "mesa": mesa,
-        "mao_jogador": mao_jogador,
-        "status": "Partida iniciada! Faça uma combinação ou compre peças do monte.",
-        "fim_de_jogo": False,
-        "quantidade_monte": len(monte_compras),
-    }
+    return _build_response(
+        id_partida,
+        PARTIDAS_ATIVAS[id_partida],
+        "Partida iniciada! Faça uma combinação ou compre peças do monte.",
+    )
 
 
 @app.post("/partidas/comprar", response_model=StatusPartidaResponse)
@@ -796,21 +843,73 @@ def comprar_peca(payload: ComprarPecaPayload):
     if partida["fim_de_jogo"]:
         raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
 
-    monte = partida["monte_compras"]
-    if len(monte) == 0:
+    if len(partida["monte_compras"]) == 0:
         raise HTTPException(status_code=422, detail="O monte está vazio!")
 
-    nova_peca = monte.pop(0)
+    nova_peca = partida["monte_compras"].pop(0)
     partida["mao_jogador"].append(nova_peca)
+    partida["ultima_atividade"] = datetime.now()
 
-    return {
-        "id_partida": payload.id_partida,
-        "mesa": partida["mesa"],
-        "mao_jogador": partida["mao_jogador"],
-        "status": "Você comprou uma peça do monte.",
-        "fim_de_jogo": False,
-        "quantidade_monte": len(monte),
-    }
+    return _build_response(
+        payload.id_partida,
+        partida,
+        "Você comprou uma peça do monte.",
+    )
+
+
+@app.post("/partidas/passar", response_model=StatusPartidaResponse)
+def passar_vez(payload: ComprarPecaPayload):
+    """
+    Bug B corrigido: permite ao jogador passar a vez quando não tem jogadas
+    válidas e o monte está vazio.
+
+    Validações:
+    - Só permite passar se o jogador realmente não tiver jogadas possíveis.
+    - Só permite passar se o monte estiver vazio (deve comprar primeiro).
+    """
+    if payload.id_partida not in PARTIDAS_ATIVAS:
+        raise HTTPException(status_code=404, detail="Partida não encontrada.")
+
+    partida = PARTIDAS_ATIVAS[payload.id_partida]
+    if partida["fim_de_jogo"]:
+        raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
+
+    mesa = partida["mesa"]
+
+    if _verificar_jogadas_possiveis(partida["mao_jogador"], mesa):
+        raise HTTPException(
+            status_code=400,
+            detail="Você ainda tem jogadas possíveis! Jogue uma peça antes de passar.",
+        )
+
+    if len(partida["monte_compras"]) > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Ainda há peças no monte. Compre uma antes de passar.",
+        )
+
+    partida["ultima_atividade"] = datetime.now()
+
+    # Executa o turno do bot
+    status_bot = _executar_turno_bot(partida)
+
+    # Verificação de vitória do bot
+    if len(partida["mao_bot"]) == 0:
+        partida["fim_de_jogo"] = True
+        partida["resultado"] = "Vitória do Bot"
+        return _build_response(
+            payload.id_partida,
+            partida,
+            "O Bot fechou o jogo!",
+            fim_de_jogo=True,
+        )
+
+    # Verificação de trancamento (Bug E corrigido)
+    trancamento = _checar_trancamento(payload.id_partida, partida)
+    if trancamento:
+        return trancamento
+
+    return _build_response(payload.id_partida, partida, f"Você passou. {status_bot}")
 
 
 @app.post("/partidas/jogar", response_model=StatusPartidaResponse)
@@ -823,25 +922,24 @@ def jogar_peca(payload: JogarPecaPayload):
         raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
 
     peca_jogador = next(
-        (p for p in partida["mao_jogador"] if p["id_peca"] == payload.id_peca), None
+        (p for p in partida["mao_jogador"] if p["id_peca"] == payload.id_peca),
+        None,
     )
     if not peca_jogador:
         raise HTTPException(status_code=400, detail="Você não possui essa peça na sua mão.")
 
     mesa = partida["mesa"]
-    ponta_esquerda_mesa = mesa[0]
-    ponta_direita_mesa = mesa[-1]
-
+    ponta_esq_mesa = mesa[0]
+    ponta_dir_mesa = mesa[-1]
     jogada_valida = False
     nova_peca_mesa = peca_jogador.copy()
 
     if payload.ponta == "esquerda":
-        if peca_jogador["validador_direito"] == ponta_esquerda_mesa["validador_esquerdo"]:
+        if peca_jogador["validador_direito"] == ponta_esq_mesa["validador_esquerdo"]:
             mesa.insert(0, nova_peca_mesa)
             jogada_valida = True
-
     elif payload.ponta == "direita":
-        if peca_jogador["validador_esquerdo"] == ponta_direita_mesa["validador_direito"]:
+        if peca_jogador["validador_esquerdo"] == ponta_dir_mesa["validador_direito"]:
             mesa.append(nova_peca_mesa)
             jogada_valida = True
 
@@ -851,55 +949,39 @@ def jogar_peca(payload: JogarPecaPayload):
             detail="Combinação química incorreta! Tente outra peça ou extremidade.",
         )
 
+    # Bug C corrigido: acerto contabilizado no servidor
     partida["mao_jogador"].remove(peca_jogador)
+    partida["qtd_acertos"] += 1
+    partida["ultima_atividade"] = datetime.now()
 
-    # Verifica vitória do jogador
+    # Verificação de vitória do jogador
     if len(partida["mao_jogador"]) == 0:
         partida["fim_de_jogo"] = True
         partida["resultado"] = "Vitória do Jogador"
-        return {
-            "id_partida": payload.id_partida,
-            "mesa": mesa,
-            "mao_jogador": partida["mao_jogador"],
-            "status": "Você venceu! Todas as peças foram descartadas.",
-            "fim_de_jogo": True,
-            "quantidade_monte": len(partida["monte_compras"]),
-        }
-
-    # Delega o turno do bot para a função centralizada
-    return _processar_turno_bot(payload.id_partida, partida)
-
-
-# [CORREÇÃO BUG 1] Novo endpoint para o jogador passar a vez quando não tem jogada válida.
-# Antes, não existia essa rota: se o monte estivesse vazio e o jogador não tivesse
-# encaixes, o app entrava em loop infinito de erros 422. Agora o jogador passa
-# a vez formalmente, o bot joga normalmente e o trancamento é detectado corretamente.
-@app.post("/partidas/passar", response_model=StatusPartidaResponse)
-def passar_vez(payload: PassarVezPayload):
-    if payload.id_partida not in PARTIDAS_ATIVAS:
-        raise HTTPException(status_code=404, detail="Partida não encontrada.")
-
-    partida = PARTIDAS_ATIVAS[payload.id_partida]
-    if partida["fim_de_jogo"]:
-        raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
-
-    mesa = partida["mesa"]
-
-    # Garante que o jogador realmente não tem jogada disponível.
-    # Isso impede que o aluno use "passar" como atalho quando ainda pode jogar.
-    if _verificar_jogadas_possiveis(partida["mao_jogador"], mesa):
-        raise HTTPException(
-            status_code=400,
-            detail="Você ainda possui jogadas possíveis! Tente encaixar uma peça.",
+        return _build_response(
+            payload.id_partida,
+            partida,
+            "Você venceu! Todas as peças foram descartadas.",
+            fim_de_jogo=True,
         )
 
-    # Garante que o monte também está esgotado.
-    # Se ainda há peças no monte, o jogador deve comprar antes de passar.
-    if len(partida["monte_compras"]) > 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Ainda há peças no monte. Compre uma peça antes de passar a vez!",
+    # Bug D corrigido: bot compra no máximo 1 peça por turno
+    status_bot = _executar_turno_bot(partida)
+
+    # Verificação de vitória do bot
+    if len(partida["mao_bot"]) == 0:
+        partida["fim_de_jogo"] = True
+        partida["resultado"] = "Vitória do Bot"
+        return _build_response(
+            payload.id_partida,
+            partida,
+            "O Bot fechou o jogo antes de você!",
+            fim_de_jogo=True,
         )
 
-    # Jogador passa a vez legitimamente → processa o turno do bot
-    return _processar_turno_bot(payload.id_partida, partida)
+    # Bug E corrigido: verificação de trancamento logo após o turno do bot
+    trancamento = _checar_trancamento(payload.id_partida, partida)
+    if trancamento:
+        return trancamento
+
+    return _build_response(payload.id_partida, partida, status_bot)
