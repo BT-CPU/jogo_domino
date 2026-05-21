@@ -30,13 +30,14 @@ class _TelaJogoState extends State<TelaJogo>
   static const _cinzaFundo = Color(0xFFF7F7F7);
   static const _corPecaDomino = Color(0xFFFFFDF9);
   static const _bordaPecaDomino = Color(0xFFE6DCC8);
+  // [CORREÇÃO BUG 1] Cor dedicada para o botão "Passar vez" — laranja para
+  // comunicar ao aluno que é uma ação de emergência, não uma jogada normal.
+  static const _laranjaPassar = Color(0xFFE67E22);
 
   // ─── Dependências ─────────────────────────────────────────────────────────
   final DominoService _service = DominoService();
   final ScrollController _tabuleiroScrollController = ScrollController();
 
-  // Controla o pulso do indicador de turno ativo (substitui o hack de
-  // DateTime.now().millisecond que não causava rebuild).
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnim;
 
@@ -60,7 +61,6 @@ class _TelaJogoState extends State<TelaJogo>
   void initState() {
     super.initState();
 
-    // Animação de pulso para o indicador de turno ativo.
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -214,6 +214,73 @@ class _TelaJogoState extends State<TelaJogo>
     }
   }
 
+  // [CORREÇÃO BUG 1] Verifica client-side se o jogador possui alguma peça que
+  // encaixa em qualquer uma das pontas da mesa. Usado para decidir se o botão
+  // "Passar vez" deve ser exibido.
+  //
+  // A lógica espelha exatamente _verificar_jogadas_possiveis() do backend,
+  // garantindo consistência entre as duas camadas.
+  bool _jogadorTemJogada() {
+    final estado = _estado;
+    if (estado == null || estado.mesa.isEmpty) return false;
+
+    final validadorPontaEsq = estado.mesa.first.validadorEsquerdo;
+    final validadorPontaDir = estado.mesa.last.validadorDireito;
+
+    return estado.maoJogador.any(
+      (peca) =>
+          peca.validadorDireito == validadorPontaEsq ||
+          peca.validadorEsquerdo == validadorPontaDir,
+    );
+  }
+
+  // [CORREÇÃO BUG 1] Passa a vez do jogador ao servidor quando ele não tem
+  // nenhuma jogada válida e o monte está vazio. O botão que chama esta função
+  // só é exibido nessa condição exata, então a dupla validação
+  // (client + server) evita uso indevido.
+  Future<void> _passarVez() async {
+    final estado = _estado;
+    if (estado == null || _processandoJogada || estado.fimDeJogo) return;
+
+    setState(() {
+      _processandoJogada = true;
+      _mensagemStatus = 'Passando a vez...';
+    });
+
+    try {
+      final resultado = await _service.passarVez(
+        idPartida: estado.idPartida,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _estado = resultado;
+        _mensagemStatus = resultado.status;
+        _processandoJogada = false;
+      });
+
+      if (resultado.fimDeJogo) await _encerrarPartida();
+    } on PassarVezInvalidaException catch (e) {
+      // O servidor rejeitou a passagem de vez — o jogador ainda tem jogadas.
+      // Isso não deveria ocorrer normalmente (o botão já filtra), mas é tratado
+      // defensivamente para o caso de o estado do cliente estar desatualizado.
+      if (!mounted) return;
+      setState(() {
+        _processandoJogada = false;
+        _mensagemStatus = 'Você ainda pode jogar!';
+      });
+      _mostrarSnack(e.toString(), isErro: true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _processandoJogada = false;
+        _mensagemStatus = 'Erro ao passar a vez.';
+      });
+      _mostrarSnack(e.toString(), isErro: true);
+    }
+  }
+
   Future<void> _encerrarPartida() async {
     final estado = _estado;
     if (estado == null || _partidaPersistida) return;
@@ -221,7 +288,6 @@ class _TelaJogoState extends State<TelaJogo>
     _timer?.cancel();
     _partidaPersistida = true;
 
-    // Persiste no banco — falha silenciosa para não bloquear o diálogo.
     try {
       await _service.finalizarPartida(
         idUsuario: widget.idUsuario ?? 1,
@@ -469,8 +535,8 @@ class _TelaJogoState extends State<TelaJogo>
               backgroundColor: _vermelho,
               foregroundColor: Colors.white,
             ),
-            child:
-                Text('Sair', style: GoogleFonts.nunito(fontWeight: FontWeight.w800)),
+            child: Text('Sair',
+                style: GoogleFonts.nunito(fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -495,7 +561,8 @@ class _TelaJogoState extends State<TelaJogo>
               label.toUpperCase(),
               style: GoogleFonts.nunito(
                 color: Colors.white54,
-                fontSize: 10,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
                 letterSpacing: 1,
               ),
             ),
@@ -520,6 +587,23 @@ class _TelaJogoState extends State<TelaJogo>
     final pontas = estado.mesa.isEmpty
         ? 'Mesa vazia'
         : 'Esq: ${estado.mesa.first.visivelEsquerdo} | Dir: ${estado.mesa.last.visivelDireito}';
+
+    // [CORREÇÃO BUG 1] O botão "Passar vez" só aparece quando AMBAS as
+    // condições são verdadeiras:
+    //   1. O monte está vazio (não há mais peças para comprar)
+    //   2. O jogador não possui nenhuma peça que encaixe nas pontas da mesa
+    //
+    // Enquanto houver peças no monte, o jogador DEVE comprar — o botão
+    // "Comprar" fica destacado em vermelho para indicar a obrigação.
+    // Isso espelha as regras clássicas do dominó.
+    final monteVazio = estado.quantidadeMonte == 0;
+    final semJogada = !_jogadorTemJogada();
+    final devePassar = !estado.fimDeJogo && monteVazio && semJogada;
+
+    // Quando o monte ainda tem peças mas o jogador não tem encaixe,
+    // destacamos o botão "Comprar" em vermelho para orientar o aluno.
+    final deveComprarObrigatoriamente =
+        !estado.fimDeJogo && !monteVazio && semJogada;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -553,7 +637,6 @@ class _TelaJogoState extends State<TelaJogo>
           children: [
             Row(
               children: [
-                // Indicador de turno com pulso real via AnimationController.
                 if (!estado.fimDeJogo)
                   AnimatedBuilder(
                     animation: _pulseAnim,
@@ -582,18 +665,44 @@ class _TelaJogoState extends State<TelaJogo>
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              _mensagemStatus,
-              style: GoogleFonts.nunito(
-                fontSize: 14,
-                color:
-                    _processandoJogada ? _vermelho : Colors.grey[700],
-                fontWeight: _processandoJogada
-                    ? FontWeight.w700
-                    : FontWeight.w500,
-                height: 1.4,
+            // [CORREÇÃO BUG 1] Exibe dica contextual quando o jogador não tem
+            // jogadas, orientando-o sobre o que fazer a seguir.
+            if (devePassar)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Sem jogadas e sem peças no monte. Use "Passar vez" para continuar.',
+                  style: GoogleFonts.nunito(
+                    fontSize: 13,
+                    color: _laranjaPassar,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              )
+            else if (deveComprarObrigatoriamente)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Sem encaixes disponíveis. Compre uma peça do monte!',
+                  style: GoogleFonts.nunito(
+                    fontSize: 13,
+                    color: _vermelho,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              )
+            else
+              Text(
+                _mensagemStatus,
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  color: _processandoJogada ? _vermelho : Colors.grey[700],
+                  fontWeight: _processandoJogada
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  height: 1.4,
+                ),
               ),
-            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -626,19 +735,25 @@ class _TelaJogoState extends State<TelaJogo>
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (!estado.fimDeJogo)
+                if (!estado.fimDeJogo) ...[
+                  // Botão Comprar — destacado em vermelho se o jogador não tem
+                  // jogadas e ainda há peças no monte (compra obrigatória).
                   ElevatedButton.icon(
-                    onPressed:
-                        (_processandoJogada || estado.quantidadeMonte == 0)
-                            ? null
-                            : _comprarPeca,
+                    onPressed: (_processandoJogada ||
+                            estado.quantidadeMonte == 0)
+                        ? null
+                        : _comprarPeca,
                     icon: const Icon(Icons.add_card, size: 16),
                     label: Text(
                       'Comprar (${estado.quantidadeMonte})',
                       style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _cinzaEscuro,
+                      // [CORREÇÃO BUG 1] Destaca o botão em vermelho quando a
+                      // compra é a única ação disponível ao jogador.
+                      backgroundColor: deveComprarObrigatoriamente
+                          ? _vermelho
+                          : _cinzaEscuro,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: Colors.grey[300],
                       padding: const EdgeInsets.symmetric(
@@ -648,6 +763,33 @@ class _TelaJogoState extends State<TelaJogo>
                       ),
                     ),
                   ),
+                  // [CORREÇÃO BUG 1] Botão "Passar vez" — exibido SOMENTE quando
+                  // o monte está vazio E o jogador não tem nenhum encaixe válido.
+                  // Garante que o jogo sempre tenha uma saída mesmo no pior cenário.
+                  if (devePassar) ...[
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed:
+                          _processandoJogada ? null : _passarVez,
+                      icon: const Icon(Icons.skip_next, size: 16),
+                      label: Text(
+                        'Passar vez',
+                        style:
+                            GoogleFonts.nunito(fontWeight: FontWeight.w700),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _laranjaPassar,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey[300],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ],
             ),
           ],
@@ -726,7 +868,9 @@ class _TelaJogoState extends State<TelaJogo>
                             else
                               const SizedBox(width: 20),
                             const SizedBox(width: 16),
-                            for (int i = 0; i < estado.mesa.length; i++) ...[
+                            for (int i = 0;
+                                i < estado.mesa.length;
+                                i++) ...[
                               _buildPecaEstilizada(estado.mesa[i],
                                   emMesa: true),
                               if (i != estado.mesa.length - 1)
@@ -825,7 +969,8 @@ class _TelaJogoState extends State<TelaJogo>
           Row(
             children: [
               Expanded(
-                child: _buildLadoPeca(peca.visivelEsquerdo, emMesa: emMesa),
+                child:
+                    _buildLadoPeca(peca.visivelEsquerdo, emMesa: emMesa),
               ),
               Container(
                 width: 2,
@@ -834,7 +979,8 @@ class _TelaJogoState extends State<TelaJogo>
                 color: Colors.black26,
               ),
               Expanded(
-                child: _buildLadoPeca(peca.visivelDireito, emMesa: emMesa),
+                child:
+                    _buildLadoPeca(peca.visivelDireito, emMesa: emMesa),
               ),
             ],
           ),
@@ -891,14 +1037,14 @@ class _TelaJogoState extends State<TelaJogo>
         children: [
           Text(
             'Sua mão',
-            style: GoogleFonts.nunito(
-                fontSize: 20, fontWeight: FontWeight.w900),
+            style:
+                GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
           Text(
             'Arraste a peça até uma das setas no tabuleiro',
-            style:
-                GoogleFonts.nunito(fontSize: 13, color: Colors.grey[600]),
+            style: GoogleFonts.nunito(
+                fontSize: 13, color: Colors.grey[600]),
           ),
           const SizedBox(height: 20),
           if (estado.maoJogador.isEmpty)
@@ -920,7 +1066,8 @@ class _TelaJogoState extends State<TelaJogo>
                       color: Colors.transparent,
                       child: Opacity(
                         opacity: 0.85,
-                        child: _buildPecaEstilizada(peca, emMesa: false),
+                        child:
+                            _buildPecaEstilizada(peca, emMesa: false),
                       ),
                     ),
                     childWhenDragging: Opacity(

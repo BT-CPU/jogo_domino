@@ -1,6 +1,5 @@
 // domino_service.dart
 // Service único consolidado para o Dominó Químico.
-// Substitui: jogo_service.dart e partida_service.dart
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -9,13 +8,11 @@ import 'domino_models.dart';
 
 // ---------------------------------------------------------------------------
 // Configuração de URL
-// Troque a constante abaixo se o endpoint mudar (ex.: ambiente de dev).
 // ---------------------------------------------------------------------------
 const _kBaseUrl = 'https://jogodomino-production.up.railway.app';
 
 // ---------------------------------------------------------------------------
 // DominoService
-// Todas as chamadas HTTP relacionadas ao jogo em um único lugar.
 // ---------------------------------------------------------------------------
 class DominoService {
   DominoService({http.Client? client}) : _client = client ?? http.Client();
@@ -24,7 +21,7 @@ class DominoService {
 
   // ─── Partida ──────────────────────────────────────────────────────────────
 
-  /// Cria uma nova partida e retorna o estado inicial (mão do jogador + mesa).
+  /// Cria uma nova partida e retorna o estado inicial.
   Future<EstadoPartida> criarPartida({
     required DificuldadeJogo dificuldade,
     required int idUsuario,
@@ -38,7 +35,6 @@ class DominoService {
       }),
     );
 
-    // O backend retorna 201 Created na criação.
     if (response.statusCode == 200 || response.statusCode == 201) {
       return EstadoPartida.fromJson(
         jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
@@ -48,14 +44,9 @@ class DominoService {
     throw _erroHttp('criar partida', response);
   }
 
-  /// Envia a jogada do jogador. O backend processa o turno do bot
-  /// na mesma chamada e devolve o estado atualizado.
+  /// Envia a jogada do jogador.
   ///
-  /// [ponta] deve ser `"esquerda"` ou `"direita"`.
-  ///
-  /// Lança [JogadaInvalidaException] quando o backend retorna 422
-  /// (combinação química incorreta) para que a UI possa tratar
-  /// separadamente dos demais erros de rede/servidor.
+  /// Lança [JogadaInvalidaException] quando o backend retorna 422.
   Future<EstadoPartida> jogarPeca({
     required String idPartida,
     required int idPeca,
@@ -84,10 +75,9 @@ class DominoService {
     throw _erroHttp('jogar peça', response);
   }
 
-  /// Compra uma peça do monte e retorna o estado atualizado.
-  /// Lança [MonteVazioException] quando o backend retorna 422
-  /// (monte esgotado) — a UI pode checar [EstadoPartida.quantidadeMonte]
-  /// antes de chamar para evitar a requisição desnecessária.
+  /// Compra uma peça do monte.
+  ///
+  /// Lança [MonteVazioException] quando o backend retorna 422.
   Future<EstadoPartida> comprarPeca({required String idPartida}) async {
     final response = await _client.post(
       Uri.parse('$_kBaseUrl/partidas/comprar'),
@@ -108,9 +98,39 @@ class DominoService {
     throw _erroHttp('comprar peça', response);
   }
 
+  // [CORREÇÃO BUG 1] Passa a vez do jogador quando ele não tem jogadas válidas
+  // e o monte está vazio. Sem este método, o jogador ficava preso em loop
+  // infinito de erros 422 ao tentar jogar peças que não encaixam.
+  //
+  // O backend valida que o jogador realmente não pode jogar antes de aceitar
+  // a passagem de vez — então não é possível usar isso como atalho.
+  //
+  // Lança [PassarVezInvalidaException] quando o backend retorna 400
+  // (jogador ainda tem jogadas ou monte não está vazio).
+  Future<EstadoPartida> passarVez({required String idPartida}) async {
+    final response = await _client.post(
+      Uri.parse('$_kBaseUrl/partidas/passar'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id_partida': idPartida}),
+    );
+
+    if (response.statusCode == 200) {
+      return EstadoPartida.fromJson(
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
+      );
+    }
+
+    if (response.statusCode == 400) {
+      final body = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+      throw PassarVezInvalidaException(
+        body['detail'] as String? ?? 'Não é possível passar a vez agora.',
+      );
+    }
+
+    throw _erroHttp('passar vez', response);
+  }
+
   /// Persiste o resultado da partida no banco de dados.
-  /// Falha silenciosa é aceitável (não bloqueia o fluxo de fim de jogo),
-  /// mas a exceção é propagada para que a UI decida como lidar.
   Future<void> finalizarPartida({
     required int idUsuario,
     required DificuldadeJogo dificuldade,
@@ -146,7 +166,6 @@ class DominoService {
 
 // ---------------------------------------------------------------------------
 // Exceções tipadas
-// Permitem que a UI distinga erros de domínio de erros de rede.
 // ---------------------------------------------------------------------------
 
 /// Lançada quando o backend rejeita a jogada por combinação química incorreta.
@@ -163,4 +182,15 @@ class MonteVazioException implements Exception {
 
   @override
   String toString() => 'O monte está vazio!';
+}
+
+// [CORREÇÃO BUG 1] Lançada quando o backend rejeita a passagem de vez
+// (jogador ainda tem jogadas disponíveis ou monte não está vazio).
+class PassarVezInvalidaException implements Exception {
+  const PassarVezInvalidaException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
