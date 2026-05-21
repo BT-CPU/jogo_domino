@@ -856,6 +856,33 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     final senha = _senhaCtrl.text;
     final confirma = _confirmaSenhaCtrl.text;
 
+    final emailLower = email.toLowerCase();
+
+// Validação de email para aluno
+if (_perfilSelecionado == 'aluno') {
+  if (!emailLower.endsWith('@aluno.cps.sp.gov.br')) {
+    _mostrarSnack(
+      'Alunos devem usar um e-mail @aluno.cps.sp.gov.br',
+      isErro: true,
+    );
+    return;
+  }
+}
+
+
+if (_perfilSelecionado == 'professor') {
+  if (
+      !emailLower.endsWith('@cps.sp.gov.br') ||
+      emailLower.endsWith('@aluno.cps.sp.gov.br')
+  ) {
+    _mostrarSnack(
+      'Professores devem usar um e-mail @cps.sp.gov.br',
+      isErro: true,
+    );
+    return;
+  }
+}
+
     if (nome.isEmpty || email.isEmpty || senha.isEmpty || confirma.isEmpty) {
       _mostrarSnack('Preencha todos os campos.', isErro: true);
       return;
