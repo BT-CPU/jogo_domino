@@ -190,7 +190,7 @@ class TelaInicialProfessor extends StatelessWidget {
                           _buildMenuCard(
                             context: context,
                             title: 'Relatorios',
-                            subtitle: 'Acompanhar desempenho',
+                            subtitle: 'Acompanhar desempenho dos alunos',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {
                               Navigator.push(
