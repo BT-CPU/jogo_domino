@@ -358,6 +358,14 @@ def _gerar_corrente_domino(nivel: int) -> list:
     Agora: todos os 16 pares possíveis (4 classes × 4 classes) aparecem
     exatamente 2 vezes nas 32 primeiras peças, mais 8 aleatórias para
     completar as 40 peças, garantindo variedade e equilíbrio.
+
+    Nível 2 — correspondência exata fórmula ↔ nome:
+    Para garantir fluidez com a nova regra de conexão exata (id_composto),
+    a partida usa apenas 2 compostos por classe (8 no total). Isso mantém
+    a mesma alta probabilidade de encaixe que existia com as 4 classes no
+    modo antigo, pois o número de valores de validador distintos circulando
+    é equivalente (8 ids vs 4 classes). A lógica de pares de classes permanece
+    idêntica; apenas o validador muda de id_classificacao para id_composto.
     """
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -382,6 +390,48 @@ def _gerar_corrente_domino(nivel: int) -> list:
 
     classes = [1, 2, 3, 4]
 
+    # ── Nível 2: correspondência exata fórmula ↔ nome do mesmo composto ─────
+    # Seleciona 2 compostos por classe para a partida inteira. Com 8 ids
+    # distintos circulando (2 por classe × 4 classes), a densidade de conexões
+    # é equivalente à situação com 4 classes do modo antigo.
+    if nivel == 2:
+        compostos_ativos_por_classe: dict[int, list] = {}
+        for cl in classes:
+            disponiveis = compostos_por_classe[cl]
+            k = min(2, len(disponiveis))
+            compostos_ativos_por_classe[cl] = random.sample(disponiveis, k)
+
+        # Gera todos os 16 pares possíveis (4×4), repete 2× = 32 peças balanceadas
+        pares_base = [(cl_esq, cl_dir) for cl_esq in classes for cl_dir in classes]
+        pares: list[tuple[int, int]] = pares_base * 2
+
+        # Completa com 8 pares aleatórios para totalizar 40 peças
+        pares += [random.choice(pares_base) for _ in range(8)]
+
+        # Embaralha para que a distribuição não seja previsível
+        random.shuffle(pares)
+
+        pecas_geradas = []
+        for id_peca, (cl_esq, cl_dir) in enumerate(pares, start=1):
+            # Lado esquerdo: fórmula de um composto ativo da classe esquerda
+            comp_esq = random.choice(compostos_ativos_por_classe[cl_esq])
+            # Lado direito: nome do MESMO composto da classe direita
+            # (correspondência exata: validador = id_composto)
+            comp_dir = random.choice(compostos_ativos_por_classe[cl_dir])
+
+            pecas_geradas.append({
+                "id_peca": id_peca,
+                "visivel_esquerdo": comp_esq["formula"],
+                "visivel_direito": comp_dir["nome"],
+                # validador agora é id_composto — garante correspondência exata
+                "validador_esquerdo": comp_esq["id_composto"],
+                "validador_direito": comp_dir["id_composto"],
+            })
+
+        return pecas_geradas
+
+    # ── Níveis 1 e 3: lógica original inalterada ─────────────────────────────
+
     # Gera todos os 16 pares possíveis (4×4), repete 2× = 32 peças balanceadas
     pares_base = [(cl_esq, cl_dir) for cl_esq in classes for cl_dir in classes]
     pares: list[tuple[int, int]] = pares_base * 2
@@ -400,9 +450,6 @@ def _gerar_corrente_domino(nivel: int) -> list:
 
         if nivel == 1:
             conteudo_dir = classificacoes_nomes[cl_dir]
-        elif nivel == 2:
-            comp_dir = random.choice(compostos_por_classe[cl_dir])
-            conteudo_dir = comp_dir["nome"]
         else:
             conteudo_dir = random.choice(propriedades_por_classe[cl_dir])
 
