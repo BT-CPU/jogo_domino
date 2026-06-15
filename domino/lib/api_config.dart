@@ -1,7 +1,7 @@
 class ApiConfig {
   // A sua API real hospedada no Railway
   static const String _producao =
-      'https://jogodomino-production.up.railway.app';
+      'https://domino-api-production.up.railway.app';
 
   static String get authBaseUrl => _producao;
 
