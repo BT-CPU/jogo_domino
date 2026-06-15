@@ -1,8 +1,4 @@
-// domino_models.dart
 
-// ---------------------------------------------------------------------------
-// Enum de dificuldade
-// ---------------------------------------------------------------------------
 enum DificuldadeJogo {
   formulaClasse(1, 'Nível 1', 'Fórmula ↔ Classe'),
   formulaNome(2, 'Nível 2', 'Fórmula ↔ Nome'),
@@ -20,9 +16,6 @@ enum DificuldadeJogo {
       );
 }
 
-// ---------------------------------------------------------------------------
-// Peça do dominó
-// ---------------------------------------------------------------------------
 class PecaDomino {
   const PecaDomino({
     required this.idPeca,
@@ -55,9 +48,6 @@ class PecaDomino {
       };
 }
 
-// ---------------------------------------------------------------------------
-// Estado da partida
-// ---------------------------------------------------------------------------
 class EstadoPartida {
   const EstadoPartida({
     required this.idPartida,
@@ -66,40 +56,19 @@ class EstadoPartida {
     required this.status,
     required this.fimDeJogo,
     required this.quantidadeMonte,
-    // Bug C corrigido: acertos contados server-side.
     this.qtdAcertos = 0,
-    // Bug B corrigido: sinaliza se há jogadas válidas disponíveis.
     this.jogadorTemJogadas = true,
-    // Sinaliza se o jogador pode passar a vez agora.
     this.podePasar = false,
   });
 
   final String idPartida;
-
-  /// Peças na mesa, da esquerda para a direita.
   final List<PecaDomino> mesa;
-
-  /// Peças na mão do jogador.
   final List<PecaDomino> maoJogador;
-
-  /// Mensagem descritiva do último evento.
   final String status;
-
-  /// true quando a partida terminou.
   final bool fimDeJogo;
-
-  /// Quantidade de peças no monte de compras.
   final int quantidadeMonte;
-
-  /// Acertos contabilizados pelo servidor (imune a manipulação client-side).
   final int qtdAcertos;
-
-  /// Bug B/E: false quando o jogador não tem peças jogáveis.
-  /// A UI usa este campo para exibir o botão "Passar".
   final bool jogadorTemJogadas;
-
-  /// true quando o jogador pode passar a vez:
-  /// não tem jogadas E (já comprou neste turno OU monte vazio).
   final bool podePasar;
 
   factory EstadoPartida.fromJson(Map<String, dynamic> json) => EstadoPartida(

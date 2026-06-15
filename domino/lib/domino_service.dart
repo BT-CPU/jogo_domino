@@ -1,8 +1,6 @@
-// domino_service.dart
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 import 'domino_models.dart';
 
 const _kBaseUrl = 'https://jogodomino-production.up.railway.app';
@@ -12,9 +10,6 @@ class DominoService {
 
   final http.Client _client;
 
-  // ─── Partida ──────────────────────────────────────────────────────────────
-
-  /// Cria uma nova partida e retorna o estado inicial.
   Future<EstadoPartida> criarPartida({
     required DificuldadeJogo dificuldade,
     required int idUsuario,
@@ -37,9 +32,6 @@ class DominoService {
     throw _erroHttp('criar partida', response);
   }
 
-  /// Envia a jogada do jogador e retorna o estado atualizado.
-  ///
-  /// Lança [JogadaInvalidaException] quando a combinação química está errada.
   Future<EstadoPartida> jogarPeca({
     required String idPartida,
     required int idPeca,
@@ -68,9 +60,7 @@ class DominoService {
     throw _erroHttp('jogar peça', response);
   }
 
-  /// Compra uma peça do monte.
-  ///
-  /// Lança [MonteVazioException] se o monte estiver esgotado.
+
   Future<EstadoPartida> comprarPeca({required String idPartida}) async {
     final response = await _client.post(
       Uri.parse('$_kBaseUrl/partidas/comprar'),
@@ -91,11 +81,6 @@ class DominoService {
     throw _erroHttp('comprar peça', response);
   }
 
-  /// Bug B corrigido: passa a vez quando o jogador não tem jogadas válidas
-  /// e o monte está vazio. O backend executa o turno do bot em seguida.
-  ///
-  /// Lança [PassarVezBloqueadaException] se o servidor rejeitar a passagem
-  /// (ainda há jogadas ou peças no monte disponíveis).
   Future<EstadoPartida> passarVez({required String idPartida}) async {
     final response = await _client.post(
       Uri.parse('$_kBaseUrl/partidas/passar'),
@@ -119,8 +104,6 @@ class DominoService {
     throw _erroHttp('passar vez', response);
   }
 
-  /// Bug C corrigido: envia o [idPartida] para que o backend use a contagem
-  /// de acertos registrada no servidor, evitando manipulação client-side.
   Future<void> finalizarPartida({
     required int idUsuario,
     required DificuldadeJogo dificuldade,
@@ -145,7 +128,6 @@ class DominoService {
     }
   }
 
-  // ─── Helper ───────────────────────────────────────────────────────────────
 
   Exception _erroHttp(String operacao, http.Response response) {
     return Exception(
@@ -154,11 +136,6 @@ class DominoService {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Exceções tipadas
-// ---------------------------------------------------------------------------
-
-/// Combinação química incorreta.
 class JogadaInvalidaException implements Exception {
   const JogadaInvalidaException();
 
@@ -167,7 +144,6 @@ class JogadaInvalidaException implements Exception {
       'Combinação química incorreta! Tente outra peça ou extremidade.';
 }
 
-/// Monte esgotado ao tentar comprar.
 class MonteVazioException implements Exception {
   const MonteVazioException();
 
@@ -175,8 +151,6 @@ class MonteVazioException implements Exception {
   String toString() => 'O monte está vazio!';
 }
 
-/// Bug B corrigido: servidor bloqueou a passagem de vez.
-/// Mensagem explica o motivo (ainda há jogadas ou peças no monte).
 class PassarVezBloqueadaException implements Exception {
   const PassarVezBloqueadaException(this.motivo);
 

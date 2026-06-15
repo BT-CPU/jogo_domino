@@ -1,15 +1,12 @@
 // tela_dificuldade.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'domino_models.dart'; // ← era jogo_models.dart
 import 'telaJogo.dart';
 
 class TelaDificuldade extends StatefulWidget {
   const TelaDificuldade({super.key, this.idUsuario});
-
   final int? idUsuario;
-
   @override
   State<TelaDificuldade> createState() => _TelaDificuldadeState();
 }
@@ -97,7 +94,6 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                         children: [
                           _DifficultyCard(
                             titulo: 'Dificuldade 1',
-                            // Label alinhado com DificuldadeJogo.formulaClasse
                             subtitulo: 'Fórmula ↔ Classe',
                             descricao:
                                 'Relacione a fórmula química com a classe funcional inorgânica correspondente (Ácido, Base, Sal ou Óxido).',
@@ -108,7 +104,6 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                           ),
                           _DifficultyCard(
                             titulo: 'Dificuldade 2',
-                            // Label alinhado com DificuldadeJogo.formulaNome
                             subtitulo: 'Fórmula ↔ Nome',
                             descricao:
                                 'Associe a fórmula química ao nome do composto inorgânico correto.',
@@ -119,7 +114,6 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                           ),
                           _DifficultyCard(
                             titulo: 'Dificuldade 3',
-                            // Label alinhado com DificuldadeJogo.formulaPropriedade
                             subtitulo: 'Fórmula ↔ Propriedade',
                             descricao:
                                 'Relacione a fórmula química a uma propriedade da sua função inorgânica.',

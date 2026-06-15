@@ -51,7 +51,6 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // ─── BARRA VERMELHA SUPERIOR ─────────────────────────
           Container(
             width: double.infinity,
             color: const Color(0xFFFF7E70),
@@ -76,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
-          // ─── CONTEÚDO ────────────────────────────────────────
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -148,7 +146,6 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: const BoxDecoration(color: Colors.transparent),
       child: Stack(
         children: [
-          // Moléculas decorativas de fundo (apenas em telas maiores)
           if (!isMobile) ...[
             Positioned(
               top: 20,
@@ -171,7 +168,6 @@ class _LoginScreenState extends State<LoginScreen> {
               child: _buildMolecule('Ca(OH)₂', 0.55, isMobile),
             ),
           ],
-          // Conteúdo principal
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -279,8 +275,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           SizedBox(height: isMobile ? 20 : 24),
-
-          // Toggle Aluno/Professor
           Row(
             children: [
               Expanded(
@@ -303,7 +297,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           SizedBox(height: isMobile ? 16 : 20),
 
-          // Campo de usuário/email
           _buildCampo(
             controller: _emailController,
             hint: isStudent
@@ -315,7 +308,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Campo de senha
           _buildCampo(
             controller: _passwordController,
             hint: 'Senha',

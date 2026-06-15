@@ -15,7 +15,6 @@ class HowToPlayScreen extends StatelessWidget {
       backgroundColor: _cinzaFundo,
       body: Column(
         children: [
-          // ─── SETA NO CANTO SUPERIOR ESQUERDO ────────────────
           Padding(
             padding: const EdgeInsets.only(left: 8, top: 24),
             child: Align(
@@ -25,13 +24,12 @@ class HowToPlayScreen extends StatelessWidget {
                   Icons.arrow_back,
                   color: _vermelho,
                   size: 36,
-                ), // Seta colorida
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
           ),
 
-          // ─── CONTEÚDO ────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
@@ -46,7 +44,6 @@ class HowToPlayScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Título Colorido
                       Text(
                         'Como Jogar',
                         textAlign: TextAlign.center,
@@ -67,7 +64,6 @@ class HowToPlayScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 32),
 
-                      // ─── LAYOUT ESQUERDA / DIREITA ───────────
                       isWide
                           ? IntrinsicHeight(
                               child: Row(
@@ -89,7 +85,6 @@ class HowToPlayScreen extends StatelessWidget {
 
                       const SizedBox(height: 48),
 
-                      // ─── BOTÃO ENTENDI ───────────────────────
                       Center(
                         child: SizedBox(
                           width: isWide ? 360 : double.infinity,
@@ -125,7 +120,6 @@ class HowToPlayScreen extends StatelessWidget {
     );
   }
 
-  // ─── LADO ESQUERDO (Exemplo do Dominó Colorido) ───────────────────
   Widget _buildEsquerda() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -138,7 +132,7 @@ class HowToPlayScreen extends StatelessWidget {
         ), // Borda com cor
         boxShadow: [
           BoxShadow(
-            color: _vermelho.withValues(alpha: 0.1), // Sombra colorida
+            color: _vermelho.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -186,7 +180,7 @@ class HowToPlayScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: _vermelho.withValues(
                 alpha: 0.1,
-              ), // Fundo suave para o texto
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -244,7 +238,6 @@ class HowToPlayScreen extends StatelessWidget {
     );
   }
 
-  // ─── LADO DIREITO (Regras com Ícones Coloridos) ───────────────────
   Widget _buildDireita() {
     final itens = [
       _RegraItem(
@@ -288,7 +281,6 @@ class HowToPlayScreen extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Círculo colorido atrás do ícone
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(

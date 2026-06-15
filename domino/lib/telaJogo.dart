@@ -24,39 +24,27 @@ class TelaJogo extends StatefulWidget {
 
 class _TelaJogoState extends State<TelaJogo>
     with SingleTickerProviderStateMixin {
-  // ─── Constantes visuais ───────────────────────────────────────────────────
   static const _vermelho = Color(0xFFC0392B);
   static const _cinzaEscuro = Color(0xFF333333);
   static const _cinzaFundo = Color(0xFFF7F7F7);
   static const _corPecaDomino = Color(0xFFFFFDF9);
   static const _bordaPecaDomino = Color(0xFFE6DCC8);
   static const _verdeAcerto = Color(0xFF27AE60);
-
-  // ─── Dependências ─────────────────────────────────────────────────────────
   final DominoService _service = DominoService();
   final ScrollController _tabuleiroScrollController = ScrollController();
-
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnim;
 
-  // ─── Estado da partida ────────────────────────────────────────────────────
   EstadoPartida? _estado;
   Timer? _timer;
 
   int _tempoSegundos = 0;
-
-  // Bug C corrigido: _qtdAcertos foi REMOVIDO — agora vem do servidor via
-  // _estado.qtdAcertos. Mantemos apenas _qtdErros client-side (menos crítico
-  // para relatórios pedagógicos e não retornado pelo servidor).
   int _qtdErros = 0;
-
   bool _carregando = true;
   bool _processandoJogada = false;
   bool _partidaPersistida = false;
   String? _erro;
   String _mensagemStatus = 'Preparando partida...';
-
-  // ─── Ciclo de vida ────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -81,8 +69,6 @@ class _TelaJogoState extends State<TelaJogo>
     _tabuleiroScrollController.dispose();
     super.dispose();
   }
-
-  // ─── Lógica de jogo ───────────────────────────────────────────────────────
 
   Future<void> _iniciarPartida() async {
     setState(() {
@@ -149,8 +135,6 @@ class _TelaJogoState extends State<TelaJogo>
       setState(() {
         _estado = resultado;
         _mensagemStatus = resultado.status;
-        // Bug C corrigido: NÃO incrementamos acertos aqui — o valor já vem
-        // atualizado em resultado.qtdAcertos diretamente do servidor.
         _processandoJogada = false;
       });
 
@@ -162,7 +146,7 @@ class _TelaJogoState extends State<TelaJogo>
       setState(() {
         _processandoJogada = false;
         _mensagemStatus = 'Combinação incorreta.';
-        _qtdErros++; // erros continuam client-side
+        _qtdErros++;
       });
       _mostrarSnack(e.toString(), isErro: true);
     } catch (e) {
@@ -213,8 +197,6 @@ class _TelaJogoState extends State<TelaJogo>
     }
   }
 
-  /// Bug B corrigido: passa a vez quando não há jogadas válidas e o monte
-  /// está vazio. O botão "Passar" aparece automaticamente via [jogadorTemJogadas].
   Future<void> _passarVez() async {
     final estado = _estado;
     if (estado == null || _processandoJogada || estado.fimDeJogo) return;
@@ -237,7 +219,6 @@ class _TelaJogoState extends State<TelaJogo>
 
       if (resultado.fimDeJogo) await _encerrarPartida();
     } on PassarVezBloqueadaException catch (e) {
-      // Servidor rejeitou — ainda há jogadas ou peças no monte
       if (!mounted) return;
       setState(() => _processandoJogada = false);
       _mostrarSnack(e.toString(), isErro: true);
@@ -258,7 +239,6 @@ class _TelaJogoState extends State<TelaJogo>
     _timer?.cancel();
     _partidaPersistida = true;
 
-    // Bug C corrigido: acertos vêm do servidor; erros ainda do cliente.
     try {
       await _service.finalizarPartida(
         idUsuario: widget.idUsuario ?? 1,
@@ -293,7 +273,6 @@ class _TelaJogoState extends State<TelaJogo>
               ),
             ),
             const SizedBox(height: 12),
-            // Bug C corrigido: exibe o valor do servidor
             Text(
               'Acertos: ${_estado?.qtdAcertos ?? 0}',
               style: GoogleFonts.nunito(fontSize: 14),
@@ -337,8 +316,6 @@ class _TelaJogoState extends State<TelaJogo>
     );
   }
 
-  // ─── Build principal ──────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -352,8 +329,6 @@ class _TelaJogoState extends State<TelaJogo>
       ),
     );
   }
-
-  // ─── Estados de tela ──────────────────────────────────────────────────────
 
   Widget _buildCarregando() {
     return Center(
@@ -437,8 +412,6 @@ class _TelaJogoState extends State<TelaJogo>
     );
   }
 
-  // ─── Header ───────────────────────────────────────────────────────────────
-
   Widget _buildHeader(EstadoPartida estado) {
     return Container(
       color: _cinzaEscuro,
@@ -487,7 +460,6 @@ class _TelaJogoState extends State<TelaJogo>
                 _buildHeaderItem(
                   icon: Icons.check_circle_outline,
                   label: 'Acertos',
-                  // Bug C corrigido: usa valor do servidor
                   value: '${estado.qtdAcertos}',
                   iconColor: Colors.greenAccent,
                 ),
@@ -559,19 +531,13 @@ class _TelaJogoState extends State<TelaJogo>
     );
   }
 
-  // ─── Painel de status ─────────────────────────────────────────────────────
-
   Widget _buildStatus(EstadoPartida estado) {
     final turno = estado.fimDeJogo ? 'Fim de Jogo' : 'Sua vez';
     final pontas = estado.mesa.isEmpty
         ? 'Mesa vazia'
         : 'Esq: ${estado.mesa.first.visivelEsquerdo} | Dir: ${estado.mesa.last.visivelDireito}';
-
-    // O jogador está bloqueado quando não tem jogadas possíveis.
     final jogadorBloqueado =
         !estado.fimDeJogo && !estado.jogadorTemJogadas;
-
-    // podePasar vem do servidor: sem jogadas E (já comprou neste turno OU monte vazio).
     final podePasar = !estado.fimDeJogo && estado.podePasar;
 
     return Container(
@@ -616,8 +582,6 @@ class _TelaJogoState extends State<TelaJogo>
                         height: 10,
                         margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
-                          // Bug E corrigido: indicador muda de cor quando
-                          // o jogador está bloqueado (sem jogadas)
                           color: jogadorBloqueado
                               ? Colors.orange
                               : Colors.green,
@@ -637,7 +601,6 @@ class _TelaJogoState extends State<TelaJogo>
               ],
             ),
 
-            // Aviso visual quando o jogador está bloqueado (sem jogadas)
             if (jogadorBloqueado) ...[
               const SizedBox(height: 6),
               Container(
@@ -725,7 +688,6 @@ class _TelaJogoState extends State<TelaJogo>
                 ),
                 const SizedBox(width: 12),
                 if (!estado.fimDeJogo) ...[
-                  // Botão Comprar — desabilitado quando monte está vazio
                   ElevatedButton.icon(
                     onPressed:
                         (_processandoJogada || estado.quantidadeMonte == 0)
@@ -750,8 +712,6 @@ class _TelaJogoState extends State<TelaJogo>
                     ),
                   ),
 
-                  // Botão "Passar" — aparece após a primeira compra do turno
-                  // (ou quando o monte está vazio), com ou sem jogadas disponíveis.
                   if (podePasar) ...[
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
@@ -783,8 +743,6 @@ class _TelaJogoState extends State<TelaJogo>
       ),
     );
   }
-
-  // ─── Tabuleiro ────────────────────────────────────────────────────────────
 
   Widget _buildTabuleiro(EstadoPartida estado) {
     return Container(
@@ -885,7 +843,6 @@ class _TelaJogoState extends State<TelaJogo>
 
   Widget _buildZonaSoltura({required String ponta}) {
     return DragTarget<PecaDomino>(
-      // ignore: unnecessary_type_check
       onWillAcceptWithDetails: (details) => details.data is PecaDomino,
       onAcceptWithDetails: (details) {
         if (!_processandoJogada) _confirmarJogada(details.data, ponta);
@@ -931,12 +888,9 @@ class _TelaJogoState extends State<TelaJogo>
     );
   }
 
-  // ─── Peças ────────────────────────────────────────────────────────────────
 
   Widget _buildPecaEstilizada(PecaDomino peca, {required bool emMesa}) {
     return GestureDetector(
-      // Translucent permite que cliques rápidos (taps) passem direto para widgets pais,
-      // garantindo que não quebremos a sua mecânica de jogar a peça!
       behavior: HitTestBehavior.translucent, 
       onLongPress: () => _mostrarZoomPeca(peca),
       child: Container(
@@ -1004,7 +958,6 @@ class _TelaJogoState extends State<TelaJogo>
           maxLines: isZoom ? 10 : 5, 
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.nunito(
-            // Tamanho 18 no zoom garante leitura sem quebrar a altura do container
             fontSize: isZoom ? 18 : (emMesa ? 11 : 12),
             fontWeight: FontWeight.w900,
             height: 1.1, 
@@ -1014,8 +967,6 @@ class _TelaJogoState extends State<TelaJogo>
       ),
     );
   }
-
-  // ─── Método para o Pop-up de Zoom ─────────────────────────────────────────
 
   void _mostrarZoomPeca(PecaDomino peca) {
     showDialog(
@@ -1028,7 +979,7 @@ class _TelaJogoState extends State<TelaJogo>
             onTap: () => Navigator.of(context).pop(), 
             child: Container(
               width: 320, 
-              height: 200, // Altura aumentada para suportar até 10 linhas de texto com segurança
+              height: 200,
               decoration: BoxDecoration(
                 color: _corPecaDomino,
                 borderRadius: BorderRadius.circular(16),
@@ -1083,8 +1034,6 @@ class _TelaJogoState extends State<TelaJogo>
       },
     );
   }
-
-  // ─── Mão do jogador ───────────────────────────────────────────────────────
 
   Widget _buildMaoJogador(EstadoPartida estado) {
     return Container(
@@ -1146,8 +1095,6 @@ class _TelaJogoState extends State<TelaJogo>
       ),
     );
   }
-
-  // ─── Utilitários visuais ──────────────────────────────────────────────────
 
   Widget _buildSeta() {
     return const Padding(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'relatorio_models.dart';
 import 'relatorio_service.dart';
 
@@ -21,9 +20,7 @@ class TelaDesempenho extends StatefulWidget {
 class _TelaDesempenhoState extends State<TelaDesempenho> {
   static const _vermelho = Color(0xFFC0392B);
   static const _cinzaFundo = Color(0xFFF9F9F9);
-
   final RelatorioService _service = const RelatorioService();
-
   RelatorioAluno? _relatorio;
   bool _carregando = true;
   String? _erro;

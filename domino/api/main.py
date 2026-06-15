@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import os
-
 import mysql.connector
 from mysql.connector import pooling
 from fastapi import FastAPI, HTTPException
@@ -9,12 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import random
 
-# ---------------------------------------------------------------------------
-# Estado em memória das partidas ativas
-# ---------------------------------------------------------------------------
 PARTIDAS_ATIVAS: dict = {}
-
-# Limite para evitar vazamento de memória (Bug F corrigido)
 _MAX_PARTIDAS_ATIVAS = 500
 _EXPIRACAO_HORAS = 2
 
@@ -29,8 +23,6 @@ def _limpar_partidas_expiradas() -> None:
     ]
     for pid in expiradas:
         del PARTIDAS_ATIVAS[pid]
-
-
 try:
     import bcrypt
 except ImportError:
@@ -45,15 +37,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
-# Bug E (segurança) corrigido: credenciais via variáveis de ambiente.
-# Configure no Railway: DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME.
-# ---------------------------------------------------------------------------
 DB_CONFIG = {
     "host":     os.getenv("DB_HOST", "mysql-17b3ac90-guitursi-f0c2.j.aivencloud.com"),
     "port":     int(os.getenv("DB_PORT", "20062")),
     "user":     os.getenv("DB_USER", "avnadmin"),
-    "password": os.getenv("DB_PASSWORD", ""),   # NUNCA deixe a senha aqui em produção
+    "password": os.getenv("DB_PASSWORD", ""),
     "database": os.getenv("DB_NAME", "defaultdb"),
     "ssl_disabled": False,
 }
@@ -65,14 +53,8 @@ DB_POOL = pooling.MySQLConnectionPool(
     **DB_CONFIG,
 )
 
-
 def get_connection():
     return DB_POOL.get_connection()
-
-
-# ---------------------------------------------------------------------------
-# Modelos Pydantic
-# ---------------------------------------------------------------------------
 
 class CadastroUsuario(BaseModel):
     nome: str
@@ -80,41 +62,26 @@ class CadastroUsuario(BaseModel):
     senha: str
     aceite_lgpd: bool
     perfil: str = "aluno"
-
-
 class LoginUsuario(BaseModel):
     email: EmailStr
     senha: str
-
-
 class PartidaFinalizadaPayload(BaseModel):
     id_usuario: int
     nivel_dificuldade: int
     tempo_segundos: int = 0
-    # Bug C corrigido: qtd_acertos agora vem do servidor via id_partida;
-    # estes campos são usados apenas como fallback se a partida não estiver mais
-    # em memória (ex.: reinício do servidor).
     qtd_acertos: int = 0
     qtd_erros: int = 0
     id_partida: Optional[str] = None
-
-
 class CriarPartidaPayload(BaseModel):
     id_usuario: int
     nivel_dificuldade: int
-
-
 class JogarPecaPayload(BaseModel):
     id_partida: str
     id_peca: int
-    ponta: str   # "esquerda" | "direita"
-
-
+    ponta: str
 class ComprarPecaPayload(BaseModel):
     id_partida: str
 
-
-# Reutilizado para /partidas/passar — mesma estrutura
 PassarVezPayload = ComprarPecaPayload
 
 
@@ -124,8 +91,6 @@ class PecaDomino(BaseModel):
     visivel_direito: str
     validador_esquerdo: int
     validador_direito: int
-
-
 class StatusPartidaResponse(BaseModel):
     id_partida: str
     mesa: list[PecaDomino]
@@ -133,18 +98,10 @@ class StatusPartidaResponse(BaseModel):
     status: str
     fim_de_jogo: bool
     quantidade_monte: int = 0
-    # Bug C corrigido: acertos contados server-side
     qtd_acertos: int = 0
-    # Bug B corrigido: sinaliza ao Flutter se o jogador tem jogadas válidas
     jogador_tem_jogadas: bool = True
-    # Sinaliza se o jogador pode passar a vez agora:
-    # true quando sem jogadas E (já comprou neste turno OU monte vazio)
     pode_passar: bool = False
 
-
-# ---------------------------------------------------------------------------
-# Funções auxiliares — banco de dados
-# ---------------------------------------------------------------------------
 
 def _iso_datetime(value):
     if value is None:
@@ -153,12 +110,10 @@ def _iso_datetime(value):
         return value
     return value.isoformat()
 
-
 def _formatar_data_cadastro(value):
     if value is None:
         return None
     return value.strftime("%d/%m/%Y %H:%M")
-
 
 def _buscar_usuario(cursor, id_usuario):
     cursor.execute(
@@ -170,7 +125,6 @@ def _buscar_usuario(cursor, id_usuario):
         (id_usuario,),
     )
     return cursor.fetchone()
-
 
 def _buscar_turma_aluno(cursor, id_usuario):
     cursor.execute(
@@ -193,7 +147,6 @@ def _taxa_acerto(soma_acertos, soma_erros):
         if total_acoes > 0
         else 0.0
     )
-
 
 def _buscar_resumo_aluno(cursor, id_usuario):
     cursor.execute(
@@ -345,11 +298,6 @@ def _listar_resumos_alunos_professor(cursor, id_professor):
 
     return cursor.fetchall()
 
-
-# ---------------------------------------------------------------------------
-# Lógica do dominó — geração e validação
-# ---------------------------------------------------------------------------
-
 def _gerar_corrente_domino(nivel: int) -> list:
     """
     Bug A corrigido: geração balanceada de pares de classes.
@@ -393,56 +341,34 @@ def _gerar_corrente_domino(nivel: int) -> list:
 
     classes = [1, 2, 3, 4]
 
-    # ── Nível 2: correspondência exata fórmula ↔ nome do mesmo composto ─────
-    # Seleciona 2 compostos por classe para a partida inteira. Com 8 ids
-    # distintos circulando (2 por classe × 4 classes), a densidade de conexões
-    # é equivalente à situação com 4 classes do modo antigo.
     if nivel == 2:
         compostos_ativos_por_classe: dict[int, list] = {}
         for cl in classes:
             disponiveis = compostos_por_classe[cl]
             k = min(2, len(disponiveis))
             compostos_ativos_por_classe[cl] = random.sample(disponiveis, k)
-
-        # Gera todos os 16 pares possíveis (4×4), repete 2× = 32 peças balanceadas
         pares_base = [(cl_esq, cl_dir) for cl_esq in classes for cl_dir in classes]
         pares: list[tuple[int, int]] = pares_base * 2
-
-        # Completa com 8 pares aleatórios para totalizar 40 peças
         pares += [random.choice(pares_base) for _ in range(8)]
-
-        # Embaralha para que a distribuição não seja previsível
         random.shuffle(pares)
 
         pecas_geradas = []
         for id_peca, (cl_esq, cl_dir) in enumerate(pares, start=1):
-            # Lado esquerdo: fórmula de um composto ativo da classe esquerda
             comp_esq = random.choice(compostos_ativos_por_classe[cl_esq])
-            # Lado direito: nome do MESMO composto da classe direita
-            # (correspondência exata: validador = id_composto)
             comp_dir = random.choice(compostos_ativos_por_classe[cl_dir])
-
             pecas_geradas.append({
                 "id_peca": id_peca,
                 "visivel_esquerdo": comp_esq["formula"],
                 "visivel_direito": comp_dir["nome"],
-                # validador agora é id_composto — garante correspondência exata
                 "validador_esquerdo": comp_esq["id_composto"],
                 "validador_direito": comp_dir["id_composto"],
             })
 
         return pecas_geradas
 
-    # ── Níveis 1 e 3: lógica original inalterada ─────────────────────────────
-
-    # Gera todos os 16 pares possíveis (4×4), repete 2× = 32 peças balanceadas
     pares_base = [(cl_esq, cl_dir) for cl_esq in classes for cl_dir in classes]
     pares: list[tuple[int, int]] = pares_base * 2
-
-    # Completa com 8 pares aleatórios para totalizar 40 peças
     pares += [random.choice(pares_base) for _ in range(8)]
-
-    # Embaralha para que a distribuição não seja previsível
     random.shuffle(pares)
 
     pecas_geradas = []
@@ -508,7 +434,6 @@ def _executar_turno_bot(partida: dict) -> str:
     peca_bot, ponta_bot = _obter_peca_jogavel_bot(partida["mao_bot"], mesa)
     comprou = False
 
-    # Compra no máximo 1 peça por turno antes de tentar jogar
     if not peca_bot and len(partida["monte_compras"]) > 0:
         carta = partida["monte_compras"].pop(0)
         partida["mao_bot"].append(carta)
@@ -572,8 +497,7 @@ def _build_response(
         if fim_de_jogo
         else _verificar_jogadas_possiveis(partida["mao_jogador"], partida["mesa"])
     )
-    # Pode passar sempre que já comprou neste turno OU monte está vazio,
-    # independente de ter ou não jogadas disponíveis.
+
     pode_passar = (
         False
         if fim_de_jogo
@@ -593,11 +517,6 @@ def _build_response(
         "jogador_tem_jogadas": jogador_tem_jogadas,
         "pode_passar": pode_passar,
     }
-
-
-# ---------------------------------------------------------------------------
-# Rotas — usuários
-# ---------------------------------------------------------------------------
 
 @app.get("/")
 def root():
@@ -718,11 +637,6 @@ def login(dados: LoginUsuario):
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
-
-
-# ---------------------------------------------------------------------------
-# Rotas — relatórios
-# ---------------------------------------------------------------------------
 
 @app.post("/partidas/finalizar", status_code=201)
 def finalizar_partida(dados: PartidaFinalizadaPayload):
@@ -846,18 +760,10 @@ def relatorio_professor(id_professor: int):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-
-# ---------------------------------------------------------------------------
-# Rotas — partidas (lógica do jogo)
-# ---------------------------------------------------------------------------
-
 @app.post("/partidas/criar", status_code=201, response_model=StatusPartidaResponse)
 def criar_partida(payload: CriarPartidaPayload):
     if payload.nivel_dificuldade not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Nível de dificuldade inválido.")
-
-    # Bug F corrigido: limpa partidas expiradas antes de criar uma nova,
-    # evitando crescimento ilimitado do dicionário em memória.
     _limpar_partidas_expiradas()
     if len(PARTIDAS_ATIVAS) >= _MAX_PARTIDAS_ATIVAS:
         raise HTTPException(
@@ -884,9 +790,9 @@ def criar_partida(payload: CriarPartidaPayload):
         "monte_compras":     monte_compras,
         "fim_de_jogo":       False,
         "resultado":         None,
-        "qtd_acertos":       0,          # Bug C: contador server-side
-        "comprou_no_turno":  False,      # controla liberação do botão Passar
-        "ultima_atividade":  datetime.now(),  # Bug F: para limpeza
+        "qtd_acertos":       0,
+        "comprou_no_turno":  False,
+        "ultima_atividade":  datetime.now(),
     }
 
     return _build_response(
@@ -947,14 +853,10 @@ def passar_vez(payload: ComprarPecaPayload):
             detail="Compre ao menos uma peça do monte antes de passar a vez.",
         )
 
-    # Reseta a flag para o próximo turno do jogador
     partida["comprou_no_turno"] = False
     partida["ultima_atividade"] = datetime.now()
-
-    # Executa o turno do bot
     status_bot = _executar_turno_bot(partida)
 
-    # Verificação de vitória do bot
     if len(partida["mao_bot"]) == 0:
         partida["fim_de_jogo"] = True
         partida["resultado"] = "Vitória do Bot"
@@ -965,7 +867,6 @@ def passar_vez(payload: ComprarPecaPayload):
             fim_de_jogo=True,
         )
 
-    # Verificação de trancamento (Bug E corrigido)
     trancamento = _checar_trancamento(payload.id_partida, partida)
     if trancamento:
         return trancamento
@@ -981,7 +882,6 @@ def jogar_peca(payload: JogarPecaPayload):
     partida = PARTIDAS_ATIVAS[payload.id_partida]
     if partida["fim_de_jogo"]:
         raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
-
     peca_jogador = next(
         (p for p in partida["mao_jogador"] if p["id_peca"] == payload.id_peca),
         None,
@@ -1010,13 +910,11 @@ def jogar_peca(payload: JogarPecaPayload):
             detail="Combinação química incorreta! Tente outra peça ou extremidade.",
         )
 
-    # Bug C corrigido: acerto contabilizado no servidor
     partida["mao_jogador"].remove(peca_jogador)
     partida["qtd_acertos"] += 1
-    partida["comprou_no_turno"] = False   # reseta para o próximo turno
+    partida["comprou_no_turno"] = False
     partida["ultima_atividade"] = datetime.now()
 
-    # Verificação de vitória do jogador
     if len(partida["mao_jogador"]) == 0:
         partida["fim_de_jogo"] = True
         partida["resultado"] = "Vitória do Jogador"
@@ -1027,10 +925,8 @@ def jogar_peca(payload: JogarPecaPayload):
             fim_de_jogo=True,
         )
 
-    # Bug D corrigido: bot compra no máximo 1 peça por turno
     status_bot = _executar_turno_bot(partida)
 
-    # Verificação de vitória do bot
     if len(partida["mao_bot"]) == 0:
         partida["fim_de_jogo"] = True
         partida["resultado"] = "Vitória do Bot"
@@ -1041,7 +937,6 @@ def jogar_peca(payload: JogarPecaPayload):
             fim_de_jogo=True,
         )
 
-    # Bug E corrigido: verificação de trancamento logo após o turno do bot
     trancamento = _checar_trancamento(payload.id_partida, partida)
     if trancamento:
         return trancamento

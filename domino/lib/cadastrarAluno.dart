@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
 
-// ─── MODELO DE USUÁRIO ──────────────────────────────────────────────────────
 class Usuario {
   final int id;
   final String nome;
@@ -28,8 +27,6 @@ class Usuario {
     dataCadastro: json['data_cadastro'] ?? '',
   );
 }
-
-// ─── SERVIÇO DE API ─────────────────────────────────────────────────────────
 class UsuarioService {
   static Future<List<Usuario>> listarUsuarios() async {
     final response = await http.get(
@@ -79,7 +76,6 @@ class UsuarioService {
   }
 }
 
-// ─── TELA CADASTRAR USUÁRIO ──────────────────────────────────────────────────
 class CadastrarAlunoScreen extends StatefulWidget {
   const CadastrarAlunoScreen({super.key});
 
@@ -196,7 +192,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
       backgroundColor: _cinzaFundo,
       body: Column(
         children: [
-          // ─── BARRA VERMELHA ──────────────────────────────────────────
           Container(
             width: double.infinity,
             color: const Color.fromARGB(255, 255, 126, 112),
@@ -232,7 +227,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             ),
           ),
 
-          // ─── SETA DE VOLTAR ──────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.only(left: 8, top: 4),
             child: Align(
@@ -248,7 +242,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             ),
           ),
 
-          // ─── CONTEÚDO ────────────────────────────────────────────────
           Expanded(
             child: Scrollbar(
               thumbVisibility: false,
@@ -274,7 +267,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     );
   }
 
-  // ─── FORMULÁRIO ─────────────────────────────────────────────────────────
   Widget _buildFormulario() {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -317,7 +309,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
           ),
           const SizedBox(height: 28),
 
-          // ─── SELETOR DE PERFIL ──────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
@@ -370,8 +361,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                 setState(() => _obscureConfirma = !_obscureConfirma),
           ),
           const SizedBox(height: 24),
-
-          // Checkbox LGPD
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -443,7 +432,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     );
   }
 
-  // ─── BOTÃO DE SELEÇÃO DE PERFIL ─────────────────────────────────────────
   Widget _buildPerfilOpcao(String valor, String label, IconData icon) {
     final selecionado = _perfilSelecionado == valor;
     return Expanded(
@@ -480,9 +468,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     );
   }
 
-  // ─── TABELA DE USUÁRIOS ─────────────────────────────────────────────────
   Widget _buildTabela() {
-    // Filtra a lista com base no termo de busca
     final usuariosFiltrados = _termoBusca.isEmpty
         ? _usuarios
         : _usuarios.where((u) {
@@ -508,7 +494,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Cabeçalho
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -541,7 +526,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ─── BARRA DE PESQUISA ───────────────────────────────────
           TextField(
             controller: _buscaCtrl,
             onChanged: (val) => setState(() => _termoBusca = val),
