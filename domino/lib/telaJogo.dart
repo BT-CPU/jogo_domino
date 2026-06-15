@@ -567,12 +567,12 @@ class _TelaJogoState extends State<TelaJogo>
         ? 'Mesa vazia'
         : 'Esq: ${estado.mesa.first.visivelEsquerdo} | Dir: ${estado.mesa.last.visivelDireito}';
 
-    // Bug B corrigido: detecta se o jogador está bloqueado (sem jogadas e
-    // sem monte) para exibir o botão "Passar" automaticamente.
+    // O jogador está bloqueado quando não tem jogadas possíveis.
     final jogadorBloqueado =
-        !estado.fimDeJogo &&
-        !estado.jogadorTemJogadas &&
-        estado.quantidadeMonte == 0;
+        !estado.fimDeJogo && !estado.jogadorTemJogadas;
+
+    // podePasar vem do servidor: sem jogadas E (já comprou neste turno OU monte vazio).
+    final podePasar = !estado.fimDeJogo && estado.podePasar;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -637,7 +637,7 @@ class _TelaJogoState extends State<TelaJogo>
               ],
             ),
 
-            // Bug B/E corrigido: aviso visual quando o jogador está bloqueado
+            // Aviso visual quando o jogador está bloqueado (sem jogadas)
             if (jogadorBloqueado) ...[
               const SizedBox(height: 6),
               Container(
@@ -660,7 +660,9 @@ class _TelaJogoState extends State<TelaJogo>
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        'Sem jogadas disponíveis e monte vazio. Use o botão "Passar" abaixo.',
+                        podePasar
+                            ? 'Sem jogadas. Compre mais peças ou passe a vez.'
+                            : 'Sem jogadas disponíveis. Compre uma peça do monte antes de passar.',
                         style: GoogleFonts.nunito(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -748,12 +750,14 @@ class _TelaJogoState extends State<TelaJogo>
                     ),
                   ),
 
-                  // Bug B corrigido: botão "Passar" aparece APENAS quando
-                  // o jogador não tem jogadas e o monte está vazio.
+                  // Botão "Passar" — visível quando bloqueado, habilitado
+                  // somente após a primeira compra do turno (ou monte vazio).
                   if (jogadorBloqueado) ...[
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
-                      onPressed: _processandoJogada ? null : _passarVez,
+                      onPressed: (_processandoJogada || !podePasar)
+                          ? null
+                          : _passarVez,
                       icon: const Icon(Icons.skip_next, size: 16),
                       label: Text(
                         'Passar',

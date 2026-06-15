@@ -70,6 +70,8 @@ class EstadoPartida {
     this.qtdAcertos = 0,
     // Bug B corrigido: sinaliza se há jogadas válidas disponíveis.
     this.jogadorTemJogadas = true,
+    // Sinaliza se o jogador pode passar a vez agora.
+    this.podePasar = false,
   });
 
   final String idPartida;
@@ -96,6 +98,10 @@ class EstadoPartida {
   /// A UI usa este campo para exibir o botão "Passar".
   final bool jogadorTemJogadas;
 
+  /// true quando o jogador pode passar a vez:
+  /// não tem jogadas E (já comprou neste turno OU monte vazio).
+  final bool podePasar;
+
   factory EstadoPartida.fromJson(Map<String, dynamic> json) => EstadoPartida(
         idPartida: json['id_partida'] as String,
         mesa: (json['mesa'] as List<dynamic>)
@@ -109,5 +115,6 @@ class EstadoPartida {
         quantidadeMonte: (json['quantidade_monte'] as int?) ?? 0,
         qtdAcertos: (json['qtd_acertos'] as int?) ?? 0,
         jogadorTemJogadas: (json['jogador_tem_jogadas'] as bool?) ?? true,
+        podePasar: (json['pode_passar'] as bool?) ?? false,
       );
 }

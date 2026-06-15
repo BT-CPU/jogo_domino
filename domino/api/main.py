@@ -137,6 +137,9 @@ class StatusPartidaResponse(BaseModel):
     qtd_acertos: int = 0
     # Bug B corrigido: sinaliza ao Flutter se o jogador tem jogadas válidas
     jogador_tem_jogadas: bool = True
+    # Sinaliza se o jogador pode passar a vez agora:
+    # true quando sem jogadas E (já comprou neste turno OU monte vazio)
+    pode_passar: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -569,6 +572,15 @@ def _build_response(
         if fim_de_jogo
         else _verificar_jogadas_possiveis(partida["mao_jogador"], partida["mesa"])
     )
+    # Pode passar quando sem jogadas E (já comprou neste turno OU monte vazio)
+    pode_passar = (
+        False
+        if fim_de_jogo or jogador_tem_jogadas
+        else (
+            partida.get("comprou_no_turno", False)
+            or len(partida["monte_compras"]) == 0
+        )
+    )
     return {
         "id_partida": id_partida,
         "mesa": partida["mesa"],
@@ -578,6 +590,7 @@ def _build_response(
         "quantidade_monte": len(partida["monte_compras"]),
         "qtd_acertos": partida["qtd_acertos"],
         "jogador_tem_jogadas": jogador_tem_jogadas,
+        "pode_passar": pode_passar,
     }
 
 
@@ -871,6 +884,7 @@ def criar_partida(payload: CriarPartidaPayload):
         "fim_de_jogo":       False,
         "resultado":         None,
         "qtd_acertos":       0,          # Bug C: contador server-side
+        "comprou_no_turno":  False,      # controla liberação do botão Passar
         "ultima_atividade":  datetime.now(),  # Bug F: para limpeza
     }
 
@@ -895,6 +909,7 @@ def comprar_peca(payload: ComprarPecaPayload):
 
     nova_peca = partida["monte_compras"].pop(0)
     partida["mao_jogador"].append(nova_peca)
+    partida["comprou_no_turno"] = True
     partida["ultima_atividade"] = datetime.now()
 
     return _build_response(
@@ -907,12 +922,13 @@ def comprar_peca(payload: ComprarPecaPayload):
 @app.post("/partidas/passar", response_model=StatusPartidaResponse)
 def passar_vez(payload: ComprarPecaPayload):
     """
-    Bug B corrigido: permite ao jogador passar a vez quando não tem jogadas
-    válidas e o monte está vazio.
+    Permite ao jogador passar a vez quando não tem jogadas válidas E
+    já comprou ao menos uma peça neste turno (ou o monte está vazio).
 
     Validações:
     - Só permite passar se o jogador realmente não tiver jogadas possíveis.
-    - Só permite passar se o monte estiver vazio (deve comprar primeiro).
+    - Só permite passar se já comprou ao menos uma vez neste turno OU
+      o monte estiver completamente vazio.
     """
     if payload.id_partida not in PARTIDAS_ATIVAS:
         raise HTTPException(status_code=404, detail="Partida não encontrada.")
@@ -929,12 +945,17 @@ def passar_vez(payload: ComprarPecaPayload):
             detail="Você ainda tem jogadas possíveis! Jogue uma peça antes de passar.",
         )
 
-    if len(partida["monte_compras"]) > 0:
+    comprou_no_turno = partida.get("comprou_no_turno", False)
+    monte_vazio = len(partida["monte_compras"]) == 0
+
+    if not comprou_no_turno and not monte_vazio:
         raise HTTPException(
             status_code=400,
-            detail="Ainda há peças no monte. Compre uma antes de passar.",
+            detail="Compre ao menos uma peça do monte antes de passar a vez.",
         )
 
+    # Reseta a flag para o próximo turno do jogador
+    partida["comprou_no_turno"] = False
     partida["ultima_atividade"] = datetime.now()
 
     # Executa o turno do bot
@@ -999,6 +1020,7 @@ def jogar_peca(payload: JogarPecaPayload):
     # Bug C corrigido: acerto contabilizado no servidor
     partida["mao_jogador"].remove(peca_jogador)
     partida["qtd_acertos"] += 1
+    partida["comprou_no_turno"] = False   # reseta para o próximo turno
     partida["ultima_atividade"] = datetime.now()
 
     # Verificação de vitória do jogador
