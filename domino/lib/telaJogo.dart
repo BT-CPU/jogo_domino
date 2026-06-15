@@ -934,76 +934,153 @@ class _TelaJogoState extends State<TelaJogo>
   // ─── Peças ────────────────────────────────────────────────────────────────
 
   Widget _buildPecaEstilizada(PecaDomino peca, {required bool emMesa}) {
-    return Container(
-      width: emMesa ? 180 : 210,
-      height: emMesa ? 80 : 90,
-      decoration: BoxDecoration(
-        color: _corPecaDomino,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _bordaPecaDomino, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: emMesa ? Colors.black45 : Colors.black12,
-            blurRadius: emMesa ? 6 : 4,
-            offset: emMesa ? const Offset(2, 4) : const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildLadoPeca(peca.visivelEsquerdo, emMesa: emMesa),
-              ),
-              Container(
-                width: 2,
-                height: double.infinity,
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                color: Colors.black26,
-              ),
-              Expanded(
-                child: _buildLadoPeca(peca.visivelDireito, emMesa: emMesa),
-              ),
-            ],
-          ),
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: Color(0xFFB8860B),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
+    return GestureDetector(
+      // Translucent permite que cliques rápidos (taps) passem direto para widgets pais,
+      // garantindo que não quebremos a sua mecânica de jogar a peça!
+      behavior: HitTestBehavior.translucent, 
+      onLongPress: () => _mostrarZoomPeca(peca),
+      child: Container(
+        width: emMesa ? 180 : 210,
+        height: emMesa ? 80 : 90,
+        decoration: BoxDecoration(
+          color: _corPecaDomino,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _bordaPecaDomino, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: emMesa ? Colors.black45 : Colors.black12,
+              blurRadius: emMesa ? 6 : 4,
+              offset: emMesa ? const Offset(2, 4) : const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _buildLadoPeca(peca.visivelEsquerdo, emMesa: emMesa),
+                ),
+                Container(
+                  width: 2,
+                  height: double.infinity,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
                   color: Colors.black26,
-                  blurRadius: 1,
-                  offset: Offset(0, 1),
+                ),
+                Expanded(
+                  child: _buildLadoPeca(peca.visivelDireito, emMesa: emMesa),
                 ),
               ],
             ),
-          ),
-        ],
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: Color(0xFFB8860B),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 1,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLadoPeca(String valorLado, {required bool emMesa}) {
+  Widget _buildLadoPeca(String valorLado, {required bool emMesa, bool isZoom = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: Center(
         child: Text(
           valorLado,
           textAlign: TextAlign.center,
-          maxLines: 3,
+          maxLines: isZoom ? 10 : 5, 
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.nunito(
-            fontSize: emMesa ? 12 : 13,
+            // Tamanho 18 no zoom garante leitura sem quebrar a altura do container
+            fontSize: isZoom ? 18 : (emMesa ? 11 : 12),
             fontWeight: FontWeight.w900,
+            height: 1.1, 
             color: const Color(0xFF2C3E50),
           ),
         ),
       ),
+    );
+  }
+
+  // ─── Método para o Pop-up de Zoom ─────────────────────────────────────────
+
+  void _mostrarZoomPeca(PecaDomino peca) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(), 
+            child: Container(
+              width: 320, 
+              height: 200, // Altura aumentada para suportar até 10 linhas de texto com segurança
+              decoration: BoxDecoration(
+                color: _corPecaDomino,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _bordaPecaDomino, width: 3),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black54,
+                    blurRadius: 15,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildLadoPeca(peca.visivelEsquerdo, emMesa: false, isZoom: true),
+                      ),
+                      Container(
+                        width: 3,
+                        height: double.infinity,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        color: Colors.black26,
+                      ),
+                      Expanded(
+                        child: _buildLadoPeca(peca.visivelDireito, emMesa: false, isZoom: true),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFB8860B),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 2,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
