@@ -1,1 +1,1 @@
-https://jogodomino-production.up.railway.app
+https://domino-api-production.up.railway.app
