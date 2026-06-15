@@ -662,7 +662,7 @@ class _TelaJogoState extends State<TelaJogo>
                       child: Text(
                         podePasar
                             ? 'Sem jogadas. Compre mais peças ou passe a vez.'
-                            : 'Sem jogadas disponíveis. Compre uma peça do monte antes de passar.',
+                            : 'Sem jogadas disponíveis. Compre uma peça do monte para poder passar.',
                         style: GoogleFonts.nunito(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -750,14 +750,12 @@ class _TelaJogoState extends State<TelaJogo>
                     ),
                   ),
 
-                  // Botão "Passar" — visível quando bloqueado, habilitado
-                  // somente após a primeira compra do turno (ou monte vazio).
-                  if (jogadorBloqueado) ...[
+                  // Botão "Passar" — aparece após a primeira compra do turno
+                  // (ou quando o monte está vazio), com ou sem jogadas disponíveis.
+                  if (podePasar) ...[
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
-                      onPressed: (_processandoJogada || !podePasar)
-                          ? null
-                          : _passarVez,
+                      onPressed: _processandoJogada ? null : _passarVez,
                       icon: const Icon(Icons.skip_next, size: 16),
                       label: Text(
                         'Passar',

@@ -572,10 +572,11 @@ def _build_response(
         if fim_de_jogo
         else _verificar_jogadas_possiveis(partida["mao_jogador"], partida["mesa"])
     )
-    # Pode passar quando sem jogadas E (já comprou neste turno OU monte vazio)
+    # Pode passar sempre que já comprou neste turno OU monte está vazio,
+    # independente de ter ou não jogadas disponíveis.
     pode_passar = (
         False
-        if fim_de_jogo or jogador_tem_jogadas
+        if fim_de_jogo
         else (
             partida.get("comprou_no_turno", False)
             or len(partida["monte_compras"]) == 0
@@ -922,11 +923,11 @@ def comprar_peca(payload: ComprarPecaPayload):
 @app.post("/partidas/passar", response_model=StatusPartidaResponse)
 def passar_vez(payload: ComprarPecaPayload):
     """
-    Permite ao jogador passar a vez quando não tem jogadas válidas E
-    já comprou ao menos uma peça neste turno (ou o monte está vazio).
+    Permite ao jogador passar a vez após comprar ao menos uma peça neste turno
+    (ou quando o monte está vazio). O jogador pode passar mesmo tendo jogadas
+    disponíveis — é uma escolha dele.
 
-    Validações:
-    - Só permite passar se o jogador realmente não tiver jogadas possíveis.
+    Validação única:
     - Só permite passar se já comprou ao menos uma vez neste turno OU
       o monte estiver completamente vazio.
     """
@@ -936,14 +937,6 @@ def passar_vez(payload: ComprarPecaPayload):
     partida = PARTIDAS_ATIVAS[payload.id_partida]
     if partida["fim_de_jogo"]:
         raise HTTPException(status_code=400, detail="Esta partida já foi encerrada.")
-
-    mesa = partida["mesa"]
-
-    if _verificar_jogadas_possiveis(partida["mao_jogador"], mesa):
-        raise HTTPException(
-            status_code=400,
-            detail="Você ainda tem jogadas possíveis! Jogue uma peça antes de passar.",
-        )
 
     comprou_no_turno = partida.get("comprou_no_turno", False)
     monte_vazio = len(partida["monte_compras"]) == 0
