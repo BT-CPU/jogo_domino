@@ -333,76 +333,88 @@ class _RelatoriosAlunoScreenState extends State<RelatoriosAlunoScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(const Color(0x08C0392B)),
-            dataRowMaxHeight: 60,
-            dataRowMinHeight: 60,
-            horizontalMargin: 20,
-            columnSpacing: 24,
-            columns: [
-              _buildDataColumn('Nivel'),
-              _buildDataColumn('Data'),
-              _buildDataColumn('Acertos', isNumeric: true),
-              _buildDataColumn('Erros', isNumeric: true),
-              _buildDataColumn('Tempo'),
-            ],
-            rows: relatorio.historico.map((partida) {
-              return DataRow(
-                cells: [
-                  DataCell(
-                    Text(
-                      partida.nivelLabel,
-                      style: GoogleFonts.nunito(
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
-                      ),
-                    ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // CHECAGEM DE SEGURANÇA
+            final double larguraSegura = constraints.hasBoundedWidth
+                ? constraints.maxWidth
+                : 0;
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: larguraSegura),
+                child: DataTable(
+                  headingRowColor: WidgetStateProperty.all(
+                    const Color(0x08C0392B),
                   ),
-                  DataCell(
-                    Text(
-                      partida.dataFormatada,
-                      style: GoogleFonts.nunito(color: Colors.grey[700]),
-                    ),
-                  ),
-                  DataCell(
-                    Center(
-                      child: Text(
-                        '${partida.qtdAcertos}',
-                        style: GoogleFonts.nunito(
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                  dataRowMaxHeight: 60,
+                  dataRowMinHeight: 60,
+                  horizontalMargin: 20,
+                  columnSpacing: 24,
+                  columns: [
+                    _buildDataColumn('Nivel'),
+                    _buildDataColumn('Data'),
+                    _buildDataColumn('Acertos'), 
+                    _buildDataColumn('Erros'),   
+                    _buildDataColumn('Tempo'),
+                  ],
+                  rows: relatorio.historico.map((partida) {
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Text(
+                            partida.nivelLabel,
+                            style: GoogleFonts.nunito(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    Center(
-                      child: Text(
-                        '${partida.qtdErros}',
-                        style: GoogleFonts.nunito(
-                          color: _vermelho,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                        DataCell(
+                          Text(
+                            partida.dataFormatada,
+                            style: GoogleFonts.nunito(color: Colors.grey[700]),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    Text(
-                      partida.tempoFormatado,
-                      style: GoogleFonts.nunito(
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
-          ),
+                        // Célula de Acertos - Widget Center() removido!
+                        DataCell(
+                          Text(
+                            '${partida.qtdAcertos}',
+                            style: GoogleFonts.nunito(
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        // Célula de Erros - Widget Center() removido!
+                        DataCell(
+                          Text(
+                            '${partida.qtdErros}',
+                            style: GoogleFonts.nunito(
+                              color: _vermelho, // Mantém a sua cor original
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            partida.tempoFormatado,
+                            style: GoogleFonts.nunito(
+                              color: Colors.grey[700],
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
