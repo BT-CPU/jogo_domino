@@ -207,7 +207,7 @@ class TelaInicial extends StatelessWidget {
                           _buildMenuCard(
                             context: context,
                             title: 'Sair',
-                            subtitle: 'Encerrar sessao',
+                            subtitle: 'Encerrar sessão',
                             icon: Icons.logout_rounded,
                             iconColor: Colors.grey[600],
                             onTap: () {
