@@ -93,7 +93,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
   bool _obscureConfirma = true;
   bool _aceiteLgpd = false;
   bool _carregando = false;
-  String _perfilSelecionado = 'aluno'; // ← novo
+  String _perfilSelecionado = 'aluno';
 
   List<Usuario> _usuarios = [];
   final _buscaCtrl = TextEditingController();
@@ -665,12 +665,13 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Table(
+                // Ajuste nas larguras das colunas para o mobile
                 columnWidths: const {
                   0: FlexColumnWidth(2.5),
                   1: FlexColumnWidth(3),
-                  2: FlexColumnWidth(1.5),
+                  2: FlexColumnWidth(1.8), // Aumentado para o FittedBox respirar
                   3: FlexColumnWidth(2),
-                  4: FixedColumnWidth(56),
+                  4: FixedColumnWidth(48), // Diminuído um pouco
                 },
                 children: [
                   TableRow(
@@ -694,17 +695,19 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                       children: [
                         _dataCell(usuario.nome),
                         _dataCell(usuario.email),
+                        // Célula do perfil corrigida
                         TableCell(
                           verticalAlignment: TableCellVerticalAlignment.middle,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
+                              horizontal: 4, // Padding externo reduzido
                               vertical: 10,
                             ),
                             child: Container(
+                              alignment: Alignment.center,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
+                                horizontal: 6, // Padding interno reduzido
+                                vertical: 4,
                               ),
                               decoration: BoxDecoration(
                                 color: usuario.perfil == 'professor'
@@ -717,16 +720,22 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                                       : Colors.green[200]!,
                                 ),
                               ),
-                              child: Text(
-                                usuario.perfil == 'professor'
-                                    ? 'Professor'
-                                    : 'Aluno',
-                                style: GoogleFonts.nunito(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: usuario.perfil == 'professor'
-                                      ? Colors.blue[700]
-                                      : Colors.green[700],
+                              // O FittedBox com maxLines: 1 garante que a palavra
+                              // encolha em vez de quebrar na vertical
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  usuario.perfil == 'professor'
+                                      ? 'Professor'
+                                      : 'Aluno',
+                                  maxLines: 1,
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: usuario.perfil == 'professor'
+                                        ? Colors.blue[700]
+                                        : Colors.green[700],
+                                  ),
                                 ),
                               ),
                             ),
@@ -775,7 +784,7 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
 
   TableCell _dataCell(String text) => TableCell(
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       child: Text(
         text,
         style: GoogleFonts.nunito(fontSize: 13, color: Colors.black87),
@@ -842,30 +851,30 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
 
     final emailLower = email.toLowerCase();
 
-// Validação de email para aluno
-if (_perfilSelecionado == 'aluno') {
-  if (!emailLower.endsWith('@aluno.cps.sp.gov.br')) {
-    _mostrarSnack(
-      'Alunos devem usar um e-mail @aluno.cps.sp.gov.br',
-      isErro: true,
-    );
-    return;
-  }
-}
+    // Validação de email para aluno
+    if (_perfilSelecionado == 'aluno') {
+      if (!emailLower.endsWith('@aluno.cps.sp.gov.br')) {
+        _mostrarSnack(
+          'Alunos devem usar um e-mail @aluno.cps.sp.gov.br',
+          isErro: true,
+        );
+        return;
+      }
+    }
 
 
-if (_perfilSelecionado == 'professor') {
-  if (
-      !emailLower.endsWith('@cps.sp.gov.br') ||
-      emailLower.endsWith('@aluno.cps.sp.gov.br')
-  ) {
-    _mostrarSnack(
-      'Professores devem usar um e-mail @cps.sp.gov.br',
-      isErro: true,
-    );
-    return;
-  }
-}
+    if (_perfilSelecionado == 'professor') {
+      if (
+          !emailLower.endsWith('@cps.sp.gov.br') ||
+          emailLower.endsWith('@aluno.cps.sp.gov.br')
+      ) {
+        _mostrarSnack(
+          'Professores devem usar um e-mail @cps.sp.gov.br',
+          isErro: true,
+        );
+        return;
+      }
+    }
 
     if (nome.isEmpty || email.isEmpty || senha.isEmpty || confirma.isEmpty) {
       _mostrarSnack('Preencha todos os campos.', isErro: true);
