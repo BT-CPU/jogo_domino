@@ -262,23 +262,37 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
 
   Widget _buildCardsResumo() {
     final relatorio = _relatorio!;
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: [
-        _buildCardResumo(
-          Icons.trending_up_rounded,
-          '${relatorio.mediaAcertoTurma.toStringAsFixed(0)}%',
-          'Media da Turma',
-          _verde,
-        ),
-        _buildCardResumo(
-          Icons.sports_esports_rounded,
-          '${relatorio.totalPartidasTurma}',
-          'Partidas Jogadas',
-          _laranja,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double larguraMaxima = 190;
+        const double espacamento = 16;
+        final larguraDisponivelParaUmCard =
+            (constraints.maxWidth - espacamento) / 2;
+        final larguraCard = larguraDisponivelParaUmCard < larguraMaxima
+            ? larguraDisponivelParaUmCard
+            : larguraMaxima;
+
+        return Wrap(
+          spacing: espacamento,
+          runSpacing: espacamento,
+          children: [
+            _buildCardResumo(
+              Icons.trending_up_rounded,
+              '${relatorio.mediaAcertoTurma.toStringAsFixed(0)}%',
+              'Media da Turma',
+              _verde,
+              largura: larguraCard,
+            ),
+            _buildCardResumo(
+              Icons.sports_esports_rounded,
+              '${relatorio.totalPartidasTurma}',
+              'Partidas Jogadas',
+              _laranja,
+              largura: larguraCard,
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -286,10 +300,11 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
     IconData icone,
     String valor,
     String label,
-    Color cor,
-  ) {
+    Color cor, {
+    required double largura,
+  }) {
     return Container(
-      width: 190,
+      width: largura,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _branco,
@@ -356,36 +371,55 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
           onChanged: (value) => setState(() => _busca = value),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdown(
-                value: _turmaSel,
-                items: _turmasDisponiveis
-                    .map(
-                      (turma) =>
-                          DropdownMenuItem(value: turma, child: Text(turma)),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() => _turmaSel = value!),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildDropdown(
-                value: _ordenarPor,
-                items: const [
-                  DropdownMenuItem(value: 'nome', child: Text('A -> Z')),
-                  DropdownMenuItem(value: 'taxa', child: Text('Maior acerto')),
-                  DropdownMenuItem(
-                    value: 'partidas',
-                    child: Text('Mais partidas'),
-                  ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const double breakpointFiltrosEstreito = 360;
+            final telaEstreita =
+                constraints.maxWidth < breakpointFiltrosEstreito;
+
+            final dropdownTurma = _buildDropdown(
+              value: _turmaSel,
+              items: _turmasDisponiveis
+                  .map(
+                    (turma) =>
+                        DropdownMenuItem(value: turma, child: Text(turma)),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _turmaSel = value!),
+            );
+
+            final dropdownOrdenar = _buildDropdown(
+              value: _ordenarPor,
+              items: const [
+                DropdownMenuItem(value: 'nome', child: Text('A -> Z')),
+                DropdownMenuItem(value: 'taxa', child: Text('Maior acerto')),
+                DropdownMenuItem(
+                  value: 'partidas',
+                  child: Text('Mais partidas'),
+                ),
+              ],
+              onChanged: (value) => setState(() => _ordenarPor = value!),
+            );
+
+            if (!telaEstreita) {
+              return Row(
+                children: [
+                  Expanded(child: dropdownTurma),
+                  const SizedBox(width: 12),
+                  Expanded(child: dropdownOrdenar),
                 ],
-                onChanged: (value) => setState(() => _ordenarPor = value!),
-              ),
-            ),
-          ],
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                dropdownTurma,
+                const SizedBox(height: 12),
+                dropdownOrdenar,
+              ],
+            );
+          },
         ),
       ],
     );
@@ -419,6 +453,8 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
     );
   }
 
+  static const double _breakpointListaAlunosEstreita = 600;
+
   Widget _buildTabelaAlunos() {
     final alunos = _alunosFiltrados;
     if (alunos.isEmpty) {
@@ -445,34 +481,52 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: _branco,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final telaEstreita =
+            constraints.maxWidth < _breakpointListaAlunosEstreita;
+
+        if (telaEstreita) {
+          return Column(
+            children: alunos
+                .map((aluno) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildCardAluno(aluno),
+                    ))
+                .toList(),
+          );
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: _branco,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildHeaderTabela(),
-          const Divider(height: 1),
-          ...alunos.asMap().entries.map((entry) {
-            final isUltimo = entry.key == alunos.length - 1;
-            return Column(
-              children: [
-                _buildLinhaAluno(entry.value),
-                if (!isUltimo)
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-              ],
-            );
-          }),
-        ],
-      ),
+          child: Column(
+            children: [
+              _buildHeaderTabela(),
+              const Divider(height: 1),
+              ...alunos.asMap().entries.map((entry) {
+                final isUltimo = entry.key == alunos.length - 1;
+                return Column(
+                  children: [
+                    _buildLinhaAluno(entry.value),
+                    if (!isUltimo)
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                  ],
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -517,6 +571,167 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
           fontWeight: FontWeight.w800,
           color: Colors.grey[600],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCardAluno(RelatorioAluno aluno) {
+    final cor = aluno.totalPartidas == 0
+        ? Colors.grey[400]!
+        : aluno.taxaAcertoMedia >= 70
+        ? _verde
+        : aluno.taxaAcertoMedia >= 50
+        ? _laranja
+        : _vermelho;
+
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RelatoriosAlunoScreen(idUsuario: aluno.idUsuario),
+        ),
+      ),
+      borderRadius: BorderRadius.circular(14),
+      hoverColor: _vermelho.withValues(alpha: 0.04),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _branco,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: cor.withValues(alpha: 0.12),
+                  child: Text(
+                    aluno.nome[0].toUpperCase(),
+                    style: GoogleFonts.nunito(
+                      color: cor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        aluno.nome,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.nunito(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        aluno.turma,
+                        style: GoogleFonts.nunito(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    aluno.totalPartidas == 0
+                        ? '--'
+                        : '${aluno.taxaAcertoMedia.toStringAsFixed(0)}%',
+                    style: GoogleFonts.nunito(
+                      color: cor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.black26,
+                  size: 22,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _buildCardAlunoMetrica(
+                  label: 'Partidas',
+                  valor: '${aluno.totalPartidas}',
+                ),
+                _buildCardAlunoMetrica(
+                  label: 'Melhor tempo',
+                  valor: aluno.melhorTempoFormatado,
+                ),
+                _buildCardAlunoMetrica(
+                  label: 'Ultima jogada',
+                  valor: aluno.ultimaJogadaLabel,
+                  corValor: aluno.ultimaJogada == null
+                      ? Colors.grey[400]
+                      : Colors.grey[700],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardAlunoMetrica({
+    required String label,
+    required String valor,
+    Color? corValor,
+  }) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.nunito(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Colors.grey[500],
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            valor,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.nunito(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: corValor ?? Colors.black87,
+            ),
+          ),
+        ],
       ),
     );
   }
