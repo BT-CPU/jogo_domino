@@ -32,8 +32,15 @@ class _TelaJogoState extends State<TelaJogo>
   static const _verdeAcerto = Color(0xFF27AE60);
   final DominoService _service = DominoService();
   final ScrollController _tabuleiroScrollController = ScrollController();
+  final ScrollController _conteudoScrollController = ScrollController();
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnim;
+
+  static const double _faixaAutoScrollTopo = 80;
+  static const double _velocidadeAutoScroll = 12;
+
+  Timer? _autoScrollTimer;
+  bool _arrastandoPeca = false;
 
   EstadoPartida? _estado;
   Timer? _timer;
@@ -65,8 +72,10 @@ class _TelaJogoState extends State<TelaJogo>
   @override
   void dispose() {
     _timer?.cancel();
+    _autoScrollTimer?.cancel();
     _pulseController.dispose();
     _tabuleiroScrollController.dispose();
+    _conteudoScrollController.dispose();
     super.dispose();
   }
 
@@ -394,17 +403,21 @@ class _TelaJogoState extends State<TelaJogo>
       children: [
         _buildHeader(estado),
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildStatus(estado),
-                const SizedBox(height: 24),
-                _buildTabuleiro(estado),
-                const SizedBox(height: 24),
-                _buildMaoJogador(estado),
-              ],
+          child: Listener(
+            onPointerMove: _aoMoverDedoDurranteArraste,
+            child: SingleChildScrollView(
+              controller: _conteudoScrollController,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildStatus(estado),
+                  const SizedBox(height: 24),
+                  _buildTabuleiro(estado),
+                  const SizedBox(height: 24),
+                  _buildMaoJogador(estado),
+                ],
+              ),
             ),
           ),
         ),
@@ -1172,6 +1185,9 @@ class _TelaJogoState extends State<TelaJogo>
                   child: Draggable<PecaDomino>(
                     data: peca,
                     maxSimultaneousDrags: podeInteragir ? 1 : 0,
+                    onDragStarted: _aoIniciarArrastePeca,
+                    onDragEnd: (_) => _aoFinalizarArrastePeca(),
+                    onDraggableCanceled: (_, __) => _aoFinalizarArrastePeca(),
                     feedback: Material(
                       color: Colors.transparent,
                       child: Opacity(
@@ -1238,6 +1254,60 @@ class _TelaJogoState extends State<TelaJogo>
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeOut,
       );
+    });
+  }
+
+  void _aoIniciarArrastePeca() {
+    _arrastandoPeca = true;
+  }
+
+  void _aoFinalizarArrastePeca() {
+    _arrastandoPeca = false;
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+  }
+
+  void _aoMoverDedoDurranteArraste(PointerMoveEvent evento) {
+    if (!_arrastandoPeca) return;
+
+    final distanciaDoTopo = evento.position.dy;
+
+    if (distanciaDoTopo <= _faixaAutoScrollTopo) {
+      _iniciarAutoScrollParaTopo();
+    } else {
+      _autoScrollTimer?.cancel();
+      _autoScrollTimer = null;
+    }
+  }
+
+  void _iniciarAutoScrollParaTopo() {
+    if (_autoScrollTimer != null) return;
+
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 16), (
+      timer,
+    ) {
+      if (!mounted ||
+          !_arrastandoPeca ||
+          !_conteudoScrollController.hasClients) {
+        timer.cancel();
+        _autoScrollTimer = null;
+        return;
+      }
+
+      final posicaoAtual = _conteudoScrollController.position.pixels;
+
+      if (posicaoAtual <= 0) {
+        timer.cancel();
+        _autoScrollTimer = null;
+        return;
+      }
+
+      final novaPosicao = (posicaoAtual - _velocidadeAutoScroll).clamp(
+        0.0,
+        _conteudoScrollController.position.maxScrollExtent,
+      );
+
+      _conteudoScrollController.jumpTo(novaPosicao);
     });
   }
 
