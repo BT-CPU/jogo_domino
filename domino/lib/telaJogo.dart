@@ -413,84 +413,108 @@ class _TelaJogoState extends State<TelaJogo>
   }
 
   Widget _buildHeader(EstadoPartida estado) {
+    const double _breakpointHeaderEstreito = 380;
+
+    final badgeNivel = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: _vermelho,
+        borderRadius: BorderRadius.only(bottomRight: Radius.circular(16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.dificuldade.titulo.toUpperCase(),
+            style: GoogleFonts.nunito(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 15,
+            ),
+          ),
+          Text(
+            widget.dificuldade.descricao,
+            style: GoogleFonts.nunito(color: Colors.white70, fontSize: 10),
+          ),
+        ],
+      ),
+    );
+
+    final statsWrap = Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 24,
+      runSpacing: 12,
+      children: [
+        _buildHeaderItem(
+          icon: Icons.access_time,
+          label: 'Tempo',
+          value: _formatarTempo(_tempoSegundos),
+        ),
+        _buildHeaderItem(
+          icon: Icons.check_circle_outline,
+          label: 'Acertos',
+          value: '${estado.qtdAcertos}',
+          iconColor: Colors.greenAccent,
+        ),
+        _buildHeaderItem(
+          icon: Icons.cancel_outlined,
+          label: 'Erros',
+          value: '$_qtdErros',
+          iconColor: Colors.redAccent,
+        ),
+        _buildHeaderItem(
+          icon: Icons.style_outlined,
+          label: 'Monte',
+          value: '${estado.quantidadeMonte}',
+          iconColor: Colors.amberAccent,
+        ),
+      ],
+    );
+
+    final botaoSair = ElevatedButton(
+      onPressed: () => Navigator.pop(context),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _vermelho,
+        foregroundColor: Colors.white,
+      ),
+      child: Text('Sair', style: GoogleFonts.nunito(fontWeight: FontWeight.w800)),
+    );
+
     return Container(
       color: _cinzaEscuro,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: _vermelho,
-              borderRadius: BorderRadius.only(bottomRight: Radius.circular(16)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final telaEstreita = constraints.maxWidth < _breakpointHeaderEstreito;
+
+          if (!telaEstreita) {
+            return Row(
               children: [
-                Text(
-                  widget.dificuldade.titulo.toUpperCase(),
-                  style: GoogleFonts.nunito(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  widget.dificuldade.descricao,
-                  style: GoogleFonts.nunito(
-                    color: Colors.white70,
-                    fontSize: 10,
-                  ),
-                ),
+                badgeNivel,
+                const SizedBox(width: 16),
+                Expanded(child: statsWrap),
+                const SizedBox(width: 16),
+                botaoSair,
               ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 24,
-              runSpacing: 12,
-              children: [
-                _buildHeaderItem(
-                  icon: Icons.access_time,
-                  label: 'Tempo',
-                  value: _formatarTempo(_tempoSegundos),
-                ),
-                _buildHeaderItem(
-                  icon: Icons.check_circle_outline,
-                  label: 'Acertos',
-                  value: '${estado.qtdAcertos}',
-                  iconColor: Colors.greenAccent,
-                ),
-                _buildHeaderItem(
-                  icon: Icons.cancel_outlined,
-                  label: 'Erros',
-                  value: '$_qtdErros',
-                  iconColor: Colors.redAccent,
-                ),
-                _buildHeaderItem(
-                  icon: Icons.style_outlined,
-                  label: 'Monte',
-                  value: '${estado.quantidadeMonte}',
-                  iconColor: Colors.amberAccent,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _vermelho,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(
-              'Sair',
-              style: GoogleFonts.nunito(fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: badgeNivel),
+                  const SizedBox(width: 12),
+                  botaoSair,
+                ],
+              ),
+              const SizedBox(height: 12),
+              statsWrap,
+            ],
+          );
+        },
       ),
     );
   }
@@ -651,78 +675,54 @@ class _TelaJogoState extends State<TelaJogo>
               ),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _cinzaFundo,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.layers_outlined,
-                          size: 14,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'Pontas ativas: $pontas',
-                            style: GoogleFonts.nunito(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final pontasAtivasBox = Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _cinzaFundo,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.layers_outlined,
+                        size: 14,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Pontas ativas: $pontas',
+                          style: GoogleFonts.nunito(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                if (!estado.fimDeJogo) ...[
-                  ElevatedButton.icon(
-                    onPressed:
-                        (_processandoJogada || estado.quantidadeMonte == 0)
-                        ? null
-                        : _comprarPeca,
-                    icon: const Icon(Icons.add_card, size: 16),
-                    label: Text(
-                      'Comprar (${estado.quantidadeMonte})',
-                      style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _cinzaEscuro,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.grey[300],
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
+                    ],
                   ),
+                );
 
-                  if (podePasar) ...[
-                    const SizedBox(width: 8),
+                final botoesAcao = <Widget>[
+                  if (!estado.fimDeJogo) ...[
                     ElevatedButton.icon(
-                      onPressed: _processandoJogada ? null : _passarVez,
-                      icon: const Icon(Icons.skip_next, size: 16),
+                      onPressed:
+                          (_processandoJogada || estado.quantidadeMonte == 0)
+                          ? null
+                          : _comprarPeca,
+                      icon: const Icon(Icons.add_card, size: 16),
                       label: Text(
-                        'Passar',
+                        'Comprar (${estado.quantidadeMonte})',
                         style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange.shade700,
+                        backgroundColor: _cinzaEscuro,
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: Colors.grey[300],
                         padding: const EdgeInsets.symmetric(
@@ -734,9 +734,60 @@ class _TelaJogoState extends State<TelaJogo>
                         ),
                       ),
                     ),
+                    if (podePasar)
+                      ElevatedButton.icon(
+                        onPressed: _processandoJogada ? null : _passarVez,
+                        icon: const Icon(Icons.skip_next, size: 16),
+                        label: Text(
+                          'Passar',
+                          style: GoogleFonts.nunito(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade700,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.grey[300],
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
                   ],
-                ],
-              ],
+                ];
+
+                final telaEstreita = constraints.maxWidth < 360;
+
+                if (!telaEstreita) {
+                  return Row(
+                    children: [
+                      Expanded(child: pontasAtivasBox),
+                      if (botoesAcao.isNotEmpty) const SizedBox(width: 12),
+                      for (int i = 0; i < botoesAcao.length; i++) ...[
+                        if (i != 0) const SizedBox(width: 8),
+                        botoesAcao[i],
+                      ],
+                    ],
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    pontasAtivasBox,
+                    if (botoesAcao.isNotEmpty) const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: botoesAcao,
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -745,98 +796,144 @@ class _TelaJogoState extends State<TelaJogo>
   }
 
   Widget _buildTabuleiro(EstadoPartida estado) {
-    return Container(
-      height: 220,
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.red,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(0, 4),
+    return Stack(
+      children: [
+        Container(
+          height: 220,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Tabuleiro',
-                  style: GoogleFonts.nunito(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  'Arraste para os lados para ver tudo',
-                  style: GoogleFonts.nunito(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white60,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context).copyWith(
-                    dragDevices: {
-                      PointerDeviceKind.touch,
-                      PointerDeviceKind.mouse,
-                    },
-                  ),
-                  child: SingleChildScrollView(
-                    controller: _tabuleiroScrollController,
-                    scrollDirection: Axis.horizontal,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: constraints.maxWidth,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (!estado.fimDeJogo && !_processandoJogada)
-                              _buildZonaSoltura(ponta: 'esquerda')
-                            else
-                              const SizedBox(width: 20),
-                            const SizedBox(width: 16),
-                            for (int i = 0; i < estado.mesa.length; i++) ...[
-                              _buildPecaEstilizada(
-                                estado.mesa[i],
-                                emMesa: true,
-                              ),
-                              if (i != estado.mesa.length - 1) _buildSeta(),
-                            ],
-                            const SizedBox(width: 16),
-                            if (!estado.fimDeJogo && !_processandoJogada)
-                              _buildZonaSoltura(ponta: 'direita')
-                            else
-                              const SizedBox(width: 20),
-                          ],
-                        ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tabuleiro',
+                      style: GoogleFonts.nunito(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                );
-              },
+                    Text(
+                      'Arraste para os lados para ver tudo',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white60,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                        },
+                      ),
+                      child: SingleChildScrollView(
+                        controller: _tabuleiroScrollController,
+                        scrollDirection: Axis.horizontal,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minWidth: constraints.maxWidth,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 40,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                if (!estado.fimDeJogo && !_processandoJogada)
+                                  _buildZonaSoltura(ponta: 'esquerda')
+                                else
+                                  const SizedBox(width: 20),
+                                const SizedBox(width: 16),
+                                for (int i = 0; i < estado.mesa.length; i++) ...[
+                                  _buildPecaEstilizada(
+                                    estado.mesa[i],
+                                    emMesa: true,
+                                  ),
+                                  if (i != estado.mesa.length - 1) _buildSeta(),
+                                ],
+                                const SizedBox(width: 16),
+                                if (!estado.fimDeJogo && !_processandoJogada)
+                                  _buildZonaSoltura(ponta: 'direita')
+                                else
+                                  const SizedBox(width: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          left: 4,
+          top: 0,
+          bottom: 0,
+          child: Center(
+            child: _buildBotaoIrParaPonta(esquerda: true),
+          ),
+        ),
+        Positioned(
+          right: 4,
+          top: 0,
+          bottom: 0,
+          child: Center(
+            child: _buildBotaoIrParaPonta(esquerda: false),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBotaoIrParaPonta({required bool esquerda}) {
+    return Tooltip(
+      message: esquerda ? 'Ir para a ponta esquerda' : 'Ir para a ponta direita',
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.35),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => _irParaPontaImediatamente(esquerda: esquerda),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Icon(
+              esquerda
+                  ? Icons.keyboard_double_arrow_left_rounded
+                  : Icons.keyboard_double_arrow_right_rounded,
+              color: Colors.white,
+              size: 22,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -894,8 +991,8 @@ class _TelaJogoState extends State<TelaJogo>
       behavior: HitTestBehavior.translucent, 
       onLongPress: () => _mostrarZoomPeca(peca),
       child: Container(
-        width: emMesa ? 180 : 210,
-        height: emMesa ? 80 : 90,
+        width: emMesa ? 200 : 230,
+        height: emMesa ? 90 : 100,
         decoration: BoxDecoration(
           color: _corPecaDomino,
           borderRadius: BorderRadius.circular(12),
@@ -958,7 +1055,7 @@ class _TelaJogoState extends State<TelaJogo>
           maxLines: isZoom ? 10 : 5, 
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.nunito(
-            fontSize: isZoom ? 18 : (emMesa ? 11 : 12),
+            fontSize: isZoom ? 18 : (emMesa ? 14 : 15),
             fontWeight: FontWeight.w900,
             height: 1.1, 
             color: const Color(0xFF2C3E50),
@@ -1122,6 +1219,15 @@ class _TelaJogoState extends State<TelaJogo>
         curve: Curves.easeOut,
       );
     });
+  }
+
+  void _irParaPontaImediatamente({required bool esquerda}) {
+    if (!_tabuleiroScrollController.hasClients) return;
+    _tabuleiroScrollController.animateTo(
+      esquerda ? 0 : _tabuleiroScrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
   }
 
   void _rolarTabuleiroParaDireita() {
