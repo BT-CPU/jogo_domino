@@ -27,6 +27,7 @@ class Usuario {
     dataCadastro: json['data_cadastro'] ?? '',
   );
 }
+
 class UsuarioService {
   static Future<List<Usuario>> listarUsuarios() async {
     final response = await http.get(
@@ -665,13 +666,12 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Table(
-                // Ajuste nas larguras das colunas para o mobile
                 columnWidths: const {
-                  0: FlexColumnWidth(2.5),
-                  1: FlexColumnWidth(3),
-                  2: FlexColumnWidth(1.8), // Aumentado para o FittedBox respirar
-                  3: FlexColumnWidth(2),
-                  4: FixedColumnWidth(48), // Diminuído um pouco
+                  0: FlexColumnWidth(2.3),
+                  1: FlexColumnWidth(2.8),
+                  2: FlexColumnWidth(1.8), 
+                  3: FlexColumnWidth(2.0),
+                  4: FixedColumnWidth(42), 
                 },
                 children: [
                   TableRow(
@@ -695,18 +695,17 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                       children: [
                         _dataCell(usuario.nome),
                         _dataCell(usuario.email),
-                        // Célula do perfil corrigida
                         TableCell(
                           verticalAlignment: TableCellVerticalAlignment.middle,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 4, // Padding externo reduzido
+                              horizontal: 4, 
                               vertical: 10,
                             ),
                             child: Container(
                               alignment: Alignment.center,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6, // Padding interno reduzido
+                                horizontal: 6, 
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
@@ -720,8 +719,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
                                       : Colors.green[200]!,
                                 ),
                               ),
-                              // O FittedBox com maxLines: 1 garante que a palavra
-                              // encolha em vez de quebrar na vertical
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
@@ -767,26 +764,36 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
     );
   }
 
+  // Novo _headerCell com FittedBox e maxLines para impedir quebras
   TableCell _headerCell(String text) => TableCell(
+    verticalAlignment: TableCellVerticalAlignment.middle,
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Text(
-        text,
-        style: GoogleFonts.nunito(
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
-          color: Colors.white,
-          letterSpacing: 0.5,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          maxLines: 1,
+          style: GoogleFonts.nunito(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     ),
   );
 
+  // Novo _dataCell com maxLines para manter o layout limpo
   TableCell _dataCell(String text) => TableCell(
+    verticalAlignment: TableCellVerticalAlignment.middle,
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
       child: Text(
         text,
+        maxLines: 1,
         style: GoogleFonts.nunito(fontSize: 13, color: Colors.black87),
         overflow: TextOverflow.ellipsis,
       ),
@@ -851,7 +858,6 @@ class _CadastrarAlunoScreenState extends State<CadastrarAlunoScreen> {
 
     final emailLower = email.toLowerCase();
 
-    // Validação de email para aluno
     if (_perfilSelecionado == 'aluno') {
       if (!emailLower.endsWith('@aluno.cps.sp.gov.br')) {
         _mostrarSnack(
