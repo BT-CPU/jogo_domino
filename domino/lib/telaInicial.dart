@@ -107,7 +107,7 @@ class TelaInicial extends StatelessWidget {
                           Column(
                             children: [
                               Text(
-                                'DOMINO DA\nQUIMICA',
+                                'DOMINÓ DA\nQUÍMICA',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.nunito(
                                   fontSize: isWide ? 26 : 22,
@@ -119,7 +119,7 @@ class TelaInicial extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'FUNCOES INORGANICAS',
+                                'FUNÇÕES INORGÂNICAS',
                                 style: GoogleFonts.nunito(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -143,7 +143,7 @@ class TelaInicial extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Escolha uma das opcoes abaixo para continuar',
+                        'Escolha uma das opções abaixo para continuar',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.nunito(
                           fontSize: 14,
@@ -159,7 +159,7 @@ class TelaInicial extends StatelessWidget {
                           _buildMenuCard(
                             context: context,
                             title: 'Nova Partida',
-                            subtitle: 'Iniciar jogo de classificacao',
+                            subtitle: 'Iniciar jogo de classificação',
                             icon: Icons.play_arrow_rounded,
                             isPrimary: true,
                             onTap: () {
@@ -175,7 +175,7 @@ class TelaInicial extends StatelessWidget {
                           ),
                           _buildMenuCard(
                             context: context,
-                            title: 'Meus Relatorios',
+                            title: 'Meus Relatórios',
                             subtitle: 'Veja seu desempenho',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {
@@ -193,7 +193,7 @@ class TelaInicial extends StatelessWidget {
                           _buildMenuCard(
                             context: context,
                             title: 'Regras do Jogo',
-                            subtitle: 'Como jogar o domino',
+                            subtitle: 'Como jogar o dominó',
                             icon: Icons.menu_book_rounded,
                             onTap: () {
                               Navigator.push(

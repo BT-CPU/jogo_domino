@@ -196,7 +196,7 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
         ),
         _buildStatCard(
           Icons.history_toggle_off_rounded,
-          'Ultima Jogada',
+          'Última Jogada',
           relatorio.ultimaJogadaLabel,
           _vermelho,
         ),
@@ -269,7 +269,7 @@ class _TelaDesempenhoState extends State<TelaDesempenho> {
               const Icon(Icons.history_rounded, color: _vermelho, size: 28),
               const SizedBox(width: 8),
               Text(
-                'Ultimas Partidas',
+                'Últimas Partidas',
                 style: GoogleFonts.nunito(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,

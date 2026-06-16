@@ -105,7 +105,7 @@ class TelaInicialProfessor extends StatelessWidget {
                           Column(
                             children: [
                               Text(
-                                'DOMINO DA\nQUIMICA',
+                                'DOMINÓ DA\nQUÍMICA',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.nunito(
                                   fontSize: isWide ? 26 : 22,
@@ -117,7 +117,7 @@ class TelaInicialProfessor extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'FUNCOES INORGANICAS',
+                                'FUNÇÕES INORGÂNICAS',
                                 style: GoogleFonts.nunito(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -141,7 +141,7 @@ class TelaInicialProfessor extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Escolha uma das opcoes abaixo para continuar',
+                        'Escolha uma das opções abaixo para continuar',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.nunito(
                           fontSize: 14,
@@ -188,7 +188,7 @@ class TelaInicialProfessor extends StatelessWidget {
                           ),
                           _buildMenuCard(
                             context: context,
-                            title: 'Relatorios',
+                            title: 'Relatórios',
                             subtitle: 'Acompanhar desempenho dos alunos',
                             icon: Icons.bar_chart_rounded,
                             onTap: () {

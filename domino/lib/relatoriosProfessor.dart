@@ -119,7 +119,7 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
         foregroundColor: _branco,
         elevation: 0,
         title: Text(
-          'Visao da Turma',
+          'Visão da Turma',
           style: GoogleFonts.nunito(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         actions: [
