@@ -107,7 +107,7 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                             subtitulo: 'Fórmula ↔ Nome',
                             descricao:
                                 'Associe a fórmula química ao nome do composto inorgânico correto.',
-                            icon: Icons.category_outlined,
+                            icon: Icons.opacity_outlined,
                             destaque: _dificuldadeSelecionada == 2,
                             onTap: () =>
                                 setState(() => _dificuldadeSelecionada = 2),
@@ -117,7 +117,7 @@ class _TelaDificuldadeState extends State<TelaDificuldade> {
                             subtitulo: 'Fórmula ↔ Propriedade',
                             descricao:
                                 'Relacione a fórmula química a uma propriedade da sua função inorgânica.',
-                            icon: Icons.hub_outlined,
+                            icon: Icons.bubble_chart_outlined,
                             destaque: _dificuldadeSelecionada == 3,
                             onTap: () =>
                                 setState(() => _dificuldadeSelecionada = 3),
