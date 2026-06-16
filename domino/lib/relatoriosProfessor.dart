@@ -279,7 +279,7 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
             _buildCardResumo(
               Icons.trending_up_rounded,
               '${relatorio.mediaAcertoTurma.toStringAsFixed(0)}%',
-              'Media da Turma',
+              'Média da Turma',
               _verde,
               largura: larguraCard,
             ),
@@ -553,7 +553,7 @@ class _RelatoriosProfessorScreenState extends State<RelatoriosProfessorScreen> {
           _buildHeaderCol('ACERTO'),
           _buildHeaderCol('PARTIDAS'),
           _buildHeaderCol('MELHOR TEMPO'),
-          _buildHeaderCol('ULTIMA JOGADA'),
+          _buildHeaderCol('ÚLTIMA JOGADA'),
           const SizedBox(width: 24),
         ],
       ),

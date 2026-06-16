@@ -69,7 +69,7 @@ class _RelatoriosAlunoScreenState extends State<RelatoriosAlunoScreen> {
       backgroundColor: _cinzaFundo,
       appBar: AppBar(
         title: Text(
-          'Relatorio do Aluno',
+          'Relatório do Aluno',
           style: GoogleFonts.nunito(
             color: Colors.white,
             fontWeight: FontWeight.w800,
@@ -144,7 +144,7 @@ class _RelatoriosAlunoScreenState extends State<RelatoriosAlunoScreen> {
               _buildCardsResumo(relatorio, isWide),
               const SizedBox(height: 24),
               Text(
-                'Historico de Partidas',
+                'Histórico de Partidas',
                 style: GoogleFonts.nunito(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -248,7 +248,7 @@ class _RelatoriosAlunoScreenState extends State<RelatoriosAlunoScreen> {
         ),
         _buildStatCard(
           Icons.history_toggle_off_rounded,
-          'Ultima Jogada',
+          'Última Jogada',
           relatorio.ultimaJogadaLabel,
           _vermelho,
         ),
@@ -353,7 +353,7 @@ class _RelatoriosAlunoScreenState extends State<RelatoriosAlunoScreen> {
                   horizontalMargin: 20,
                   columnSpacing: 24,
                   columns: [
-                    _buildDataColumn('Nivel'),
+                    _buildDataColumn('Nível'),
                     _buildDataColumn('Data'),
                     _buildDataColumn('Acertos'), 
                     _buildDataColumn('Erros'),   
